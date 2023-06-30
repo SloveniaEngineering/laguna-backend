@@ -3,7 +3,40 @@ name = "laguna-backend"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
-actix-web = "4"
-sqlx = { version = "0.6.3", features = ["runtime-actix-rustls", "postgres", "uuid", "migrate"] }
+[workspace]
+members = [
+    "crates/*"
+]
 
+[workspace.dependencies]
+# Dependencies inherited by all crates/* members.
+actix-web = "4"
+sqlx = { version = "0.6.3", features = [
+    "runtime-actix-rustls",
+    "postgres",
+    "uuid",
+    "migrate",
+    "chrono",
+] }
+
+[dependencies]
+# Dependencies for root crate.
+actix-web = "4"
+sqlx = { version = "0.6.3", features = [
+    "runtime-actix-rustls",
+    "postgres",
+    "uuid",
+    "migrate",
+    "chrono",
+] }
+
+# Set logging level via RUST_LOG env var.
+env_logger = "0.10.0"
+
+# For calls to logging macros.
+log = "0.4.19"
+
+laguna-backend-internal = { path = "crates/laguna-backend-internal" }
+
+[dev-dependencies]
+cargo-watch = "8.4.0"

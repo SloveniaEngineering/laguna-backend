@@ -1,0 +1,9 @@
+[package]
+name = "laguna-backend-internal"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+laguna-backend-api = { path = "../laguna-backend-api" }
+laguna-backend-model = { path = "../laguna-backend-model" }
+laguna-backend-middleware = { path = "../laguna-backend-middleware" }
