@@ -4,30 +4,36 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace]
-members = [
-    "crates/*"
-]
+members = ["crates/*"]
 
 [workspace.dependencies]
 # Dependencies inherited by all crates/* members.
 actix-web = "4"
+
+# NOTE: Use time rather than crono because crono is unmaintained.
 sqlx = { version = "0.6.3", features = [
     "runtime-actix-rustls",
     "postgres",
     "uuid",
     "migrate",
-    "chrono",
+    "macros",
+    "time",
+    "json",
 ] }
 
 [dependencies]
 # Dependencies for root crate.
 actix-web = "4"
+
+# NOTE: Use time rather than crono because crono is unmaintained.
 sqlx = { version = "0.6.3", features = [
     "runtime-actix-rustls",
     "postgres",
     "uuid",
     "migrate",
-    "chrono",
+    "macros",
+    "time",
+    "json",
 ] }
 
 # Set logging level via RUST_LOG env var.
@@ -36,7 +42,15 @@ env_logger = "0.10.0"
 # For calls to logging macros.
 log = "0.4.19"
 
-laguna-backend-internal = { path = "crates/laguna-backend-internal" }
+# Laguna library (internally re-exports all sub-libraries).
+laguna = { package = "laguna-backend-internal", path = "crates/laguna-backend-internal" }
 
 [dev-dependencies]
 cargo-watch = "8.4.0"
+
+# CLI for sqlx.
+# More: https://github.com/launchbadge/sqlx/blob/main/sqlx-cli/README.md
+sqlx-cli = { version = "0.6.3", default-features = false, features = [
+    "rustls",
+    "postgres",
+] }
