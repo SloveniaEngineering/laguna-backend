@@ -22,6 +22,9 @@ sqlx = { version = "0.6.3", features = [
 log = "0.4.19"
 # Set logging level via RUST_LOG env var.
 env_logger = "0.10.0"
+# For password hashing.
+sha2 = "0.10"
+digest = { version = "0.10.7", default-features = false }
 
 [dependencies]
 # Dependencies for root crate.

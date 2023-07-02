@@ -1,8 +1,8 @@
-use std::env;
-
 use laguna_backend_model::user::{Role, User};
 use log::debug;
+use sha2::{Digest, Sha256};
 use sqlx::{postgres::PgPoolOptions, PgPool};
+use std::env;
 
 async fn setup() -> PgPool {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
@@ -28,13 +28,16 @@ async fn teardown(pool: PgPool) {
 #[actix_web::test]
 async fn test_insert_and_select_user() {
     let pool = setup().await;
+    let password = "test123";
+    let password_hash = Sha256::digest(password);
 
     sqlx::query(
         r#"
     INSERT INTO "User" (username, email, password, avatar_url, role) 
-    VALUES ('test', 'test@laguna.io', digest('test123', 'sha-256'), NULL, $1)
+    VALUES ('test', 'test@laguna.io', $1, NULL, $2)
     "#,
     )
+    .bind(format!("{:x}", password_hash)) // store hex-string of hash in DB
     .bind(Role::Admin)
     .execute(&pool)
     .await
@@ -52,7 +55,7 @@ async fn test_insert_and_select_user() {
         User {
             id: user.id,
             username: String::from("test"),
-            password: user.password.clone(),
+            password: format!("{:x}", password_hash),
             email: String::from("test@laguna.io"),
             first_login: user.first_login,
             last_login: user.last_login,

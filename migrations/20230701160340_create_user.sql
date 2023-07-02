@@ -2,9 +2,6 @@
 -- uuid_generate_v4()
 -- More: 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
--- For password hashing.
--- digest(pass, 'sha-256')
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TYPE Role AS ENUM ('Normie', 'Verified', 'Mod', 'Admin');
 

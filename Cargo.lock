@@ -1742,8 +1742,10 @@ name = "laguna-backend-model"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "digest",
  "env_logger",
  "log",
+ "sha2",
  "sqlx",
 ]
 
