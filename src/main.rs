@@ -5,6 +5,7 @@ use sqlx::postgres::PgPoolOptions;
 
 #[actix_web::main]
 async fn main() -> Result<(), sqlx::Error> {
+    // Logging level from RUST_LOG env variable.
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     // Database connection setup.
@@ -22,7 +23,8 @@ async fn main() -> Result<(), sqlx::Error> {
         .expect("PORT not specified")
         .parse::<u16>()
         .expect("PORT invalid");
-    let _ = HttpServer::new(|| {
+
+    HttpServer::new(|| {
         App::new()
             .wrap(middleware::Logger::default())
             .default_service(web::to(|| HttpResponse::NotFound()))
@@ -30,7 +32,8 @@ async fn main() -> Result<(), sqlx::Error> {
     .bind((host, port))
     .expect("Cannot bind address")
     .run()
-    .await;
+    .await
+    .expect("Cannot start server");
 
     pool.close().await;
 

@@ -6,3 +6,5 @@ edition = "2021"
 [dependencies]
 sqlx = { workspace = true }
 actix-web = { workspace = true }
+log = { workspace = true }
+env_logger = { workspace = true }

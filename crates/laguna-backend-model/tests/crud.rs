@@ -1,12 +1,15 @@
+use std::env;
+
 use laguna_backend_model::user::{Role, User};
+use log::debug;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 
-const TEST_DATABASE_URL: &str = "postgres://postgres:postgres@127.0.0.1:5432/laguna_test_db";
+async fn setup() -> PgPool {
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
 
-pub(crate) async fn setup() -> PgPool {
     let pool = PgPoolOptions::new()
         .max_connections(1)
-        .connect(TEST_DATABASE_URL)
+        .connect(&env::var("DATABASE_URL").expect("DATABASE_URL not set"))
         .await
         .expect("Unable to connect to test database");
 
@@ -18,13 +21,14 @@ pub(crate) async fn setup() -> PgPool {
     pool
 }
 
-pub(crate) async fn teardown(pool: PgPool) {
+async fn teardown(pool: PgPool) {
     pool.close().await
 }
 
 #[actix_web::test]
-async fn crud_user() {
-    let conn = setup().await;
+async fn test_insert_and_select_user() {
+    let pool = setup().await;
+
     sqlx::query(
         r#"
     INSERT INTO "User" (username, email, password, avatar_url, role) 
@@ -32,13 +36,17 @@ async fn crud_user() {
     "#,
     )
     .bind(Role::Admin)
-    .execute(&conn)
+    .execute(&pool)
     .await
     .expect("INSERT failed");
+
     let user = sqlx::query_as::<_, User>("SELECT * FROM \"User\"")
-        .fetch_one(&conn)
+        .fetch_one(&pool)
         .await
         .expect("Could not get user");
+
+    debug!("{:#?}", user);
+
     assert_eq!(
         user,
         User {
@@ -52,10 +60,6 @@ async fn crud_user() {
             role: Role::Admin,
         }
     );
-    sqlx::query("DELETE FROM \"User\" WHERE id = $1")
-        .bind(user.id)
-        .execute(&conn)
-        .await
-        .expect("Couldn't delete user");
-    teardown(conn).await;
+
+    teardown(pool).await;
 }
