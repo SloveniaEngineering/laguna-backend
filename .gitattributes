@@ -1,2 +1,6 @@
 # End all lines with linefeed
 * text=auto eol=lf
+
+# Detect SQL as language
+*.sql linguist-detectable=true
+*.sql linguist-language=sql
