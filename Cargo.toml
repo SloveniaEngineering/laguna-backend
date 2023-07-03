@@ -6,28 +6,7 @@ edition = "2021"
 [workspace]
 members = ["crates/*"]
 
-[workspace.dependencies]
-# Dependencies inherited by all crates/* members.
-actix-web = "4"
-# NOTE: Use time rather than crono because crono is unmaintained.
-sqlx = { version = "0.6.3", features = [
-    "runtime-actix-rustls",
-    "postgres",
-    "uuid",
-    "migrate",
-    "macros",
-    "time",
-    "json",
-] }
-log = "0.4.19"
-# Set logging level via RUST_LOG env var.
-env_logger = "0.10.0"
-# For password hashing.
-sha2 = "0.10"
-digest = { version = "0.10.7", default-features = false }
-
 [dependencies]
-# Dependencies for root crate.
 actix-web = "4"
 sqlx = { version = "0.6.3", features = [
     "runtime-actix-rustls",
@@ -40,7 +19,12 @@ sqlx = { version = "0.6.3", features = [
 ] }
 env_logger = "0.10.0"
 log = "0.4.19"
-# Laguna library (internally re-exports all sub-libraries).
+actix-jwt-auth-middleware = "0.3.0"
+jwt-compact = "0.7.0"
+sha2 = "0.10"
+chrono = { version = "*", features = ["serde"]}
+uuid = { version = "*", features = ["serde", "v4", "fast-rng"] }
+digest = { version = "0.10.7", default-features = false }
 laguna = { package = "laguna-backend-internal", path = "crates/laguna-backend-internal" }
 
 [dev-dependencies]

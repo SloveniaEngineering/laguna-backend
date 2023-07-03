@@ -14,5 +14,9 @@ CREATE TABLE IF NOT EXISTS "User" (
     first_login TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     avatar_url TEXT,
-    role Role NOT NULL DEFAULT 'Normie'
+    role Role NOT NULL DEFAULT 'Normie',
+    is_active BOOLEAN DEFAULT TRUE,
+    has_verified_email BOOLEAN DEFAULT FALSE,
+    is_history_private BOOLEAN DEFAULT TRUE,
+    is_profile_private BOOLEAN DEFAULT TRUE
 );

@@ -61,6 +61,10 @@ async fn test_insert_and_select_user() {
             last_login: user.last_login,
             avatar_url: None,
             role: Role::Admin,
+            is_active: true,
+            has_verified_email: false,
+            is_history_private: true,
+            is_profile_private: true
         }
     );
 
