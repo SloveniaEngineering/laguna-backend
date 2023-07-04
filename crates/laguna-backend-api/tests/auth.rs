@@ -1,16 +1,22 @@
 use actix_jwt_auth_middleware::{use_jwt::UseJWTOnApp, Authority, TokenSigner};
 use actix_web::{
     dev::{Service, ServiceResponse},
-    http::{header, StatusCode},
+    http::{
+        header::{self, HeaderValue},
+        StatusCode,
+    },
     test::{init_service, TestRequest},
     web, App,
 };
 
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use env_logger;
 
-use jwt_compact::alg::{Hs256, Hs256Key};
-use laguna_backend_api::{login::login, register::register};
+use jwt_compact::{
+    alg::{Hs256, Hs256Key},
+    TimeOptions,
+};
+use laguna_backend_api::{login::login, register::register, user::me};
 use laguna_backend_model::{
     login::LoginDTO,
     user::{Role, UserDTO},
@@ -196,26 +202,23 @@ async fn test_login() {
 }
 
 #[actix_web::test]
-async fn test_access_with_bearer() {
+async fn test_access_and_refresh_token() {
     let pool = setup().await;
     let key = Hs256Key::new("some random test shit");
     let authority = Authority::<UserDTO, Hs256, _, _>::new()
         .refresh_authorizer(|| async move { Ok(()) })
-        .enable_header_tokens(true)
+        .enable_header_tokens(true) // see comment below
         .token_signer(Some(
             TokenSigner::new()
                 .signing_key(key.clone())
                 .algorithm(Hs256)
+                .time_options(TimeOptions::from_leeway(Duration::nanoseconds(5))) // to make sure refresh is triggered. TODO: this is kind of best-effort like, can we explicitly test this?
                 .build()
                 .expect("Cannot create token signer"),
         ))
         .verifying_key(key.clone())
         .build()
         .expect("Cannot create key authority");
-
-    async fn me(user: UserDTO) -> String {
-        format!("Hello {:?}", user)
-    }
 
     let app = init_service(
         App::new()
@@ -224,15 +227,15 @@ async fn test_access_with_bearer() {
             .service(login)
             .use_jwt(
                 authority,
-                web::scope("/api").service(web::resource("/me").to(me)),
+                web::scope("/api").service(web::scope("/user").service(me)),
             ),
     )
     .await;
 
     let req = TestRequest::post()
         .set_json(UserDTO {
-            username: String::from("test_access_with_bearer"),
-            email: String::from("test_access_with_bearer@laguna.io"),
+            username: String::from("test_access_refresh"),
+            email: String::from("test_access_refresh@laguna.io"),
             password: String::from("test123"),
             avatar_url: None,
             role: Role::Admin,
@@ -249,36 +252,45 @@ async fn test_access_with_bearer() {
 
     let req = TestRequest::post()
         .set_json(LoginDTO {
-            username_or_email: String::from("test_access_with_bearer"),
+            username_or_email: String::from("test_access_refresh"),
             password: String::from("test123"),
             login_timestamp: Utc::now(),
         })
         .uri("/login");
 
+    // TODO: Find better way.
+    // Guess what? HttpRequest has ::cookies(), but TestRequest doesn't have ::cookies() => we must use headers in order to use TestRequest.
+    // Why do we need cookie? Because actix-jwt-auth-middleware deals with cookies (when sending, when receiving, however, it is customizable).
+    // So we enable headers with [`Authority::enable_header_tokens(true)`].
+    // This is why the below parsing is required.
+    fn cookie_in_header_to_token(cookie: &HeaderValue) -> String {
+        // INPUT FORMAT: {access,refresh}_token=<TOKEN>; Secure
+        // OUTPUT FORMAT: <TOKEN>
+        // First get access_token=<TOKEN>; by splitting whitespace
+        let unprocessed_token = cookie.to_str().unwrap().split_whitespace().next().unwrap();
+        // Second get rid of ;
+        let unprocessed_token = unprocessed_token
+            .chars()
+            .take(unprocessed_token.len() - 1)
+            .collect::<Vec<char>>();
+        // Split on = (position of(=) + 1 because we don't want =) to get <TOKEN> into RHS token value
+        let (_, token) = unprocessed_token
+            .split_at(unprocessed_token.iter().position(|c| c == &'=').unwrap() + 1);
+        token.to_vec().into_iter().collect::<String>()
+    }
+
     let res: ServiceResponse = app.call(req.to_request()).await.unwrap();
     let mut cookies = res.headers().get_all(header::SET_COOKIE);
-    let access_token = cookies.next().unwrap();
-    let _refresh_token = cookies.next().unwrap();
+    let access_token = cookie_in_header_to_token(cookies.next().unwrap());
+    let refresh_token = cookie_in_header_to_token(cookies.next().unwrap());
     assert_eq!(cookies.next(), None);
-    // Guess what? HttpRequest has ::cookies(), but TestRequest doesn't have ::cookies() => we must use headers in order to use TestRequest.
-    // This is why the below parsing is required.
-    let unprocessed_token = access_token
-        .to_str()
-        .unwrap()
-        .split_whitespace()
-        .next()
-        .unwrap();
-    let unprocessed_token = unprocessed_token
-        .chars()
-        .take(unprocessed_token.len() - 1)
-        .collect::<Vec<char>>();
-    let (_, token) =
-        unprocessed_token.split_at(unprocessed_token.iter().position(|c| c == &'=').unwrap() + 1);
-    let token = token.to_vec().into_iter().collect::<String>();
+
     let req = TestRequest::get()
-        .uri("/api/me")
-        .append_header(("access_token", token));
+        .uri("/api/user/me")
+        .append_header(("access_token", access_token))
+        .append_header(("refresh_token", refresh_token));
     let res: ServiceResponse = app.call(req.to_request()).await.unwrap();
     assert_eq!(res.status(), 200);
+
     teardown(pool).await;
 }

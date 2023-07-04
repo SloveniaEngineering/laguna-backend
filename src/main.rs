@@ -1,7 +1,9 @@
+use actix_cors::Cors;
 use actix_jwt_auth_middleware::use_jwt::UseJWTOnApp;
 
 use actix_jwt_auth_middleware::Authority;
 use actix_jwt_auth_middleware::TokenSigner;
+use actix_web::http::header;
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 
 use jwt_compact::alg::Hs256;
@@ -9,6 +11,7 @@ use jwt_compact::alg::Hs256Key;
 use laguna::api::login::login;
 use laguna::api::register::register;
 
+use laguna::api::user::me;
 use laguna::model::user::UserDTO;
 use std::env;
 
@@ -36,6 +39,8 @@ async fn main() -> Result<(), sqlx::Error> {
         .parse::<u16>()
         .expect("PORT invalid");
 
+    let host_clone = host.clone();
+
     HttpServer::new(move || {
         let authority = Authority::<UserDTO, Hs256, _, _>::new()
             .refresh_authorizer(|| async move { Ok(()) })
@@ -49,12 +54,22 @@ async fn main() -> Result<(), sqlx::Error> {
             .verifying_key(key.clone())
             .build()
             .expect("Cannot create key authority");
+        let cors = Cors::default()
+            .allowed_origin(&host_clone)
+            .supports_credentials()
+            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "PATCH"])
+            .allowed_headers(vec![header::CONTENT_TYPE])
+            .max_age(3600);
         App::new()
             .wrap(middleware::Logger::default())
+            .wrap(cors)
             .app_data(web::Data::new(pool.clone()))
             .service(register)
             .service(login)
-            .use_jwt(authority, web::scope("/api").service(web::scope("/user")))
+            .use_jwt(
+                authority,
+                web::scope("/api").service(web::scope("/user").service(me)),
+            )
             .default_service(web::to(|| HttpResponse::NotFound()))
     })
     .bind((host, port))
