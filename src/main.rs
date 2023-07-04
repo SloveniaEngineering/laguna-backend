@@ -10,7 +10,7 @@ use jwt_compact::alg::Hs256Key;
 use laguna::api::login::login;
 use laguna::api::register::register;
 
-use laguna::model::user::User;
+use laguna::model::user::UserDTO;
 use std::env;
 
 use sqlx::postgres::PgPoolOptions;
@@ -38,7 +38,7 @@ async fn main() -> Result<(), sqlx::Error> {
         .expect("PORT invalid");
 
     HttpServer::new(move || {
-        let authority = Authority::<User, Hs256, _, _>::new()
+        let authority = Authority::<UserDTO, Hs256, _, _>::new()
             .refresh_authorizer(|| async move { Ok(()) })
             .token_signer(Some(
                 TokenSigner::new()
@@ -53,7 +53,8 @@ async fn main() -> Result<(), sqlx::Error> {
         App::new()
             .wrap(middleware::Logger::default())
             .app_data(web::Data::new(pool.clone()))
-            .service(web::scope("/user").service(register).service(login))
+            .service(register)
+            .service(login)
             .use_jwt(authority, web::scope("/api").service(web::scope("/user")))
             .default_service(web::to(|| HttpResponse::NotFound()))
     })
@@ -63,6 +64,7 @@ async fn main() -> Result<(), sqlx::Error> {
     .await
     .expect("Cannot start server");
 
+    // Is this necessary?
     // pool.close().await;
 
     Ok(())

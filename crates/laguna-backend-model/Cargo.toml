@@ -19,6 +19,6 @@ env_logger = "0.10.0"
 sha2 = "0.10"
 digest = { version = "0.10.7", default-features = false }
 actix-jwt-auth-middleware = "0.3.0"
-uuid = { version = "*", features = ["serde"] }
+uuid = { version = "*", features = ["serde", "v4", "fast-rng"] }
 serde = { version = "1.0", features = ["derive"] }
 chrono = { version = "*", features = ["serde"] } 

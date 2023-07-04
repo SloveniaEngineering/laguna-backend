@@ -18,8 +18,11 @@ sqlx = { version = "0.6.3", features = [
 actix-jwt-auth-middleware = "0.3.0"
 jwt-compact = "0.7.0"
 sha2 = "0.10"
+log = "*"
 chrono = { version = "*", features = ["serde"]}
 uuid = { version = "*", features = ["serde", "v4", "fast-rng"] }
 digest = { version = "0.10.7", default-features = false }
 derive_more = "*"
+env_logger = "*"
 serde = { version = "1.0", features = ["derive"]}
+actix-web-httpauth = "0.8.0"
