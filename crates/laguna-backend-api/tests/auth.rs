@@ -19,7 +19,7 @@ use jwt_compact::{
 use laguna_backend_api::{login::login, register::register, user::me};
 use laguna_backend_model::{
     login::LoginDTO,
-    user::{Role, UserDTO},
+    user::{Role, UserDTO, Behaviour},
 };
 
 use sqlx::{postgres::PgPoolOptions, PgPool};
@@ -71,6 +71,7 @@ async fn test_register() {
             password: String::from("test123"),
             avatar_url: None,
             role: Role::Admin,
+            behaviour: Behaviour::Lurker,
             is_active: None,
             is_history_private: None,
             first_login: None,
@@ -90,6 +91,7 @@ async fn test_register() {
             password: String::from("test123"),
             avatar_url: None,
             role: Role::Admin,
+            behaviour: Behaviour::Lurker,
             is_active: None,
             is_history_private: None,
             first_login: None,
@@ -137,6 +139,7 @@ async fn test_login() {
             password: String::from("test123"),
             avatar_url: None,
             role: Role::Admin,
+            behaviour: Behaviour::Lurker,
             is_active: None,
             is_history_private: None,
             first_login: None,
@@ -239,6 +242,7 @@ async fn test_access_and_refresh_token() {
             password: String::from("test123"),
             avatar_url: None,
             role: Role::Admin,
+            behaviour: Behaviour::Lurker,
             is_active: None,
             is_history_private: None,
             first_login: None,

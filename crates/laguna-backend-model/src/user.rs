@@ -11,6 +11,16 @@ pub enum Role {
     Admin,
 }
 
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, sqlx::Type)]
+pub enum  Behaviour {
+    Lurker,
+    Downloader,
+    Freeleecher,
+    Leech,
+    Seed,
+    Choked,
+}
+
 /// User DB object.
 /// Not to be confused with [`UserDTO`] used for API.
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, FromRequest, sqlx::FromRow)]
@@ -27,6 +37,7 @@ pub struct User {
     pub last_login: DateTime<Utc>,
     pub avatar_url: Option<String>,
     pub role: Role,
+    pub behaviour: Behaviour,
     pub is_active: bool,
     pub has_verified_email: bool,
     pub is_history_private: bool,
@@ -46,6 +57,7 @@ pub struct UserDTO {
     pub last_login: Option<DateTime<Utc>>,
     pub avatar_url: Option<String>,
     pub role: Role,
+    pub behaviour: Behaviour,
     /// If None, DEFAULT is true
     pub is_active: Option<bool>,
     /// If None, DEFAULT is false
@@ -66,6 +78,7 @@ impl From<User> for UserDTO {
             last_login: Some(user.last_login),
             avatar_url: user.avatar_url,
             role: user.role,
+            behaviour: user.behaviour,
             is_active: Some(user.is_active),
             has_verified_email: Some(user.has_verified_email),
             is_history_private: Some(user.is_history_private),
