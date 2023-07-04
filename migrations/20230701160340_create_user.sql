@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS "User" (
     last_login TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     avatar_url TEXT,
     role Role NOT NULL DEFAULT 'Normie',
-    Behaviour Behaviour NOT NULL DEFAULT 'Lurker',
+    behaviour Behaviour NOT NULL DEFAULT 'Lurker',
     is_active BOOLEAN DEFAULT TRUE,
     has_verified_email BOOLEAN DEFAULT FALSE,
     is_history_private BOOLEAN DEFAULT TRUE,
