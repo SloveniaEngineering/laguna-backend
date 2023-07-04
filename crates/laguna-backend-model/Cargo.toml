@@ -4,9 +4,21 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-sqlx = { workspace = true }
-actix-web = { workspace = true }
-log = { workspace = true }
-env_logger = { workspace = true }
-sha2 = { workspace = true }
-digest = { workspace = true }
+actix-web = "4"
+sqlx = { version = "0.6.3", features = [
+    "runtime-actix-rustls",
+    "postgres",
+    "uuid",
+    "migrate",
+    "macros",
+    "chrono",
+    "json",
+] }
+log = "0.4.19"
+env_logger = "0.10.0"
+sha2 = "0.10"
+digest = { version = "0.10.7", default-features = false }
+actix-jwt-auth-middleware = "0.3.0"
+uuid = { version = "*", features = ["serde", "v4", "fast-rng"] }
+serde = { version = "1.0", features = ["derive"] }
+chrono = { version = "*", features = ["serde"] } 

@@ -3,9 +3,15 @@ use log::debug;
 use sha2::{Digest, Sha256};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::env;
+use std::sync::Once;
+
+// Initialize env_logger only once.
+static ENV_LOGGER_SETUP: Once = Once::new();
 
 async fn setup() -> PgPool {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
+    ENV_LOGGER_SETUP.call_once(|| {
+        env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
+    });
 
     let pool = PgPoolOptions::new()
         .max_connections(1)
@@ -61,8 +67,18 @@ async fn test_insert_and_select_user() {
             last_login: user.last_login,
             avatar_url: None,
             role: Role::Admin,
+            is_active: true,
+            has_verified_email: false,
+            is_history_private: true,
+            is_profile_private: true
         }
     );
+
+    // clean after
+    sqlx::query("DELETE FROM \"User\"")
+        .execute(&pool)
+        .await
+        .unwrap();
 
     teardown(pool).await;
 }

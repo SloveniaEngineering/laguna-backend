@@ -4,4 +4,24 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-actix-web = { workspace = true }
+laguna-backend-model = { path = "../laguna-backend-model" }
+actix-web = "4"
+sqlx = { version = "0.6.3", features = [
+    "runtime-actix-rustls",
+    "postgres",
+    "uuid",
+    "migrate",
+    "macros",
+    "time",
+    "json",
+] }
+actix-jwt-auth-middleware = "0.3.0"
+jwt-compact = "0.7.0"
+sha2 = "0.10"
+log = "*"
+chrono = { version = "*", features = ["serde"]}
+uuid = { version = "*", features = ["serde", "v4", "fast-rng"] }
+digest = { version = "0.10.7", default-features = false }
+derive_more = "*"
+env_logger = "*"
+serde = { version = "1.0", features = ["derive"]}
