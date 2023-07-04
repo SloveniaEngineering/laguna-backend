@@ -2,7 +2,6 @@ use actix_jwt_auth_middleware::use_jwt::UseJWTOnApp;
 
 use actix_jwt_auth_middleware::Authority;
 use actix_jwt_auth_middleware::TokenSigner;
-
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 
 use jwt_compact::alg::Hs256;

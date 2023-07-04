@@ -6,7 +6,6 @@ use actix_web::{
     web, App,
 };
 
-
 use chrono::Utc;
 use env_logger;
 
@@ -16,7 +15,6 @@ use laguna_backend_model::{
     login::LoginDTO,
     user::{Role, UserDTO},
 };
-
 
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::{env, sync::Once};
@@ -264,11 +262,22 @@ async fn test_access_with_bearer() {
     assert_eq!(cookies.next(), None);
     // Guess what? HttpRequest has ::cookies(), but TestRequest doesn't have ::cookies() => we must use headers in order to use TestRequest.
     // This is why the below parsing is required.
-    let unprocessed_token = access_token.to_str().unwrap().split_whitespace().next().unwrap();
-    let unprocessed_token = unprocessed_token.chars().take(unprocessed_token.len()-1).collect::<Vec<char>>();
-    let (_, token) = unprocessed_token.split_at(unprocessed_token.iter().position(|c| c == &'=').unwrap()+1);
+    let unprocessed_token = access_token
+        .to_str()
+        .unwrap()
+        .split_whitespace()
+        .next()
+        .unwrap();
+    let unprocessed_token = unprocessed_token
+        .chars()
+        .take(unprocessed_token.len() - 1)
+        .collect::<Vec<char>>();
+    let (_, token) =
+        unprocessed_token.split_at(unprocessed_token.iter().position(|c| c == &'=').unwrap() + 1);
     let token = token.to_vec().into_iter().collect::<String>();
-    let req = TestRequest::get().uri("/api/me").append_header(("access_token", token));
+    let req = TestRequest::get()
+        .uri("/api/me")
+        .append_header(("access_token", token));
     let res: ServiceResponse = app.call(req.to_request()).await.unwrap();
     assert_eq!(res.status(), 200);
     teardown(pool).await;
