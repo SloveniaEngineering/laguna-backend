@@ -25,4 +25,3 @@ digest = { version = "0.10.7", default-features = false }
 derive_more = "*"
 env_logger = "*"
 serde = { version = "1.0", features = ["derive"]}
-actix-web-httpauth = "0.8.0"

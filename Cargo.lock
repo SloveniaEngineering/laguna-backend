@@ -1867,7 +1867,6 @@ version = "0.1.0"
 dependencies = [
  "actix-jwt-auth-middleware",
  "actix-web",
- "actix-web-httpauth",
  "chrono",
  "derive_more",
  "digest",
