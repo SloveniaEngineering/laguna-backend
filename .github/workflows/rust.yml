@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build_and_test:
 
     runs-on: ubuntu-latest
     
@@ -42,4 +42,4 @@ jobs:
     - name: Setup database
       run: scripts/dbsetup.sh laguna_db
     - name: Run tests
-      run: cargo test --verbose
+      run: scripts/test.sh
