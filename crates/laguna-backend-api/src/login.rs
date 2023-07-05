@@ -21,7 +21,6 @@ use crate::state::UserState;
 ///      --data '{
 ///                 "username_or_email": "test",
 ///                 "password": "test123",
-///                 "login_timestamp": "2023-07-04T10:18:17.391698Z"
 ///              }'
 /// ```
 /// ### Response (OK)
@@ -68,7 +67,7 @@ pub async fn login(
     if let Some(logged_user) = fetched_user {
         if logged_user.password == format!("{:x}", Sha256::digest(&login_dto.password)) {
             sqlx::query("UPDATE \"User\" SET last_login = $1 WHERE id = $2")
-                .bind(login_dto.login_timestamp)
+                .bind(chrono::offset::Utc::now())
                 .bind(logged_user.id)
                 .execute(pool.get_ref())
                 .await?;
