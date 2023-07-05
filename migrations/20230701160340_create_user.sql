@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS "User" (
     avatar_url TEXT,
     role Role NOT NULL DEFAULT 'Normie',
     behaviour Behaviour NOT NULL DEFAULT 'Lurker',
-    is_active BOOLEAN DEFAULT TRUE,
-    has_verified_email BOOLEAN DEFAULT FALSE,
-    is_history_private BOOLEAN DEFAULT TRUE,
-    is_profile_private BOOLEAN DEFAULT TRUE
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    has_verified_email BOOLEAN NOT NULL DEFAULT FALSE,
+    is_history_private BOOLEAN NOT NULL DEFAULT TRUE,
+    is_profile_private BOOLEAN NOT NULL DEFAULT TRUE
 );
