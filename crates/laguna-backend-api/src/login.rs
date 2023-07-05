@@ -34,9 +34,9 @@ use crate::state::UserState;
 /// {
 ///     "LoginSuccess": {
 ///         "user": {
+///             "id": "b33b630d-e098-47d0-bc21-94c6a7467f17"
 ///             "username": "test",
 ///             "email": "test@laguna.io",
-///             "password": "ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae",
 ///             "first_login": "2023-07-04T10:18:17.391698Z",
 ///             "last_login": "2023-07-04T10:18:17.391698Z",
 ///             "avatar_url": null,
