@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum UserState {
-    AlreadyRegistered { user: UserDTO },
+    AlreadyRegistered,
     RegistrationSuccess,
     LoginSuccess { user: UserDTO },
 }

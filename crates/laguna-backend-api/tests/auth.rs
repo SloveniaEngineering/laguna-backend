@@ -17,6 +17,7 @@ use jwt_compact::{
 use laguna_backend_api::{login::login, register::register, user::me};
 use laguna_backend_model::{
     login::LoginDTO,
+    register::RegisterDTO,
     user::{Behaviour, Role, UserDTO},
 };
 
@@ -63,19 +64,10 @@ async fn test_register() {
     )
     .await;
     let req = TestRequest::post()
-        .set_json(UserDTO {
+        .set_json(RegisterDTO {
             username: String::from("test"),
             email: String::from("test@laguna.io"),
             password: String::from("test123"),
-            avatar_url: None,
-            role: Role::Admin,
-            behaviour: Behaviour::Lurker,
-            is_active: None,
-            is_history_private: None,
-            first_login: None,
-            last_login: None,
-            has_verified_email: None,
-            is_profile_private: None,
         })
         .uri("/api/user/auth/register");
     let res: ServiceResponse = app.call(req.to_request()).await.unwrap();
@@ -83,19 +75,10 @@ async fn test_register() {
 
     // Test already exists
     let req = TestRequest::post()
-        .set_json(UserDTO {
+        .set_json(RegisterDTO {
             username: String::from("test"),
             email: String::from("test@laguna.io"),
             password: String::from("test123"),
-            avatar_url: None,
-            role: Role::Admin,
-            behaviour: Behaviour::Lurker,
-            is_active: None,
-            is_history_private: None,
-            first_login: None,
-            last_login: None,
-            has_verified_email: None,
-            is_profile_private: None,
         })
         .uri("/api/user/auth/register");
 
@@ -134,19 +117,10 @@ async fn test_login() {
     .await;
 
     let req = TestRequest::post()
-        .set_json(UserDTO {
+        .set_json(RegisterDTO {
             username: String::from("test_login"),
             email: String::from("test_login@laguna.io"),
             password: String::from("test123"),
-            avatar_url: None,
-            role: Role::Admin,
-            behaviour: Behaviour::Lurker,
-            is_active: None,
-            is_history_private: None,
-            first_login: None,
-            last_login: None,
-            has_verified_email: None,
-            is_profile_private: None,
         })
         .uri("/api/user/auth/register");
     let res: ServiceResponse = app.call(req.to_request()).await.unwrap();
@@ -157,7 +131,6 @@ async fn test_login() {
         .set_json(LoginDTO {
             username_or_email: String::from("test_login"),
             password: String::from("test123"),
-            login_timestamp: Utc::now(),
         })
         .uri("/api/user/auth/login");
 
@@ -170,7 +143,6 @@ async fn test_login() {
         .set_json(LoginDTO {
             username_or_email: String::from("test_login@laguna.io"),
             password: String::from("test123"),
-            login_timestamp: Utc::now(),
         })
         .uri("/api/user/auth/login");
 
@@ -183,7 +155,6 @@ async fn test_login() {
         .set_json(LoginDTO {
             username_or_email: String::from("test_login"),
             password: String::from("seiufhoifhjqow"),
-            login_timestamp: Utc::now(),
         })
         .uri("/api/user/auth/login");
 
@@ -195,7 +166,6 @@ async fn test_login() {
         .set_json(LoginDTO {
             username_or_email: String::from("test_loginx"),
             password: String::from("test123"),
-            login_timestamp: Utc::now(),
         })
         .uri("/api/user/auth/login");
 
@@ -240,19 +210,10 @@ async fn test_access_and_refresh_token() {
     .await;
 
     let req = TestRequest::post()
-        .set_json(UserDTO {
+        .set_json(RegisterDTO {
             username: String::from("test_access_refresh"),
             email: String::from("test_access_refresh@laguna.io"),
             password: String::from("test123"),
-            avatar_url: None,
-            role: Role::Admin,
-            behaviour: Behaviour::Lurker,
-            is_active: None,
-            is_history_private: None,
-            first_login: None,
-            last_login: None,
-            has_verified_email: None,
-            is_profile_private: None,
         })
         .uri("/api/user/auth/register");
     let res: ServiceResponse = app.call(req.to_request()).await.unwrap();
@@ -262,7 +223,6 @@ async fn test_access_and_refresh_token() {
         .set_json(LoginDTO {
             username_or_email: String::from("test_access_refresh"),
             password: String::from("test123"),
-            login_timestamp: Utc::now(),
         })
         .uri("/api/user/auth/login");
 
