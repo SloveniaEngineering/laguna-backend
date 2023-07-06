@@ -43,7 +43,7 @@ jobs:
       run: cargo build --release
     - name: Check if sqlx-cli exists
       id: check_sqlx_exists
-      uses: andstor/file-existence-action@v1
+      uses: andstor/file-existence-action@v2
       with:
         files: "./cargo/bin/sqlx"
     - name: Install sqlx-cli
