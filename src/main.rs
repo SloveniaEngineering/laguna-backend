@@ -44,6 +44,8 @@ async fn main() -> Result<(), sqlx::Error> {
     HttpServer::new(move || {
         let authority = Authority::<UserDTO, Hs256, _, _>::new()
             .refresh_authorizer(|| async move { Ok(()) })
+            // .enable_cookie_tokens(true)
+            .enable_header_tokens(true)
             .token_signer(Some(
                 TokenSigner::new()
                     .signing_key(key.clone())
@@ -64,8 +66,11 @@ async fn main() -> Result<(), sqlx::Error> {
             .wrap(middleware::Logger::default())
             .wrap(cors)
             .app_data(web::Data::new(pool.clone()))
-            .service(register)
-            .service(login)
+            .service(
+                web::scope("/api/user/auth")
+                    .service(register)
+                    .service(login),
+            )
             .use_jwt(
                 authority,
                 web::scope("/api").service(web::scope("/user").service(me)),

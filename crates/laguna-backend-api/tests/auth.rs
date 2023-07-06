@@ -1,15 +1,13 @@
 use actix_jwt_auth_middleware::{use_jwt::UseJWTOnApp, Authority, TokenSigner};
 use actix_web::{
     dev::{Service, ServiceResponse},
-    http::{
-        header::{self, HeaderValue},
-        StatusCode,
-    },
+    http::{header, StatusCode},
     test::{init_service, TestRequest},
     web, App,
 };
 
 use chrono::{Duration, Utc};
+use cookie::Cookie;
 use env_logger;
 
 use jwt_compact::{
@@ -19,7 +17,7 @@ use jwt_compact::{
 use laguna_backend_api::{login::login, register::register, user::me};
 use laguna_backend_model::{
     login::LoginDTO,
-    user::{Role, UserDTO, Behaviour},
+    user::{Behaviour, Role, UserDTO},
 };
 
 use sqlx::{postgres::PgPoolOptions, PgPool};
@@ -61,7 +59,7 @@ async fn test_register() {
     let app = init_service(
         App::new()
             .app_data(web::Data::new(pool.clone()))
-            .service(register),
+            .service(web::scope("/api/user/auth").service(register)),
     )
     .await;
     let req = TestRequest::post()
@@ -79,7 +77,7 @@ async fn test_register() {
             has_verified_email: None,
             is_profile_private: None,
         })
-        .uri("/register");
+        .uri("/api/user/auth/register");
     let res: ServiceResponse = app.call(req.to_request()).await.unwrap();
     assert_eq!(res.status(), StatusCode::OK);
 
@@ -99,7 +97,7 @@ async fn test_register() {
             has_verified_email: None,
             is_profile_private: None,
         })
-        .uri("/register");
+        .uri("/api/user/auth/register");
 
     let res = app.call(req.to_request()).await.unwrap();
     assert_eq!(res.status(), StatusCode::ALREADY_REPORTED);
@@ -126,8 +124,11 @@ async fn test_login() {
     let app = init_service(
         App::new()
             .app_data(web::Data::new(pool.clone()))
-            .service(register)
-            .service(login)
+            .service(
+                web::scope("/api/user/auth")
+                    .service(register)
+                    .service(login),
+            )
             .use_jwt(authority, web::scope("/api")),
     )
     .await;
@@ -147,7 +148,7 @@ async fn test_login() {
             has_verified_email: None,
             is_profile_private: None,
         })
-        .uri("/register");
+        .uri("/api/user/auth/register");
     let res: ServiceResponse = app.call(req.to_request()).await.unwrap();
     assert_eq!(res.status(), StatusCode::OK);
 
@@ -158,7 +159,7 @@ async fn test_login() {
             password: String::from("test123"),
             login_timestamp: Utc::now(),
         })
-        .uri("/login");
+        .uri("/api/user/auth/login");
 
     let res: ServiceResponse = app.call(req.to_request()).await.unwrap();
     assert_eq!(res.status(), StatusCode::OK);
@@ -171,7 +172,7 @@ async fn test_login() {
             password: String::from("test123"),
             login_timestamp: Utc::now(),
         })
-        .uri("/login");
+        .uri("/api/user/auth/login");
 
     let res: ServiceResponse = app.call(req.to_request()).await.unwrap();
     assert_eq!(res.status(), StatusCode::OK);
@@ -184,7 +185,7 @@ async fn test_login() {
             password: String::from("seiufhoifhjqow"),
             login_timestamp: Utc::now(),
         })
-        .uri("/login");
+        .uri("/api/user/auth/login");
 
     let res: ServiceResponse = app.call(req.to_request()).await.unwrap();
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
@@ -196,7 +197,7 @@ async fn test_login() {
             password: String::from("test123"),
             login_timestamp: Utc::now(),
         })
-        .uri("/login");
+        .uri("/api/user/auth/login");
 
     let res: ServiceResponse = app.call(req.to_request()).await.unwrap();
     assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
@@ -210,7 +211,7 @@ async fn test_access_and_refresh_token() {
     let key = Hs256Key::new("some random test shit");
     let authority = Authority::<UserDTO, Hs256, _, _>::new()
         .refresh_authorizer(|| async move { Ok(()) })
-        .enable_header_tokens(true) // see comment below
+        // .enable_header_tokens(true) // see comment below
         .token_signer(Some(
             TokenSigner::new()
                 .signing_key(key.clone())
@@ -226,8 +227,11 @@ async fn test_access_and_refresh_token() {
     let app = init_service(
         App::new()
             .app_data(web::Data::new(pool.clone()))
-            .service(register)
-            .service(login)
+            .service(
+                web::scope("/api/user/auth")
+                    .service(register)
+                    .service(login),
+            )
             .use_jwt(
                 authority,
                 web::scope("/api").service(web::scope("/user").service(me)),
@@ -250,7 +254,7 @@ async fn test_access_and_refresh_token() {
             has_verified_email: None,
             is_profile_private: None,
         })
-        .uri("/register");
+        .uri("/api/user/auth/register");
     let res: ServiceResponse = app.call(req.to_request()).await.unwrap();
     assert_eq!(res.status(), StatusCode::OK);
 
@@ -260,39 +264,18 @@ async fn test_access_and_refresh_token() {
             password: String::from("test123"),
             login_timestamp: Utc::now(),
         })
-        .uri("/login");
-
-    // TODO: Find better way.
-    // Guess what? HttpRequest has ::cookies(), but TestRequest doesn't have ::cookies() => we must use headers in order to use TestRequest.
-    // Why do we need cookie? Because actix-jwt-auth-middleware deals with cookies (when sending, when receiving, however, it is customizable).
-    // So we enable headers with [`Authority::enable_header_tokens(true)`].
-    // This is why the below parsing is required.
-    fn cookie_in_header_to_token(cookie: &HeaderValue) -> String {
-        // INPUT FORMAT: {access,refresh}_token=<TOKEN>; Secure
-        // OUTPUT FORMAT: <TOKEN>
-        // First get access_token=<TOKEN>; by splitting whitespace
-        let unprocessed_token = cookie.to_str().unwrap().split_whitespace().next().unwrap();
-        // Second get rid of ;
-        let unprocessed_token = unprocessed_token
-            .chars()
-            .take(unprocessed_token.len() - 1)
-            .collect::<Vec<char>>();
-        // Split on = (position of(=) + 1 because we don't want =) to get <TOKEN> into RHS token value
-        let (_, token) = unprocessed_token
-            .split_at(unprocessed_token.iter().position(|c| c == &'=').unwrap() + 1);
-        token.to_vec().into_iter().collect::<String>()
-    }
+        .uri("/api/user/auth/login");
 
     let res: ServiceResponse = app.call(req.to_request()).await.unwrap();
     let mut cookies = res.headers().get_all(header::SET_COOKIE);
-    let access_token = cookie_in_header_to_token(cookies.next().unwrap());
-    let refresh_token = cookie_in_header_to_token(cookies.next().unwrap());
+    let access_token = cookies.next().unwrap().to_str().unwrap();
+    let refresh_token = cookies.next().unwrap().to_str().unwrap();
     assert_eq!(cookies.next(), None);
 
     let req = TestRequest::get()
         .uri("/api/user/me")
-        .append_header(("access_token", access_token))
-        .append_header(("refresh_token", refresh_token));
+        .cookie(Cookie::parse(access_token).unwrap())
+        .cookie(Cookie::parse(refresh_token).unwrap());
     let res: ServiceResponse = app.call(req.to_request()).await.unwrap();
     assert_eq!(res.status(), 200);
 

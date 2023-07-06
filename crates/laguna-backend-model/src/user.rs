@@ -12,7 +12,7 @@ pub enum Role {
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, sqlx::Type)]
-pub enum  Behaviour {
+pub enum Behaviour {
     Lurker,
     Downloader,
     Freeleecher,
