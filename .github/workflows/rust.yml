@@ -29,7 +29,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Install lld and clang
-      run: sudo apt-get install lld clang
+      run: sudo apt-get install lld clang -y --no-install-recommends
     - uses: actions/cache@v3
       with:
         path: |
@@ -41,7 +41,13 @@ jobs:
         key: ubuntu-latest-cargo-${{ hashFiles('**/Cargo.lock') }}
     - name: Build
       run: cargo build --release
+    - name: Check if sqlx-cli exists
+      id: check_sqlx_exists
+      uses: andstor/file-existence-action@v1
+      with:
+        files: "./cargo/bin/sqlx"
     - name: Install sqlx-cli
+      if: steps.check_sqlx_exists.outputs.exists == 'false'
       run: cargo install sqlx-cli
     - name: Setup database and run tests
       run: scripts/test.sh
