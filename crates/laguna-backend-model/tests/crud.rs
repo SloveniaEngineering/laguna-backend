@@ -1,4 +1,4 @@
-use laguna_backend_model::user::{Role, User, Behaviour};
+use laguna_backend_model::user::{Behaviour, Role, User};
 use log::debug;
 use sha2::{Digest, Sha256};
 use sqlx::{postgres::PgPoolOptions, PgPool};

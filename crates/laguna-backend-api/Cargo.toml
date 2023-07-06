@@ -5,7 +5,8 @@ edition = "2021"
 
 [dependencies]
 laguna-backend-model = { path = "../laguna-backend-model" }
-actix-web = "4"
+actix-web = { version = "4", features = ["cookies"] }
+cookie = { version = "0.16", features = ["secure"] }
 sqlx = { version = "0.6.3", features = [
     "runtime-actix-rustls",
     "postgres",

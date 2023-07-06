@@ -11,7 +11,7 @@ use sqlx::PgPool;
 use crate::error::{APIError, LoginError};
 use crate::state::UserState;
 
-/// `POST /api/user/login`
+/// `POST /api/user/auth/login`
 /// # Example
 /// ### Request
 /// ```sh

@@ -9,7 +9,7 @@ use sqlx::PgPool;
 use crate::error::APIError;
 use crate::state::UserState;
 
-/// `POST /register`
+/// `POST /api/user/auth/register`
 /// # Example
 /// ### Request
 /// ```bash
