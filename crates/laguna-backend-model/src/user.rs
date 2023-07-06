@@ -48,10 +48,11 @@ pub struct User {
 /// This object is serialized and transfered between BE and FE (in API).
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, FromRequest)]
 pub struct UserDTO {
+    /// The user's id
+    pub id: Uuid,
     pub username: String,
     pub email: String,
-    pub password: String,
-    /// If None, DEFAULT is CURRENT_TIMESTAMP
+    /// If None, DEFAULT is CURRENT_TIMESTAMP or we don't have permissions
     pub first_login: Option<DateTime<Utc>>,
     /// If None, DEFAULT is CURRENT_TIMESTAMP
     pub last_login: Option<DateTime<Utc>>,
@@ -71,9 +72,9 @@ pub struct UserDTO {
 impl From<User> for UserDTO {
     fn from(user: User) -> Self {
         Self {
+            id: user.id,
             username: user.username,
             email: user.email,
-            password: user.password,
             first_login: Some(user.first_login),
             last_login: Some(user.last_login),
             avatar_url: user.avatar_url,
