@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 export DATABASE_URL=${DATABASE_URL:-postgres://postgres:postgres@127.0.0.1:5432/laguna_test_db}
-export RUST_BACKTRACE=${RUST_BACKTRACE:-full}
+export RUST_BACKTRACE=${RUST_BACKTRACE:-0}
 export RUST_LOG=${RUST_BACKTRACE:-debug}
 
 # Drop existing test DB (if it exists)

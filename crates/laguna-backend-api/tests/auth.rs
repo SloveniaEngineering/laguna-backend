@@ -124,7 +124,7 @@ async fn test_login_with_wrong_username_or_email() {
 #[actix_web::test]
 async fn test_login_with_wrong_password() {
     let (pool, app) = common::setup().await;
-    let res = common::register_and_login_new_user(
+    let login_res = common::register_and_login_new_user(
         RegisterDTO {
             username: String::from("test_login_wrong_pwd"),
             email: String::from("test_login_wrong_pwd@laguna.io"),
@@ -138,20 +138,19 @@ async fn test_login_with_wrong_password() {
     )
     .await;
 
-    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+    assert_eq!(login_res.status(), StatusCode::UNAUTHORIZED);
     assert_eq!(
-        read_body_json::<LoginError, _>(res).await,
+        read_body_json::<LoginError, _>(login_res).await,
         LoginError::InvalidCredentials
     );
     common::teardown(pool).await;
 }
 
 #[actix_web::test]
-#[ignore = "Doesn't work"]
 async fn test_access_token() {
     let (pool, app) = common::setup().await;
 
-    let res = common::register_and_login_new_user(
+    let login_res = common::register_and_login_new_user(
         RegisterDTO {
             username: String::from("test_access_token"),
             email: String::from("test_access_token@laguna.io"),
@@ -164,11 +163,14 @@ async fn test_access_token() {
         &app,
     )
     .await;
-    assert_eq!(res.status(), StatusCode::OK);
+    assert_eq!(login_res.status(), StatusCode::OK);
 
-    let res =
-        common::request_with_jwt_cookies_set(&res, TestRequest::get().uri("/api/user/me"), &app)
-            .await;
+    let res = common::request_with_jwt_cookies_set(
+        &login_res,
+        TestRequest::get().uri("/api/user/me"),
+        &app,
+    )
+    .await;
     assert_eq!(res.status(), StatusCode::OK);
 
     common::teardown(pool).await;

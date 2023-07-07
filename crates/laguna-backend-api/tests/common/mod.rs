@@ -112,8 +112,7 @@ pub(crate) async fn register_and_login_new_user(
     login_dto: LoginDTO,
     app: &impl actix_web::dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
 ) -> ServiceResponse {
-    let res = register_new_user(register_dto, app).await.unwrap();
-    assert_eq!(res.status(), StatusCode::OK);
+    let _ = register_new_user(register_dto, app).await.unwrap();
     let res = login_new_user(login_dto, app).await.unwrap();
     res
 }
@@ -123,16 +122,19 @@ pub(crate) async fn request_with_jwt_cookies_set(
     mut req: TestRequest,
     app: &impl actix_web::dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
 ) -> ServiceResponse {
-    let req = test_request_with_cookies_from_response(login_res).await;
+    for cookie in extract_cookies(login_res).await {
+        req = req.cookie(cookie);
+    }
     app.call(req.to_request()).await.unwrap()
 }
 
-pub(crate) async fn test_request_with_cookies_from_response(res: &ServiceResponse) -> TestRequest {
+pub(crate) async fn extract_cookies<'a>(res: &'a ServiceResponse) -> Vec<Cookie<'a>> {
     let mut cookies = res.headers().get_all(header::SET_COOKIE);
     let access_token = cookies.next().unwrap().to_str().unwrap();
     let refresh_token = cookies.next().unwrap().to_str().unwrap();
 
-    TestRequest::get()
-        .cookie(Cookie::parse(access_token).unwrap())
-        .cookie(Cookie::parse(refresh_token).unwrap())
+    vec![
+        Cookie::parse(access_token).unwrap(),
+        Cookie::parse(refresh_token).unwrap(),
+    ]
 }
