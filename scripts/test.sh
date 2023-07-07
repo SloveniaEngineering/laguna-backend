@@ -13,7 +13,7 @@ sqlx database create
 
 # Run all tests and show their output
 # Use single thread because many tests will use laguna_test_db at same time when multithreaded.
-cargo test --all --release -- --nocapture --test-threads=1
+cargo test --all -- --nocapture --test-threads=1
 
 # Automatically drop test database
 sqlx database drop -y

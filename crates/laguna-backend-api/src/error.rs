@@ -26,10 +26,12 @@ impl From<AuthError> for APIError {
 
 impl ResponseError for APIError {}
 
-#[derive(Debug, Display, Serialize, Deserialize)]
-pub enum UserError {}
+#[derive(Debug, PartialEq, Eq, Display, Serialize, Deserialize)]
+pub enum UserError {
+    DoesNotExist,
+}
 
-#[derive(Debug, Display, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Display, Serialize, Deserialize)]
 pub enum LoginError {
     InvalidCredentials,
 }

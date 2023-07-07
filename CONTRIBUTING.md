@@ -1,5 +1,9 @@
 # Table of contents
 
+> **Warning**
+> This document is WIP (work in progress) and is not yet complete.
+> This document is also not meant to be read linearly but rather as a reference.
+
 1. [Requirements](#requirements)
 2. [Setup](#setup)
 3. [Project structure](#project-structure)

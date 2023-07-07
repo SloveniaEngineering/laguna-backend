@@ -11,7 +11,8 @@ use jwt_compact::alg::Hs256Key;
 use laguna::api::login::login;
 use laguna::api::register::register;
 
-use laguna::api::user::me;
+use laguna::api::user::get_me;
+use laguna::api::user::get_one;
 use laguna::model::user::UserDTO;
 use std::env;
 
@@ -44,7 +45,6 @@ async fn main() -> Result<(), sqlx::Error> {
     HttpServer::new(move || {
         let authority = Authority::<UserDTO, Hs256, _, _>::new()
             .refresh_authorizer(|| async move { Ok(()) })
-            // .enable_cookie_tokens(true)
             .enable_header_tokens(true)
             .token_signer(Some(
                 TokenSigner::new()
@@ -73,7 +73,7 @@ async fn main() -> Result<(), sqlx::Error> {
             )
             .use_jwt(
                 authority,
-                web::scope("/api").service(web::scope("/user").service(me)),
+                web::scope("/api").service(web::scope("/user").service(get_me).service(get_one)),
             )
             .default_service(web::to(|| HttpResponse::NotFound()))
     })

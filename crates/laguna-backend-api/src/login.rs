@@ -5,6 +5,7 @@ use digest::Digest;
 use jwt_compact::alg::Hs256;
 use laguna_backend_model::login::LoginDTO;
 use laguna_backend_model::user::{User, UserDTO};
+
 use sha2::Sha256;
 use sqlx::PgPool;
 
@@ -23,7 +24,8 @@ use crate::state::UserState;
 ///                 "password": "test123",
 ///              }'
 /// ```
-/// ### Response (OK)
+/// ### Response
+/// HTTP/1.1 200 OK
 /// Cookies:
 /// ```text
 /// set-cookie: access_token=eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0Njc1OTksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.jAQEpr_tjKc_j-asnoIBEhT8xmhBHXPjYygtwNfb76w; Secure
@@ -49,6 +51,7 @@ use crate::state::UserState;
 /// }
 /// ```
 /// ### Response (on invalid password ("test12"))
+/// HTTP/1.1 401 Unauthorized
 /// ```text
 /// InvalidCredentials
 /// ```
@@ -80,7 +83,7 @@ pub async fn login(
                 }));
         }
     }
+
     // SECURITY: Don't report "Password" or "Username" invalid to avoid brute-force attacks.
     Ok(HttpResponse::Unauthorized().json(LoginError::InvalidCredentials))
-    // Err(LoginError::InvalidCredentials.into())
 }
