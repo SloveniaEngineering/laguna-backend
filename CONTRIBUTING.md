@@ -24,6 +24,9 @@ In the future we will add powershell scripts for Windows.
 
 # Setup
 
+> **Note**
+> This guide uses Linux `scripts/*.sh`, but scrips for Windows are also available via `scripts/*-win.ps1`.
+
 1. Clone this repo and `cd` into it.
 2. Run `cargo install sqlx-cli`.
 3. Run `cargo install cargo-watch`.
@@ -118,9 +121,6 @@ DATABASE_URL=postgres://user:password@localhost:37201/my_db_name scripts/dev.sh
 
 #### On Windows:
 
-> **Warning**
-> Not implemented yet.
-
-```bash
+```powershell
 $env:DATABASE_URL="postgres://user:password@localhost:37201/my_db_name"; scripts/dev-win.ps1
 ```
