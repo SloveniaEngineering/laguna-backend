@@ -46,7 +46,7 @@ jobs:
       id: check_sqlx_exists
       uses: andstor/file-existence-action@v2
       with:
-        files: "~/.cargo/bin/sqlx, ~/.cargo/bin/cargo-sqlx"
+        files: "~/.cargo/bin/sqlx"
     - name: Install sqlx-cli
       if: steps.check_sqlx_exists.outputs.files_exists == 'false'
       run: cargo install sqlx-cli
