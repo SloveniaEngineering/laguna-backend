@@ -62,7 +62,7 @@ Crate structure in Rust: https://doc.rust-lang.org/cargo/guide/project-layout.ht
 
 # Testing
 
-1. Run `scripts/test.sh` to run all tests in release mode.
+1. Run `scripts/test.sh` to run all tests.
 
 > **Warning**
 > all tests use same test DB, so they should not be run in parallel hence `--test-threads=1`.
@@ -108,7 +108,7 @@ which will create an `up` and `down` migration files and can be reverted with `s
    2. `RUST_LOG` - Logging level. Defaults to `info`.
    3. `RUST_BACKTRACE` - Backtrace level. Defaults to `full`.
    4. `HOST` - Logging style. Defaults to `127.0.0.1` or `localhost`.
-   5. `PORT` - Port to listen on. Defaults to `8080`.
+   5. `PORT` - Port to listen on. Defaults to `6969`.
 
 For example, if your database is on a different host or port, or maybe it has a different name, you can override `DATABASE_URL` env var to point at your DB.
 This is however not recommended.

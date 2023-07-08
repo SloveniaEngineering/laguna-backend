@@ -10,7 +10,7 @@ $PSDefaultParameterValues = @{
     "env:RUST_BACKTRACE"="full";
     "env:RUST_LOG"="debug";
     "env:HOST"="127.0.0.1";
-    "env:PORT"="8080"
+    "env:PORT"="6969"
 }
 
 # Runs in development enviornment and reruns for every change

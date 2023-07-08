@@ -9,8 +9,11 @@ use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 use jwt_compact::alg::Hs256;
 use jwt_compact::alg::Hs256Key;
 use laguna::api::login::login;
+use laguna::api::misc::get_app_info;
 use laguna::api::register::register;
 
+use laguna::api::user::delete_me;
+use laguna::api::user::delete_one;
 use laguna::api::user::get_me;
 use laguna::api::user::get_one;
 use laguna::model::user::UserDTO;
@@ -73,7 +76,13 @@ async fn main() -> Result<(), sqlx::Error> {
             )
             .use_jwt(
                 authority,
-                web::scope("/api").service(web::scope("/user").service(get_me).service(get_one)),
+                web::scope("/api").service(
+                    web::scope("/user")
+                        .service(get_me)
+                        .service(get_one)
+                        .service(web::scope("/delete").service(delete_me).service(delete_one))
+                        .service(web::scope("/misc").service(get_app_info)),
+                ),
             )
             .default_service(web::to(|| HttpResponse::NotFound()))
     })
