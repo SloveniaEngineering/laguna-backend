@@ -28,7 +28,7 @@ In the future we will add powershell scripts for Windows.
 > This guide uses Linux `scripts/*.sh`, but scrips for Windows are also available via `scripts/*-win.ps1`.
 
 1. Clone this repo and `cd` into it.
-2. Run `cargo install sqlx-cli`.
+2. Run `cargo install sqlx-cli --no-default-features --features rustls,postgres`.
 3. Run `cargo install cargo-watch`.
 4. Make sure Postgres daemon is running, then do `scripts/dbsetup.sh laguna_db` to create `laguna_db` local DB with tables.
 5. [Running](#running) the server.
