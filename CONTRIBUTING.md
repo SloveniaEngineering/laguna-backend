@@ -62,7 +62,7 @@ Crate structure in Rust: https://doc.rust-lang.org/cargo/guide/project-layout.ht
 1. Run `scripts/test.sh` to run all tests in release mode.
 
 > **Warning**
-> all tests use same test DB, so they should not be run in parallel hence `--tests-threads=1`.
+> all tests use same test DB, so they should not be run in parallel hence `--test-threads=1`.
 
 In the future we will fix this by using different test DBs for each batch of tests.
 

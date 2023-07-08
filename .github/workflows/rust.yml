@@ -40,12 +40,13 @@ jobs:
           target/
         key: ubuntu-latest-cargo-${{ hashFiles('**/Cargo.lock') }}
     - name: Build
-      run: cargo build --release
+      # Build for debug so that tests use the same libs
+      run: cargo build
     - name: Check if sqlx-cli exists
       id: check_sqlx_exists
       uses: andstor/file-existence-action@v2
       with:
-        files: "~/.cargo/bin/sqlx"
+        files: "~/.cargo/bin/sqlx, ~/.cargo/bin/cargo-sqlx"
     - name: Install sqlx-cli
       if: steps.check_sqlx_exists.outputs.exists == 'false'
       run: cargo install sqlx-cli
