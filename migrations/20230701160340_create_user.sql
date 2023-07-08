@@ -4,7 +4,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TYPE Role AS ENUM ('Normie', 'Verified', 'Mod', 'Admin');
-CREATE TYPE Behaviour AS ENUM ('Lurker', 'Downloader', 'Freeleecher', 'Leech', 'Seed', 'Choked');
+CREATE TYPE Behaviour AS ENUM ('Lurker', 'Downloader', 'Freeleecher', 'Leech', 'Seed', 'Choked', 'Uploader');
 
 CREATE TABLE IF NOT EXISTS "User" (
     id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),

@@ -19,6 +19,7 @@ pub enum Behaviour {
     Leech,
     Seed,
     Choked,
+    Uploader,
 }
 
 /// User DB object.
