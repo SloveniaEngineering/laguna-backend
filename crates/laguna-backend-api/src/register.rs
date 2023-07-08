@@ -58,5 +58,5 @@ pub async fn register(
     .bind(format!("{:x}", Sha256::digest(&register_dto.password)))
     .execute(pool.get_ref())
     .await?;
-    Ok(HttpResponse::Ok().json(UserState::RegistrationSuccess))
+    Ok(HttpResponse::Ok().json(UserState::RegisterSuccess))
 }

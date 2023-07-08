@@ -1,6 +1,7 @@
 use actix_jwt_auth_middleware::TokenSigner;
 use actix_web::post;
 use actix_web::{web, HttpResponse};
+use chrono::Utc;
 use digest::Digest;
 use jwt_compact::alg::Hs256;
 use laguna_backend_model::login::LoginDTO;
@@ -70,17 +71,20 @@ pub async fn login(
     if let Some(logged_user) = fetched_user {
         if logged_user.password == format!("{:x}", Sha256::digest(&login_dto.password)) {
             sqlx::query("UPDATE \"User\" SET last_login = $1 WHERE id = $2")
-                .bind(chrono::offset::Utc::now())
+                .bind(Utc::now())
                 .bind(logged_user.id)
                 .execute(pool.get_ref())
                 .await?;
+            // Logged user has been updated, we need to fetch new user.
+            let user = sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE id = $1")
+                .bind(logged_user.id)
+                .fetch_one(pool.get_ref())
+                .await?;
             return Ok(HttpResponse::Ok()
                 // TODO: get rid of clones
-                .cookie(cookie_signer.create_access_cookie(&logged_user.clone().into())?)
-                .cookie(cookie_signer.create_refresh_cookie(&logged_user.clone().into())?)
-                .json(UserState::LoginSuccess {
-                    user: logged_user.into(),
-                }));
+                .cookie(cookie_signer.create_access_cookie(&user.clone().into())?)
+                .cookie(cookie_signer.create_refresh_cookie(&user.clone().into())?)
+                .json(UserState::LoginSuccess { user: user.into() }));
         }
     }
 

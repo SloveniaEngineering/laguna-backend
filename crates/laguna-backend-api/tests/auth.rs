@@ -7,8 +7,12 @@ use actix_web::{
     test::{read_body_json, TestRequest},
 };
 
-use laguna_backend_api::error::LoginError;
-use laguna_backend_model::{login::LoginDTO, register::RegisterDTO};
+use laguna_backend_api::{error::LoginError, state::UserState};
+use laguna_backend_model::{
+    login::LoginDTO,
+    register::RegisterDTO,
+    user::{User, UserDTO},
+};
 
 #[actix_web::test]
 async fn test_register() {
@@ -24,7 +28,10 @@ async fn test_register() {
     .await
     .unwrap();
     assert_eq!(res.status(), StatusCode::OK);
-
+    assert_eq!(
+        read_body_json::<UserState, _>(res).await,
+        UserState::RegisterSuccess
+    );
     common::teardown(pool).await;
 }
 
@@ -42,6 +49,10 @@ async fn test_register_twice() {
     .await
     .unwrap();
     assert_eq!(res.status(), StatusCode::OK);
+    assert_eq!(
+        read_body_json::<UserState, _>(res).await,
+        UserState::RegisterSuccess
+    );
 
     let res = common::register_new_user(
         RegisterDTO {
@@ -54,6 +65,10 @@ async fn test_register_twice() {
     .await
     .unwrap();
     assert_eq!(res.status(), StatusCode::ALREADY_REPORTED);
+    assert_eq!(
+        read_body_json::<UserState, _>(res).await,
+        UserState::AlreadyRegistered
+    );
     common::teardown(pool).await;
 }
 
@@ -73,7 +88,19 @@ async fn test_login() {
         &app,
     )
     .await;
+
+    let user = sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE username = $1")
+        .bind("test_login")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
     assert_eq!(res.status(), StatusCode::OK);
+    assert_eq!(
+        read_body_json::<UserState, _>(res).await,
+        UserState::LoginSuccess { user: user.into() }
+    );
+
     common::teardown(pool).await;
 }
 
@@ -95,6 +122,17 @@ async fn test_login_with_wrong_username_or_email() {
     .await;
     assert_eq!(res.status(), StatusCode::OK);
 
+    let user = sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE username = $1")
+        .bind("test_login_wrong")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        read_body_json::<UserState, _>(res).await,
+        UserState::LoginSuccess { user: user.into() }
+    );
+
     // Wrong username
     let res = common::login_new_user(
         LoginDTO {
@@ -103,9 +141,14 @@ async fn test_login_with_wrong_username_or_email() {
         },
         &app,
     )
-    .await;
+    .await
+    .unwrap();
 
-    assert_eq!(res.unwrap().status(), StatusCode::UNAUTHORIZED);
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+    assert_eq!(
+        read_body_json::<LoginError, _>(res).await,
+        LoginError::InvalidCredentials
+    );
 
     // Wrong email
     let res = common::login_new_user(
@@ -115,9 +158,14 @@ async fn test_login_with_wrong_username_or_email() {
         },
         &app,
     )
-    .await;
+    .await
+    .unwrap();
 
-    assert_eq!(res.unwrap().status(), StatusCode::UNAUTHORIZED);
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+    assert_eq!(
+        read_body_json::<LoginError, _>(res).await,
+        LoginError::InvalidCredentials
+    );
     common::teardown(pool).await;
 }
 
@@ -165,13 +213,27 @@ async fn test_access_token() {
     .await;
     assert_eq!(login_res.status(), StatusCode::OK);
 
+    let user = sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE username = $1")
+        .bind("test_access_token")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
     let res = common::request_with_jwt_cookies_set(
         &login_res,
         TestRequest::get().uri("/api/user/me"),
         &app,
     )
     .await;
+
+    assert_eq!(
+        read_body_json::<UserState, _>(login_res).await,
+        UserState::LoginSuccess {
+            user: user.clone().into()
+        }
+    );
     assert_eq!(res.status(), StatusCode::OK);
+    assert_eq!(read_body_json::<UserDTO, _>(res).await, user.into());
 
     common::teardown(pool).await;
 }

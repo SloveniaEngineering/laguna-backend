@@ -17,7 +17,7 @@ use jwt_compact::{
 use laguna_backend_api::{
     login::login,
     register::register,
-    user::{get_me, get_one},
+    user::{delete_me, delete_one, get_me, get_one},
 };
 use laguna_backend_model::{login::LoginDTO, register::RegisterDTO, user::UserDTO};
 use std::env;
@@ -70,7 +70,12 @@ pub(crate) async fn setup() -> (
             )
             .use_jwt(
                 authority,
-                web::scope("/api").service(web::scope("/user").service(get_me).service(get_one)),
+                web::scope("/api").service(
+                    web::scope("/user")
+                        .service(get_me)
+                        .service(get_one)
+                        .service(web::scope("/delete").service(delete_me).service(delete_one)),
+                ),
             )
             .default_service(web::to(|| HttpResponse::NotFound())),
     )
