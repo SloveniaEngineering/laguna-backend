@@ -1,6 +1,5 @@
 -- For UUIDs.
 -- uuid_generate_v4()
--- More: 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TYPE Role AS ENUM ('Normie', 'Verified', 'Mod', 'Admin');
