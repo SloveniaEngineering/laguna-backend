@@ -42,13 +42,15 @@ jobs:
     - name: Build
       # Build for debug so that tests use the same libs
       run: cargo build
-    - name: Check if sqlx-cli exists
-      id: check_sqlx_exists
-      uses: andstor/file-existence-action@v2
-      with:
-        files: "~/.cargo/bin/cargo-sqlx"
+    # Apparently this method is not reliable hence we use --force when installing.
+    # TODO: Find a quicker way to "install" sqlx-cli
+    # - name: Check if sqlx-cli exists
+    #  id: check_sqlx_exists
+    #  uses: andstor/file-existence-action@v2
+    #  with:
+    #    files: "~/.cargo/bin/cargo-sqlx, ~/.cargo/bin/sqlx"
     - name: Install sqlx-cli
-      if: steps.check_sqlx_exists.outputs.files_exists == 'false'
-      run: cargo install sqlx-cli --no-default-features --features rustls,postgres
+      # if: steps.check_sqlx_exists.outputs.files_exists == 'false'
+      run: cargo install --force sqlx-cli --no-default-features --features rustls,postgres
     - name: Setup database and run tests
       run: scripts/test.sh
