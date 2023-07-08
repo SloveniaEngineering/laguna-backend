@@ -48,7 +48,7 @@ jobs:
       with:
         files: "~/.cargo/bin/sqlx, ~/.cargo/bin/cargo-sqlx"
     - name: Install sqlx-cli
-      if: steps.check_sqlx_exists.outputs.exists == 'false'
+      if: steps.check_sqlx_exists.outputs.files_exists == 'false'
       run: cargo install sqlx-cli
     - name: Setup database and run tests
       run: scripts/test.sh
