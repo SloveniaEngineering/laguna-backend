@@ -22,22 +22,24 @@ use crate::state::UserState;
 ///  }'
 /// ```
 /// ### Response (on successful register)
+/// HTTP/1.1 200 OK
 /// ```text
 /// RegistrationSuccess
 /// ```
 /// ### Response (on already registered)
+/// HTTP/1.1 208 Already Reported
 /// ```text
 /// AlreadyRegistered
 /// ```
 #[post("/register")]
 pub async fn register(
-    user_dto: web::Json<RegisterDTO>,
+    register_dto: web::Json<RegisterDTO>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
     let fetched_user =
         sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE username = $1 AND email = $2")
-            .bind(&user_dto.username)
-            .bind(&user_dto.email)
+            .bind(&register_dto.username)
+            .bind(&register_dto.email)
             .fetch_optional(pool.get_ref())
             .await?;
 
@@ -51,10 +53,10 @@ pub async fn register(
         VALUES ($1, $2, $3);
     "#,
     )
-    .bind(&user_dto.username)
-    .bind(&user_dto.email)
-    .bind(format!("{:x}", Sha256::digest(&user_dto.password)))
+    .bind(&register_dto.username)
+    .bind(&register_dto.email)
+    .bind(format!("{:x}", Sha256::digest(&register_dto.password)))
     .execute(pool.get_ref())
     .await?;
-    Ok(HttpResponse::Ok().json(UserState::RegistrationSuccess))
+    Ok(HttpResponse::Ok().json(UserState::RegisterSuccess))
 }

@@ -1,5 +1,9 @@
 # Table of contents
 
+> **Warning**
+> This document is WIP (work in progress) and is not yet complete.
+> This document is also not meant to be read linearly but rather as a reference.
+
 1. [Requirements](#requirements)
 2. [Setup](#setup)
 3. [Project structure](#project-structure)
@@ -58,7 +62,7 @@ Crate structure in Rust: https://doc.rust-lang.org/cargo/guide/project-layout.ht
 1. Run `scripts/test.sh` to run all tests in release mode.
 
 > **Warning**
-> all tests use same test DB, so they should not be run in parallel hence `--tests-threads=1`.
+> all tests use same test DB, so they should not be run in parallel hence `--test-threads=1`.
 
 In the future we will fix this by using different test DBs for each batch of tests.
 

@@ -26,3 +26,7 @@ digest = { version = "0.10.7", default-features = false }
 derive_more = "*"
 env_logger = "*"
 serde = { version = "1.0", features = ["derive"]}
+
+[dev-dependencies]
+actix-http = "3.3.1"
+serde_json = "1"

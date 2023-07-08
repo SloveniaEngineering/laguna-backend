@@ -2041,6 +2041,7 @@ dependencies = [
 name = "laguna-backend-api"
 version = "0.1.0"
 dependencies = [
+ "actix-http",
  "actix-jwt-auth-middleware",
  "actix-web",
  "chrono",
@@ -2052,6 +2053,7 @@ dependencies = [
  "laguna-backend-model",
  "log",
  "serde",
+ "serde_json",
  "sha2",
  "sqlx 0.6.3",
  "uuid",
