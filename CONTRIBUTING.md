@@ -13,6 +13,7 @@
 7. [Migrations and model changes](#migrations-and-model-changes)
 8. [Running](#running)
 9. [CI/CD & PRs](#cicd--prs)
+10. [API documentation](#api-documentation)
 
 # Requirements
 
@@ -139,3 +140,7 @@ Checks can be surpassed by `Maintainer`s.
 
 > **Warning**
 > **Before marking PR for review, make sure that code doesn't have any warnings and unnecessary comments.**
+
+# API documentation
+
+API documentation is available at https://sloveniaengineering.github.io/laguna-backend/.
