@@ -9,38 +9,8 @@ updates:
       time: "17:00"
       timezone: "Europe/Ljubljana"
 
-  # Laguna
+  # Laguna workspace
   - directory: /
-    open-pull-requests-limit: 5
-    package-ecosystem: "cargo"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "17:00"
-      timezone: "Europe/Ljubljana"
-
-  # API
-  - directory: /crates/laguna-backend-api
-    open-pull-requests-limit: 5
-    package-ecosystem: "cargo"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "17:00"
-      timezone: "Europe/Ljubljana"
-
-  # Middleware
-  - directory: /crates/laguna-backend-middleware
-    open-pull-requests-limit: 5
-    package-ecosystem: "cargo"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "17:00"
-      timezone: "Europe/Ljubljana"
-
-  # Model
-  - directory: /crates/laguna-backend-model
     open-pull-requests-limit: 5
     package-ecosystem: "cargo"
     schedule:
