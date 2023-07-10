@@ -12,6 +12,7 @@
 6. [Fixing warnings](#fixing-warnings)
 7. [Migrations and model changes](#migrations-and-model-changes)
 8. [Running](#running)
+9. [CI/CD & PRs](#cicd--prs)
 
 # Requirements
 
@@ -127,3 +128,14 @@ DATABASE_URL=postgres://user:password@localhost:37201/my_db_name scripts/dev.sh
 ```powershell
 $env:DATABASE_URL="postgres://user:password@localhost:37201/my_db_name"; scripts/dev-win.ps1
 ```
+
+# CI/CD & PRs
+
+To skip CI for a commit, add [One of the these keywords to your commit message](https://docs.github.com/en/actions/managing-workflow-runs/skipping-workflow-runs).
+
+PRs won't be merged until all checks pass.
+PRs need to be reviewed by at least one `Maintainer`.
+Checks can be surpassed by `Maintainer`s.
+
+> **Warning**
+> **Before marking PR for review, make sure that code doesn't have any warnings and unnecessary comments.**
