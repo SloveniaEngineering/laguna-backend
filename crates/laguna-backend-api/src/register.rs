@@ -13,13 +13,14 @@ use crate::state::UserState;
 /// # Example
 /// ### Request
 /// ```bash
-/// curl -X POST -i 'http://127.0.0.1:8080/register' \
-///  -H "Content-Type: application/json" \
-///  --data '{
-///    "username": "test",
-///    "email": "test@laguna.io",
-///    "password": "test123",
-///  }'
+/// curl -X POST
+///      -H "Content-Type: application/json" \
+///      -i 'http://127.0.0.1:6969/api/user/auth/register' \
+///      --data '{
+///         "username": "test",
+///         "email": "test@laguna.io",
+///         "password": "test123",
+///      }'
 /// ```
 /// ### Response (on successful register)
 /// HTTP/1.1 200 OK
@@ -28,8 +29,8 @@ use crate::state::UserState;
 /// ```
 /// ### Response (on already registered)
 /// HTTP/1.1 208 Already Reported
-/// ```text
-/// AlreadyRegistered
+/// ```json
+/// "AlreadyRegistered"
 /// ```
 #[post("/register")]
 pub async fn register(

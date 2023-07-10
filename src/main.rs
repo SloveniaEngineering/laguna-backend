@@ -6,8 +6,10 @@ use actix_jwt_auth_middleware::TokenSigner;
 use actix_web::http::header;
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 
+use chrono::Duration;
 use jwt_compact::alg::Hs256;
 use jwt_compact::alg::Hs256Key;
+use jwt_compact::TimeOptions;
 use laguna::api::login::login;
 use laguna::api::misc::get_app_info;
 use laguna::api::register::register;
@@ -49,10 +51,12 @@ async fn main() -> Result<(), sqlx::Error> {
         let authority = Authority::<UserDTO, Hs256, _, _>::new()
             .refresh_authorizer(|| async move { Ok(()) })
             .enable_header_tokens(true)
+            .enable_cookie_tokens(true)
             .token_signer(Some(
                 TokenSigner::new()
                     .signing_key(key.clone())
                     .algorithm(Hs256)
+                    .time_options(TimeOptions::from_leeway(Duration::days(1)))
                     .build()
                     .expect("Cannot create token signer"),
             ))

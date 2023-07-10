@@ -110,6 +110,9 @@ which will create an `up` and `down` migration files and can be reverted with `s
    4. `HOST` - Logging style. Defaults to `127.0.0.1` or `localhost`.
    5. `PORT` - Port to listen on. Defaults to `6969`.
 
+> **Note**
+> `scripts/devs.sh` watches for changes in source code and if change is detected automatically recompiles and restarts the server.
+
 For example, if your database is on a different host or port, or maybe it has a different name, you can override `DATABASE_URL` env var to point at your DB.
 This is however not recommended.
 

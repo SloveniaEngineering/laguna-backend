@@ -19,11 +19,11 @@ use crate::state::UserState;
 /// ```sh
 /// curl -X POST \
 ///      -H 'Content-Type: application/json' \
-///      -i 'http://127.0.0.1:8080/login' \
+///      -i 'http://127.0.0.1:6969/api/user/auth/login' \
 ///      --data '{
-///                 "username_or_email": "test",
-///                 "password": "test123",
-///              }'
+///         "username_or_email": "test",
+///         "password": "test123"
+///      }'
 /// ```
 /// ### Response
 /// HTTP/1.1 200 OK
@@ -53,8 +53,8 @@ use crate::state::UserState;
 /// ```
 /// ### Response (on invalid password ("test12"))
 /// HTTP/1.1 401 Unauthorized
-/// ```text
-/// InvalidCredentials
+/// ```json
+/// "InvalidCredentials"
 /// ```
 #[post("/login")]
 pub async fn login(
@@ -70,16 +70,14 @@ pub async fn login(
 
     if let Some(logged_user) = fetched_user {
         if logged_user.password == format!("{:x}", Sha256::digest(&login_dto.password)) {
-            sqlx::query("UPDATE \"User\" SET last_login = $1 WHERE id = $2")
-                .bind(Utc::now())
-                .bind(logged_user.id)
-                .execute(pool.get_ref())
-                .await?;
-            // Logged user has been updated, we need to fetch new user.
-            let user = sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE id = $1")
-                .bind(logged_user.id)
-                .fetch_one(pool.get_ref())
-                .await?;
+            // Logged user has been updated, we need to return the updated user.
+            let user = sqlx::query_as::<_, User>(
+                "UPDATE \"User\" SET last_login = $1 WHERE id = $2 RETURNING *",
+            )
+            .bind(Utc::now())
+            .bind(logged_user.id)
+            .fetch_one(pool.get_ref())
+            .await?;
             return Ok(HttpResponse::Ok()
                 // TODO: get rid of clones
                 .cookie(cookie_signer.create_access_cookie(&user.clone().into())?)

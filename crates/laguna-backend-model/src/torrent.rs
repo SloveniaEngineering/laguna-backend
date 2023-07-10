@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::user::User;
@@ -14,5 +14,5 @@ pub struct Torrent {
     pub path: PathBuf,
     pub info_hash: String,
     pub uploaded_by: User,
-    pub modded_by: Option<User>
+    pub modded_by: Option<User>,
 }

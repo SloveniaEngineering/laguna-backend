@@ -8,6 +8,7 @@ use actix_web::{
     test::{init_service, TestRequest},
     web, App, HttpRequest, HttpResponse, ResponseError,
 };
+use chrono::Duration;
 use cookie::{Cookie, CookieJar};
 use env_logger;
 use jwt_compact::{
@@ -54,6 +55,7 @@ pub(crate) async fn setup() -> (
             TokenSigner::new()
                 .signing_key(key.clone())
                 .algorithm(Hs256)
+                .time_options(TimeOptions::from_leeway(Duration::days(1)))
                 .build()
                 .expect("Cannot create token signer"),
         ))
