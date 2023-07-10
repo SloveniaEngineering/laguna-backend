@@ -14,10 +14,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+            path: |
+                ~/.cargo/bin/
+                ~/.cargo/registry/index/
+                ~/.cargo/registry/cache/
+                ~/.cargo/git/db/
+                target/
+            key: ubuntu-latest-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Build Docs
         run: cargo doc --no-deps --document-private-items --workspace
       - name: Doc Index Page Redirection
-        run: echo '<meta http-equiv="refresh" content="1; url=laguna-backend/index.html">' > target/doc/index.html
+        run: echo '<meta http-equiv="refresh" content="1; url=index.html">' > target/doc/index.html
       - name: Deploy Docs
         uses: peaceiris/actions-gh-pages@v3
         with:
