@@ -1,6 +1,7 @@
 #![allow(unused)]
 use actix_http::{body::MessageBody, Error, Request};
 use actix_jwt_auth_middleware::{use_jwt::UseJWTOnApp, Authority, TokenSigner};
+use actix_web::cookie::Cookie;
 use actix_web::{
     dev::{self, Service, ServiceRequest, ServiceResponse},
     http::{header, StatusCode},
@@ -9,11 +10,13 @@ use actix_web::{
     web, App, HttpRequest, HttpResponse, ResponseError,
 };
 use chrono::Duration;
-use cookie::{Cookie, CookieJar};
 use env_logger;
 use jwt_compact::{
     alg::{Hs256, Hs256Key},
     TimeOptions,
+};
+use laguna_backend_api::torrent::{
+    get_torrent, get_torrent_by_info_hash, get_torrent_download, get_torrents_filtered, put_torrent,
 };
 use laguna_backend_api::{
     login::login,
@@ -72,12 +75,21 @@ pub(crate) async fn setup() -> (
             )
             .use_jwt(
                 authority,
-                web::scope("/api").service(
-                    web::scope("/user")
-                        .service(get_me)
-                        .service(get_one)
-                        .service(web::scope("/delete").service(delete_me).service(delete_one)),
-                ),
+                web::scope("/api")
+                    .service(
+                        web::scope("/user")
+                            .service(get_me)
+                            .service(get_one)
+                            .service(web::scope("/delete").service(delete_me).service(delete_one)),
+                    )
+                    .service(
+                        web::scope("/torrent")
+                            .service(get_torrent)
+                            .service(get_torrent_by_info_hash)
+                            .service(web::scope("/download").service(get_torrent_download))
+                            .service(web::scope("/upload").service(put_torrent))
+                            .service(get_torrents_filtered),
+                    ),
             )
             .default_service(web::to(|| HttpResponse::NotFound())),
     )

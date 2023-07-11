@@ -54,3 +54,24 @@ jobs:
       run: cargo install --force sqlx-cli --no-default-features --features rustls,postgres
     - name: Setup database and run tests
       run: scripts/test.sh
+  
+  deploy_docs:
+    needs: build_and_test
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docs
+        run: cargo doc --no-deps --document-private-items --workspace
+      - name: Doc Index Page Redirection
+        run: echo '<meta http-equiv="refresh" content="1; url=laguna_backend/index.html">' > target/doc/index.html
+      - name: Deploy Docs
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          user_name: "github-actions-laguna[bot]"
+          user_email: "github-actions-laguna[bot]@users.noreply.github.com"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: documentation
+          publish_dir: target/doc
+          force_orphan: true

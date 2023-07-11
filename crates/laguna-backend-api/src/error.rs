@@ -1,3 +1,5 @@
+use std::io;
+
 use actix_jwt_auth_middleware::AuthError;
 use actix_web::error::ResponseError;
 use derive_more::Display;
@@ -7,9 +9,17 @@ use sqlx::error::Error as SqlxError;
 #[derive(Debug, Display)]
 pub enum APIError {
     SqlxError(SqlxError),
+    IOError(io::Error),
     AuthError(AuthError),
     UserError(UserError),
+    TorrentError(TorrentError),
     LoginError(LoginError),
+}
+
+impl From<io::Error> for APIError {
+    fn from(value: io::Error) -> Self {
+        Self::IOError(value)
+    }
 }
 
 impl From<SqlxError> for APIError {
@@ -45,5 +55,17 @@ impl From<UserError> for APIError {
 impl From<LoginError> for APIError {
     fn from(value: LoginError) -> Self {
         Self::LoginError(value)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Display, Serialize, Deserialize)]
+pub enum TorrentError {
+    DoesNotExist,
+    MissingFileName,
+}
+
+impl From<TorrentError> for APIError {
+    fn from(value: TorrentError) -> Self {
+        Self::TorrentError(value)
     }
 }

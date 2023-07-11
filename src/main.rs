@@ -1,4 +1,5 @@
 use actix_cors::Cors;
+
 use actix_jwt_auth_middleware::use_jwt::UseJWTOnApp;
 
 use actix_jwt_auth_middleware::Authority;
@@ -14,6 +15,11 @@ use laguna::api::login::login;
 use laguna::api::misc::get_app_info;
 use laguna::api::register::register;
 
+use laguna::api::torrent::get_torrent;
+use laguna::api::torrent::get_torrent_by_info_hash;
+use laguna::api::torrent::get_torrent_download;
+use laguna::api::torrent::get_torrents_filtered;
+use laguna::api::torrent::put_torrent;
 use laguna::api::user::delete_me;
 use laguna::api::user::delete_one;
 use laguna::api::user::get_me;
@@ -80,13 +86,22 @@ async fn main() -> Result<(), sqlx::Error> {
             )
             .use_jwt(
                 authority,
-                web::scope("/api").service(
-                    web::scope("/user")
-                        .service(get_me)
-                        .service(get_one)
-                        .service(web::scope("/delete").service(delete_me).service(delete_one))
-                        .service(web::scope("/misc").service(get_app_info)),
-                ),
+                web::scope("/api")
+                    .service(
+                        web::scope("/user")
+                            .service(get_me)
+                            .service(get_one)
+                            .service(web::scope("/delete").service(delete_me).service(delete_one))
+                            .service(web::scope("/misc").service(get_app_info)),
+                    )
+                    .service(
+                        web::scope("/torrent")
+                            .service(web::scope("/download").service(get_torrent_download))
+                            .service(web::scope("/upload").service(put_torrent))
+                            .service(get_torrent_by_info_hash)
+                            .service(get_torrents_filtered)
+                            .service(get_torrent),
+                    ),
             )
             .default_service(web::to(|| HttpResponse::NotFound()))
     })

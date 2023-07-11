@@ -8,10 +8,9 @@ CREATE TABLE IF NOT EXISTS "Torrent" (
     file_name VARCHAR(100) NOT NULL,
     -- https://en.wikipedia.org/wiki/.nfo
     nfo TEXT,
-    --- Torrent file path on local FS
-    path TEXT NOT NULL,
     -- info_hash is SHA-256 hash of "info" section of torrent file (BitTorrent v2)
     info_hash TEXT NOT NULL,
+    uploaded_at TIMESTAMP WITH TIME ZONE NOT NULL,
     uploaded_by UUID NOT NULL REFERENCES "User" (id),
     modded_by UUID REFERENCES "User" (id)
 );
