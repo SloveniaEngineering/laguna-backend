@@ -16,7 +16,6 @@ pub struct Torrent {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct TorrentDTO {
-    pub id: Option<Uuid>,
     pub title: String,
     pub file_name: String,
     pub nfo: Option<String>,
@@ -31,7 +30,6 @@ pub struct TorrentDTO {
 impl From<Torrent> for TorrentDTO {
     fn from(torrent: Torrent) -> Self {
         Self {
-            id: Some(torrent.id),
             title: torrent.title,
             file_name: torrent.file_name,
             nfo: torrent.nfo,
@@ -53,4 +51,12 @@ pub struct TorrentPutDTO {
     pub modded_by: Option<Uuid>,
     #[serde(with = "serde_bytes")]
     pub payload: Vec<u8>,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub struct TorrentPatchDTO {
+    pub title: String,
+    pub file_name: String,
+    pub nfo: Option<String>,
+    pub modded_by: Option<Uuid>,
 }
