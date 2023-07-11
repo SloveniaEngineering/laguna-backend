@@ -4,10 +4,7 @@ use actix_web::{get, patch, put, web, HttpResponse};
 use chrono::{DateTime, Utc};
 use digest::Digest;
 use laguna_backend_middleware::filters::torrent::{TorrentFilter, DEFAULT_TORRENT_FILTER_LIMIT};
-use laguna_backend_model::{
-    torrent::{Torrent, TorrentDTO, TorrentPutDTO, TorrentPatchDTO},
-    user::UserDTO,
-};
+use laguna_backend_model::torrent::{Torrent, TorrentDTO, TorrentPatchDTO, TorrentPutDTO};
 use sha2::Sha256;
 use sqlx::PgPool;
 use std::io::Read;
@@ -67,7 +64,7 @@ pub async fn get_torrent(
 /// ```
 /// ## Response
 /// HTTP/1.1 200 OK
-/// 
+///
 /// ```json
 /// {
 ///   "title": "test",
@@ -198,7 +195,7 @@ pub async fn get_torrents_with_filter(
 ///         "title": "TEST (2020)",
 ///         "file_name": "test_upload",
 ///         "nfo": null,
-///         "modded_by": null 
+///         "modded_by": null
 ///      }'
 /// Updates torrent metadata (not file).
 /// Certain fields are not allowed to be updated.
@@ -292,7 +289,7 @@ pub async fn get_torrent_download(
 /// ```
 /// ## Response
 /// HTTP/1.1 200 OK
-/// 
+///
 /// ```json
 /// "UploadSuccess"
 /// ```

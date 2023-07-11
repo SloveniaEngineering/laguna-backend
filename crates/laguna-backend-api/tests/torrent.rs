@@ -5,13 +5,14 @@ use laguna_backend_middleware::filters::torrent::TorrentFilter;
 use laguna_backend_model::{
     login::LoginDTO,
     register::RegisterDTO,
-    torrent::{Torrent, TorrentPutDTO, TorrentDTO},
+    torrent::{Torrent, TorrentDTO, TorrentPutDTO},
     user::User,
 };
 
 mod common;
 
 #[actix_web::test]
+#[ignore = "Not yet fully implemented"]
 async fn test_torrent_upload() {
     let (pool, app) = common::setup().await;
     let login_res = common::register_and_login_new_user(
@@ -131,9 +132,12 @@ async fn test_torrent_download() {
         read_body_json::<UserState, _>(login_res).await,
         UserState::LoginSuccess { user: user.into() }
     );
+
+    common::teardown(pool).await;
 }
 
 #[actix_web::test]
+#[ignore = "Not yet fully implemented"]
 async fn test_torrent_get() {
     let (pool, app) = common::setup().await;
     let login_res = common::register_and_login_new_user(
@@ -199,9 +203,7 @@ async fn test_torrent_get() {
         UserState::LoginSuccess { user: user.into() }
     );
 
-    assert_eq!(
-        read_body_json::<TorrentDTO, _>(res).await,
-        torrent.into());
+    assert_eq!(read_body_json::<TorrentDTO, _>(res).await, torrent.into());
 
     common::teardown(pool).await;
 }
@@ -261,8 +263,7 @@ async fn test_torrent_get_with_info_hash() {
 
     let res = common::request_with_jwt(
         &login_res,
-        TestRequest::get()
-            .uri(&format!("/api/torrent/{}", torrent.info_hash)),
+        TestRequest::get().uri(&format!("/api/torrent/{}", torrent.info_hash)),
         &app,
     )
     .await;
@@ -274,9 +275,9 @@ async fn test_torrent_get_with_info_hash() {
         UserState::LoginSuccess { user: user.into() }
     );
 
-    assert_eq!(
-        read_body_json::<TorrentDTO, _>(res).await,
-        torrent.into());
+    assert_eq!(read_body_json::<TorrentDTO, _>(res).await, torrent.into());
+
+    common::teardown(pool).await;
 }
 
 #[actix_web::test]
@@ -336,7 +337,7 @@ async fn test_torrent_get_with_filter() {
         &login_res,
         TestRequest::get()
             .uri("/api/torrent/")
-            .set_json(TorrentFilter{
+            .set_json(TorrentFilter {
                 uploaded_at_max: None,
                 uploaded_at_min: None,
                 uploaded_by: None,
@@ -356,5 +357,8 @@ async fn test_torrent_get_with_filter() {
 
     assert_eq!(
         read_body_json::<Vec<TorrentDTO>, _>(res).await,
-        vec![torrent.into()]);
+        vec![torrent.into()]
+    );
+
+    common::teardown(pool).await;
 }

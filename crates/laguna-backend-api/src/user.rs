@@ -1,5 +1,5 @@
 use actix_web::{delete, get, web, HttpResponse};
-use laguna_backend_model::user::{UserDTO, User};
+use laguna_backend_model::user::{User, UserDTO};
 
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -78,8 +78,8 @@ pub async fn get_user(
             .bind(*id)
             .fetch_optional(pool.get_ref())
             .await?
-            .ok_or_else(|| UserError::DoesNotExist)?),
-    ))
+            .ok_or_else(|| UserError::DoesNotExist)?,
+    )))
 }
 
 /// `DELETE /api/user/delete/me`
