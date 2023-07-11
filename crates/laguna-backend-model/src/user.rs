@@ -52,7 +52,7 @@ pub struct User {
 /// 1. `email`
 /// 2. `password`
 /// Also, [`UserDTO`] has `last_login` as an [`Option`].
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, FromRequest, sqlx::FromRow)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, FromRequest)]
 pub struct UserDTO {
     /// The user's id
     pub id: Uuid,

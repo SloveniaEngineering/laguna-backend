@@ -8,3 +8,10 @@ pub enum UserState {
     DeleteSuccess,
     LoginSuccess { user: UserDTO },
 }
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TorrentState {
+    UploadSuccess,
+    UploadFailure,
+    AlreadyExists,
+}

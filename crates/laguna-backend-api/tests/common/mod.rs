@@ -1,4 +1,5 @@
 #![allow(unused)]
+use actix_http::header::HeaderValue;
 use actix_http::{body::MessageBody, Error, Request};
 use actix_jwt_auth_middleware::{use_jwt::UseJWTOnApp, Authority, TokenSigner};
 use actix_web::cookie::Cookie;
@@ -15,11 +16,16 @@ use jwt_compact::{
     alg::{Hs256, Hs256Key},
     TimeOptions,
 };
+use laguna_backend_api::torrent::{
+    get_torrent, get_torrent_download, get_torrent_with_info_hash, get_torrents_with_filter,
+    put_torrent,
+};
 use laguna_backend_api::{
     login::login,
     register::register,
-    user::{delete_me, delete_one, get_me, get_one},
+    user::{delete_me, delete_user, get_me, get_user},
 };
+use laguna_backend_middleware::consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME};
 use laguna_backend_model::{login::LoginDTO, register::RegisterDTO, user::UserDTO};
 use std::env;
 use std::sync::Once;
@@ -51,6 +57,9 @@ pub(crate) async fn setup() -> (
     let key = Hs256Key::new("some random test shit");
     let authority = Authority::<UserDTO, Hs256, _, _>::new()
         .refresh_authorizer(|| async move { Ok(()) })
+        .enable_header_tokens(true)
+        .access_token_name(ACCESS_TOKEN_HEADER_NAME)
+        .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
         .token_signer(Some(
             TokenSigner::new()
                 .signing_key(key.clone())
@@ -72,12 +81,25 @@ pub(crate) async fn setup() -> (
             )
             .use_jwt(
                 authority,
-                web::scope("/api").service(
-                    web::scope("/user")
-                        .service(get_me)
-                        .service(get_one)
-                        .service(web::scope("/delete").service(delete_me).service(delete_one)),
-                ),
+                web::scope("/api")
+                    .service(
+                        web::scope("/user")
+                            .service(get_me)
+                            .service(get_user)
+                            .service(
+                                web::scope("/delete")
+                                    .service(delete_me)
+                                    .service(delete_user),
+                            ),
+                    )
+                    .service(
+                        web::scope("/torrent")
+                            .service(get_torrent)
+                            .service(get_torrent_with_info_hash)
+                            .service(get_torrents_with_filter)
+                            .service(web::scope("/download").service(get_torrent_download))
+                            .service(web::scope("/upload").service(put_torrent)),
+                    ),
             )
             .default_service(web::to(|| HttpResponse::NotFound())),
     )
@@ -124,24 +146,20 @@ pub(crate) async fn register_and_login_new_user(
     res
 }
 
-pub(crate) async fn request_with_jwt_cookies_set(
+pub(crate) async fn jwt_from_response(res: &ServiceResponse) -> (&HeaderValue, &HeaderValue) {
+    let access_token = res.headers().get(ACCESS_TOKEN_HEADER_NAME).unwrap();
+    let refresh_token = res.headers().get(REFRESH_TOKEN_HEADER_NAME).unwrap();
+    (access_token, refresh_token)
+}
+
+pub(crate) async fn request_with_jwt(
     login_res: &ServiceResponse,
     mut req: TestRequest,
     app: &impl actix_web::dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
 ) -> ServiceResponse {
-    for cookie in extract_cookies(login_res).await {
-        req = req.cookie(cookie);
-    }
+    let (access_token, refresh_token) = jwt_from_response(login_res).await;
+    req = req
+        .append_header((ACCESS_TOKEN_HEADER_NAME, access_token))
+        .append_header((REFRESH_TOKEN_HEADER_NAME, refresh_token));
     app.call(req.to_request()).await.unwrap()
-}
-
-pub(crate) async fn extract_cookies<'a>(res: &'a ServiceResponse) -> Vec<Cookie<'a>> {
-    let mut cookies = res.headers().get_all(header::SET_COOKIE);
-    let access_token = cookies.next().unwrap().to_str().unwrap();
-    let refresh_token = cookies.next().unwrap().to_str().unwrap();
-
-    vec![
-        Cookie::parse(access_token).unwrap(),
-        Cookie::parse(refresh_token).unwrap(),
-    ]
 }

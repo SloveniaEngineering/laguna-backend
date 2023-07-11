@@ -1,4 +1,5 @@
 use actix_cors::Cors;
+
 use actix_jwt_auth_middleware::use_jwt::UseJWTOnApp;
 
 use actix_jwt_auth_middleware::Authority;
@@ -14,10 +15,17 @@ use laguna::api::login::login;
 use laguna::api::misc::get_app_info;
 use laguna::api::register::register;
 
+use laguna::api::torrent::get_torrent;
+use laguna::api::torrent::get_torrent_download;
+use laguna::api::torrent::get_torrent_with_info_hash;
+use laguna::api::torrent::get_torrents_with_filter;
+use laguna::api::torrent::put_torrent;
 use laguna::api::user::delete_me;
-use laguna::api::user::delete_one;
+use laguna::api::user::delete_user;
 use laguna::api::user::get_me;
-use laguna::api::user::get_one;
+use laguna::api::user::get_user;
+use laguna::middleware::consts::ACCESS_TOKEN_HEADER_NAME;
+use laguna::middleware::consts::REFRESH_TOKEN_HEADER_NAME;
 use laguna::model::user::UserDTO;
 use std::env;
 
@@ -49,7 +57,8 @@ async fn main() -> Result<(), sqlx::Error> {
         let authority = Authority::<UserDTO, Hs256, _, _>::new()
             .refresh_authorizer(|| async move { Ok(()) })
             .enable_header_tokens(true)
-            .enable_cookie_tokens(true)
+            .access_token_name(ACCESS_TOKEN_HEADER_NAME)
+            .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
             .token_signer(Some(
                 TokenSigner::new()
                     .signing_key(key.clone())
@@ -72,7 +81,8 @@ async fn main() -> Result<(), sqlx::Error> {
             )
             .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "PATCH"])
             .allowed_headers(vec![
-                header::CONTENT_TYPE,
+                header::ORIGIN,
+                header::CONNECTION,
                 header::ACCEPT,
                 header::CONTENT_TYPE,
                 header::REFERER,
@@ -94,13 +104,26 @@ async fn main() -> Result<(), sqlx::Error> {
             )
             .use_jwt(
                 authority,
-                web::scope("/api").service(
-                    web::scope("/user")
-                        .service(get_me)
-                        .service(get_one)
-                        .service(web::scope("/delete").service(delete_me).service(delete_one))
-                        .service(web::scope("/misc").service(get_app_info)),
-                ),
+                web::scope("/api")
+                    .service(
+                        web::scope("/user")
+                            .service(get_me)
+                            .service(get_user)
+                            .service(
+                                web::scope("/delete")
+                                    .service(delete_me)
+                                    .service(delete_user),
+                            )
+                            .service(web::scope("/misc").service(get_app_info)),
+                    )
+                    .service(
+                        web::scope("/torrent")
+                            .service(web::scope("/download").service(get_torrent_download))
+                            .service(web::scope("/upload").service(put_torrent))
+                            .service(get_torrent_with_info_hash)
+                            .service(get_torrents_with_filter)
+                            .service(get_torrent),
+                    ),
             )
             .default_service(web::to(|| HttpResponse::NotFound()))
     })

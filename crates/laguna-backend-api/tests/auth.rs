@@ -219,12 +219,8 @@ async fn test_access_token() {
         .await
         .unwrap();
 
-    let res = common::request_with_jwt_cookies_set(
-        &login_res,
-        TestRequest::get().uri("/api/user/me"),
-        &app,
-    )
-    .await;
+    let res =
+        common::request_with_jwt(&login_res, TestRequest::get().uri("/api/user/me"), &app).await;
 
     assert_eq!(
         read_body_json::<UserState, _>(login_res).await,
