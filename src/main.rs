@@ -16,14 +16,14 @@ use laguna::api::misc::get_app_info;
 use laguna::api::register::register;
 
 use laguna::api::torrent::get_torrent;
-use laguna::api::torrent::get_torrent_by_info_hash;
 use laguna::api::torrent::get_torrent_download;
-use laguna::api::torrent::get_torrents_filtered;
+use laguna::api::torrent::get_torrent_with_info_hash;
+use laguna::api::torrent::get_torrents_with_filter;
 use laguna::api::torrent::put_torrent;
 use laguna::api::user::delete_me;
-use laguna::api::user::delete_one;
+use laguna::api::user::delete_user;
 use laguna::api::user::get_me;
-use laguna::api::user::get_one;
+use laguna::api::user::get_user;
 use laguna::model::user::UserDTO;
 use std::env;
 
@@ -90,16 +90,20 @@ async fn main() -> Result<(), sqlx::Error> {
                     .service(
                         web::scope("/user")
                             .service(get_me)
-                            .service(get_one)
-                            .service(web::scope("/delete").service(delete_me).service(delete_one))
+                            .service(get_user)
+                            .service(
+                                web::scope("/delete")
+                                    .service(delete_me)
+                                    .service(delete_user),
+                            )
                             .service(web::scope("/misc").service(get_app_info)),
                     )
                     .service(
                         web::scope("/torrent")
                             .service(web::scope("/download").service(get_torrent_download))
                             .service(web::scope("/upload").service(put_torrent))
-                            .service(get_torrent_by_info_hash)
-                            .service(get_torrents_filtered)
+                            .service(get_torrent_with_info_hash)
+                            .service(get_torrents_with_filter)
                             .service(get_torrent),
                     ),
             )

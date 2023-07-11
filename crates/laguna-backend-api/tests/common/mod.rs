@@ -16,12 +16,13 @@ use jwt_compact::{
     TimeOptions,
 };
 use laguna_backend_api::torrent::{
-    get_torrent, get_torrent_by_info_hash, get_torrent_download, get_torrents_filtered, put_torrent,
+    get_torrent, get_torrent_download, get_torrent_with_info_hash, get_torrents_with_filter,
+    put_torrent,
 };
 use laguna_backend_api::{
     login::login,
     register::register,
-    user::{delete_me, delete_one, get_me, get_one},
+    user::{delete_me, delete_user, get_me, get_user},
 };
 use laguna_backend_model::{login::LoginDTO, register::RegisterDTO, user::UserDTO};
 use std::env;
@@ -79,16 +80,20 @@ pub(crate) async fn setup() -> (
                     .service(
                         web::scope("/user")
                             .service(get_me)
-                            .service(get_one)
-                            .service(web::scope("/delete").service(delete_me).service(delete_one)),
+                            .service(get_user)
+                            .service(
+                                web::scope("/delete")
+                                    .service(delete_me)
+                                    .service(delete_user),
+                            ),
                     )
                     .service(
                         web::scope("/torrent")
                             .service(get_torrent)
-                            .service(get_torrent_by_info_hash)
+                            .service(get_torrent_with_info_hash)
                             .service(web::scope("/download").service(get_torrent_download))
                             .service(web::scope("/upload").service(put_torrent))
-                            .service(get_torrents_filtered),
+                            .service(get_torrents_with_filter),
                     ),
             )
             .default_service(web::to(|| HttpResponse::NotFound())),

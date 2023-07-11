@@ -1,6 +1,5 @@
-use std::{fs::File, path::PathBuf};
+use std::fs::File;
 
-use actix_files::NamedFile;
 use actix_web::{get, put, web, HttpResponse};
 use chrono::{DateTime, Utc};
 use laguna_backend_middleware::filters::torrent::{TorrentFilter, DEFAULT_TORRENT_FILTER_LIMIT};
@@ -9,6 +8,7 @@ use laguna_backend_model::{
     user::UserDTO,
 };
 use sqlx::PgPool;
+use std::io::Read;
 use std::io::Write;
 use uuid::Uuid;
 
@@ -36,7 +36,7 @@ pub async fn get_torrent(
 /// `GET /api/torrent/{info_hash}`
 /// This only gets you torrent metadata (stored in DB).
 #[get("/{info_hash}")]
-pub async fn get_torrent_by_info_hash(
+pub async fn get_torrent_with_info_hash(
     info_hash: web::Path<String>,
     _user: UserDTO,
     pool: web::Data<PgPool>,
@@ -51,7 +51,7 @@ pub async fn get_torrent_by_info_hash(
 
 /// `GET /api/torrent`
 #[get("/")]
-pub async fn get_torrents_filtered(
+pub async fn get_torrents_with_filter(
     filter: web::Json<TorrentFilter>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
@@ -104,14 +104,18 @@ pub async fn get_torrents_filtered(
 pub async fn get_torrent_download(
     id: web::Path<Uuid>,
     pool: web::Data<PgPool>,
-) -> Result<NamedFile, APIError> {
-    let file_name =
-        sqlx::query_scalar::<_, String>("SELECT file_name FROM \"Torrent\" WHERE id = $1")
-            .bind(id.into_inner())
-            .fetch_optional(pool.get_ref())
-            .await?
-            .ok_or_else(|| TorrentError::DoesNotExist)?;
-    Ok(NamedFile::open_async(PathBuf::from(format!("torrents/{}.torrent", file_name))).await?)
+) -> Result<HttpResponse, APIError> {
+    let torrent = sqlx::query_as::<_, Torrent>("SELECT * FROM \"Torrent\" WHERE id = $1")
+        .bind(id.into_inner())
+        .fetch_optional(pool.get_ref())
+        .await?
+        .ok_or_else(|| TorrentError::DoesNotExist)?;
+    let mut file = File::open(format!("torrents/{}.torrent", torrent.id))?;
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes)?;
+    let mut torrent_dto = TorrentDTO::from(torrent);
+    torrent_dto.payload = bytes;
+    Ok(HttpResponse::Ok().json(torrent_dto))
 }
 
 /// `PUT /api/torrent/upload`

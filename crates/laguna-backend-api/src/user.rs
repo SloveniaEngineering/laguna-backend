@@ -77,7 +77,7 @@ pub async fn get_me(user: UserDTO) -> Result<HttpResponse, APIError> {
 /// }
 /// ```
 #[get("/{id}")]
-pub async fn get_one(
+pub async fn get_user(
     id: web::Path<Uuid>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
@@ -116,7 +116,7 @@ pub async fn delete_me(user: UserDTO, pool: web::Data<PgPool>) -> Result<HttpRes
 /// "DeleteSuccess"
 /// ```
 #[delete("/{id}")]
-pub async fn delete_one(
+pub async fn delete_user(
     id: web::Path<Uuid>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
