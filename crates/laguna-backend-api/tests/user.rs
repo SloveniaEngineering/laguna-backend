@@ -34,12 +34,8 @@ async fn test_get_me() {
         .await
         .unwrap();
 
-    let res = common::request_with_jwt_cookies_set(
-        &login_res,
-        TestRequest::get().uri("/api/user/me"),
-        &app,
-    )
-    .await;
+    let res =
+        common::request_with_jwt(&login_res, TestRequest::get().uri("/api/user/me"), &app).await;
     assert_eq!(res.status(), StatusCode::OK);
     assert_eq!(read_body_json::<UserDTO, _>(res).await, user.into());
 
@@ -72,7 +68,7 @@ async fn test_get_one() {
         .await
         .unwrap();
 
-    let res = common::request_with_jwt_cookies_set(
+    let res = common::request_with_jwt(
         &login_res,
         TestRequest::get().uri(&format!("/api/user/{}", user.id)),
         &app,
@@ -102,7 +98,7 @@ async fn test_delete_me() {
     .await;
     assert_eq!(login_res.status(), StatusCode::OK);
 
-    let res = common::request_with_jwt_cookies_set(
+    let res = common::request_with_jwt(
         &login_res,
         TestRequest::delete().uri("/api/user/delete/me"),
         &app,
@@ -143,7 +139,7 @@ async fn test_delete_one() {
         .await
         .unwrap();
 
-    let res = common::request_with_jwt_cookies_set(
+    let res = common::request_with_jwt(
         &login_res,
         TestRequest::delete().uri(&format!("/api/user/delete/{}", user.id)),
         &app,

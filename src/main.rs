@@ -24,6 +24,8 @@ use laguna::api::user::delete_me;
 use laguna::api::user::delete_user;
 use laguna::api::user::get_me;
 use laguna::api::user::get_user;
+use laguna::middleware::consts::ACCESS_TOKEN_HEADER_NAME;
+use laguna::middleware::consts::REFRESH_TOKEN_HEADER_NAME;
 use laguna::model::user::UserDTO;
 use std::env;
 
@@ -55,7 +57,8 @@ async fn main() -> Result<(), sqlx::Error> {
         let authority = Authority::<UserDTO, Hs256, _, _>::new()
             .refresh_authorizer(|| async move { Ok(()) })
             .enable_header_tokens(true)
-            .enable_cookie_tokens(true)
+            .access_token_name(ACCESS_TOKEN_HEADER_NAME)
+            .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
             .token_signer(Some(
                 TokenSigner::new()
                     .signing_key(key.clone())
@@ -78,7 +81,8 @@ async fn main() -> Result<(), sqlx::Error> {
             )
             .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "PATCH"])
             .allowed_headers(vec![
-                header::CONTENT_TYPE,
+                header::ORIGIN,
+                header::CONNECTION,
                 header::ACCEPT,
                 header::CONTENT_TYPE,
                 header::REFERER,

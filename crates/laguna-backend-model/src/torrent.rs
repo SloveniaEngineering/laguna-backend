@@ -5,7 +5,7 @@ use uuid::Uuid;
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, sqlx::FromRow)]
 pub struct Torrent {
     pub id: Uuid,
-    pub name: String,
+    pub title: String,
     pub file_name: String,
     pub nfo: Option<String>,
     pub info_hash: String,
@@ -16,8 +16,8 @@ pub struct Torrent {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct TorrentDTO {
-    pub id: Uuid,
-    pub name: String,
+    pub id: Option<Uuid>,
+    pub title: String,
     pub file_name: String,
     pub nfo: Option<String>,
     pub info_hash: String,
@@ -31,8 +31,8 @@ pub struct TorrentDTO {
 impl From<Torrent> for TorrentDTO {
     fn from(torrent: Torrent) -> Self {
         Self {
-            id: torrent.id,
-            name: torrent.name,
+            id: Some(torrent.id),
+            title: torrent.title,
             file_name: torrent.file_name,
             nfo: torrent.nfo,
             info_hash: torrent.info_hash,
@@ -42,4 +42,15 @@ impl From<Torrent> for TorrentDTO {
             payload: Vec::new(),
         }
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+pub struct TorrentPutDTO {
+    pub title: String,
+    pub file_name: String,
+    pub nfo: Option<String>,
+    pub uploaded_by: Uuid,
+    pub modded_by: Option<Uuid>,
+    #[serde(with = "serde_bytes")]
+    pub payload: Vec<u8>,
 }

@@ -4,6 +4,7 @@ use actix_web::{web, HttpResponse};
 use chrono::Utc;
 use digest::Digest;
 use jwt_compact::alg::Hs256;
+use laguna_backend_middleware::consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME};
 use laguna_backend_model::login::LoginDTO;
 use laguna_backend_model::user::{User, UserDTO};
 
@@ -60,7 +61,7 @@ use crate::state::UserState;
 pub async fn login(
     login_dto: web::Json<LoginDTO>,
     pool: web::Data<PgPool>,
-    cookie_signer: web::Data<TokenSigner<UserDTO, Hs256>>,
+    signer: web::Data<TokenSigner<UserDTO, Hs256>>,
 ) -> Result<HttpResponse, APIError> {
     let fetched_user =
         sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE username = $1 OR email = $1")
@@ -80,8 +81,14 @@ pub async fn login(
             .await?;
             return Ok(HttpResponse::Ok()
                 // TODO: get rid of clones
-                .cookie(cookie_signer.create_access_cookie(&user.clone().into())?)
-                .cookie(cookie_signer.create_refresh_cookie(&user.clone().into())?)
+                .append_header((
+                    ACCESS_TOKEN_HEADER_NAME,
+                    signer.create_access_header_value(&user.clone().into())?,
+                ))
+                .append_header((
+                    REFRESH_TOKEN_HEADER_NAME,
+                    signer.create_refresh_header_value(&user.clone().into())?,
+                ))
                 .json(UserState::LoginSuccess { user: user.into() }));
         }
     }

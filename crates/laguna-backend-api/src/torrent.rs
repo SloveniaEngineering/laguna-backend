@@ -1,12 +1,14 @@
-use std::fs::File;
+use std::fs::{self, File};
 
 use actix_web::{get, patch, put, web, HttpResponse};
 use chrono::{DateTime, Utc};
+use digest::Digest;
 use laguna_backend_middleware::filters::torrent::{TorrentFilter, DEFAULT_TORRENT_FILTER_LIMIT};
 use laguna_backend_model::{
-    torrent::{Torrent, TorrentDTO},
+    torrent::{Torrent, TorrentDTO, TorrentPutDTO},
     user::UserDTO,
 };
+use sha2::Sha256;
 use sqlx::PgPool;
 use std::io::Read;
 use std::io::Write;
@@ -49,7 +51,7 @@ pub async fn get_torrent_with_info_hash(
     Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent)))
 }
 
-/// `GET /api/torrent`
+/// `GET /api/torrent/`
 #[get("/")]
 pub async fn get_torrents_with_filter(
     filter: web::Json<TorrentFilter>,
@@ -108,12 +110,12 @@ pub async fn patch_torrent(
         sqlx::query_as::<_, Torrent>(
             r#"
     UPDATE "Torrent" 
-    SET name = $1, file_name = $2, nfo = $3, modded_by = $4
+    SET title = $1, file_name = $2, nfo = $3, modded_by = $4
     WHERE id = $5
     RETURNING *
     "#,
         )
-        .bind(&torrent_dto.name)
+        .bind(&torrent_dto.title)
         .bind(&torrent_dto.file_name)
         .bind(&torrent_dto.nfo)
         .bind(&torrent_dto.modded_by)
@@ -150,11 +152,11 @@ pub async fn get_torrent_download(
 /// TODO: Right now, we send it via Json body, but we should use multipart/form-data.
 #[put("/")]
 pub async fn put_torrent(
-    torrent_dto: web::Json<TorrentDTO>,
+    torrent_dto: web::Json<TorrentPutDTO>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-    let torrent = sqlx::query_as::<_, Torrent>("SELECT * FROM \"Torrent\" WHERE id = $1")
-        .bind(torrent_dto.id)
+    let torrent = sqlx::query_as::<_, Torrent>("SELECT * FROM \"Torrent\" WHERE title = $1")
+        .bind(&torrent_dto.title)
         .fetch_optional(pool.get_ref())
         .await?;
 
@@ -162,26 +164,35 @@ pub async fn put_torrent(
         Some(_) => Ok(HttpResponse::AlreadyReported().json(TorrentState::AlreadyExists)),
         None => {
             let mut transaction = pool.begin().await?;
+            let torrent = sqlx::query_as::<_, Torrent>(
+                r#"
+            INSERT INTO "Torrent" (title, file_name, nfo, info_hash, uploaded_at, uploaded_by) 
+                VALUES ($1, $2, $3, $4, $5, $6)
+                RETURNING *
+                "#,
+            )
+            .bind(&torrent_dto.title)
+            .bind(&torrent_dto.file_name)
+            .bind(&torrent_dto.nfo)
+            .bind(format!("{:x}", Sha256::digest(&torrent_dto.payload))) // TODO: Hash only info section of Torrent. This is fine for now, but redundant.
+            .bind(Utc::now())
+            .bind(&torrent_dto.uploaded_by)
+            .fetch_one(&mut transaction)
+            .await?;
+
             // Transaction is rolled back if file creation fails.
-            let mut file = File::create(format!("/torrents/{}.torrent", torrent_dto.id))?;
+            fs::create_dir_all("/torrents")?;
+            let mut file = File::create(format!("/torrents/{}.torrent", torrent.id))?;
             file.write_all(&torrent_dto.payload)?;
 
             // Transaction is rolled back if file create time cannot be fetched.
             let file_create_time = file.metadata().map(|metadata| metadata.created())??;
 
-            sqlx::query(
-                r#"
-            INSERT INTO "Torrent" (name, file_name, nfo, info_hash, uploaded_at, uploaded_by) 
-                VALUES ($1, $2, $3, $4, $5, $6)
-                "#,
-            )
-            .bind(&torrent_dto.name)
-            .bind(&torrent_dto.file_name)
-            .bind(&torrent_dto.nfo)
-            .bind(DateTime::<Utc>::from(file_create_time))
-            .bind(&torrent_dto.uploaded_by)
-            .execute(&mut transaction)
-            .await?;
+            sqlx::query("UPDATE \"Torrent\" SET uploaded_at = $1 WHERE id = $2")
+                .bind(DateTime::<Utc>::from(file_create_time))
+                .bind(torrent.id)
+                .execute(&mut transaction)
+                .await?;
 
             transaction.commit().await?;
             Ok(HttpResponse::Ok().json(TorrentState::UploadSuccess))
