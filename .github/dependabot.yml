@@ -8,6 +8,11 @@ updates:
       day: "monday"
       time: "17:00"
       timezone: "Europe/Ljubljana"
+    labels:
+      - "A-CI/CD"
+      - "S-UNSTAGED"
+      - "T-Dep"
+      - "D-1"
 
   # Laguna workspace
   - directory: /
@@ -18,3 +23,8 @@ updates:
       day: "monday"
       time: "17:00"
       timezone: "Europe/Ljubljana"
+    labels:
+      - "A-CI/CD"
+      - "S-UNSTAGED"
+      - "T-Dep"
+      - "D-1"
