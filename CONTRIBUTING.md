@@ -111,6 +111,8 @@ which will create an `up` and `down` migration files and can be reverted with `s
    3. `RUST_BACKTRACE` - Backtrace level. Defaults to `full`.
    4. `HOST` - Logging style. Defaults to `127.0.0.1` or `localhost`.
    5. `PORT` - Port to listen on. Defaults to `6969`.
+   6. `FRONTEND_HOST` - Host of frontend. Defaults to `127.0.0.1` or `localhost`.
+   7. `FRONTEND_PORT` - Port of frontend. Defaults to `4200`.
 
 > **Note**
 > `scripts/devs.sh` watches for changes in source code and if change is detected automatically recompiles and restarts the server.

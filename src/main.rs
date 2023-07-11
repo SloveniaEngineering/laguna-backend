@@ -45,8 +45,6 @@ async fn main() -> Result<(), sqlx::Error> {
         .parse::<u16>()
         .expect("PORT invalid");
 
-    let host_clone = host.clone();
-
     HttpServer::new(move || {
         let authority = Authority::<UserDTO, Hs256, _, _>::new()
             .refresh_authorizer(|| async move { Ok(()) })
@@ -64,10 +62,26 @@ async fn main() -> Result<(), sqlx::Error> {
             .build()
             .expect("Cannot create key authority");
         let cors = Cors::default()
-            .allowed_origin(&host_clone)
-            .supports_credentials()
+            .allowed_origin(
+                format!(
+                    "{}:{}",
+                    env::var("FRONTEND_HOST").expect("FRONTEND_HOST not set"),
+                    env::var("FRONTEND_PORT").expect("FRONTEND_PORT not set")
+                )
+                .as_str(),
+            )
             .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "PATCH"])
-            .allowed_headers(vec![header::CONTENT_TYPE])
+            .allowed_headers(vec![
+                header::CONTENT_TYPE,
+                header::ACCEPT,
+                header::CONTENT_TYPE,
+                header::REFERER,
+                header::USER_AGENT,
+                header::HOST,
+                header::ACCEPT_ENCODING,
+                header::ACCEPT_LANGUAGE,
+                header::ACCESS_CONTROL_REQUEST_HEADERS,
+            ])
             .max_age(3600);
         App::new()
             .wrap(middleware::Logger::default())

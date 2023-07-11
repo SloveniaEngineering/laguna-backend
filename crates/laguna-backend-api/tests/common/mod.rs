@@ -1,6 +1,7 @@
 #![allow(unused)]
 use actix_http::{body::MessageBody, Error, Request};
 use actix_jwt_auth_middleware::{use_jwt::UseJWTOnApp, Authority, TokenSigner};
+use actix_web::cookie::Cookie;
 use actix_web::{
     dev::{self, Service, ServiceRequest, ServiceResponse},
     http::{header, StatusCode},
@@ -9,7 +10,6 @@ use actix_web::{
     web, App, HttpRequest, HttpResponse, ResponseError,
 };
 use chrono::Duration;
-use cookie::{Cookie, CookieJar};
 use env_logger;
 use jwt_compact::{
     alg::{Hs256, Hs256Key},

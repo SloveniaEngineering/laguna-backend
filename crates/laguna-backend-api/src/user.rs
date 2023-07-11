@@ -1,5 +1,5 @@
 use actix_web::{delete, get, web, HttpResponse};
-use laguna_backend_model::user::UserDTO;
+use laguna_backend_model::user::{User, UserDTO};
 
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -81,13 +81,13 @@ pub async fn get_one(
     id: web::Path<Uuid>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-    Ok(HttpResponse::Ok().json(
-        sqlx::query_as::<_, UserDTO>("SELECT * FROM \"User\" WHERE id = $1")
+    Ok(HttpResponse::Ok().json(UserDTO::from(
+        sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE id = $1")
             .bind(*id)
             .fetch_optional(pool.get_ref())
             .await?
             .ok_or_else(|| UserError::DoesNotExist)?,
-    ))
+    )))
 }
 
 /// `DELETE /api/user/delete/me`
