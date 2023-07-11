@@ -1,6 +1,6 @@
 use std::fs::File;
 
-use actix_web::{get, put, web, HttpResponse};
+use actix_web::{get, patch, put, web, HttpResponse};
 use chrono::{DateTime, Utc};
 use laguna_backend_middleware::filters::torrent::{TorrentFilter, DEFAULT_TORRENT_FILTER_LIMIT};
 use laguna_backend_model::{
@@ -93,6 +93,34 @@ pub async fn get_torrents_with_filter(
             .map(|torrent| TorrentDTO::from(torrent))
             .collect::<Vec<TorrentDTO>>(),
     ))
+}
+
+/// `PATCH /api/torrent/`
+/// Updates torrent metadata (not file).
+/// Certain fields are not allowed to be updated.
+/// Returns updated [`TorrentDTO`].
+#[patch("/")]
+pub async fn patch_torrent(
+    torrent_dto: web::Json<TorrentDTO>,
+    pool: web::Data<PgPool>,
+) -> Result<HttpResponse, APIError> {
+    Ok(HttpResponse::Ok().json(TorrentDTO::from(
+        sqlx::query_as::<_, Torrent>(
+            r#"
+    UPDATE "Torrent" 
+    SET name = $1, file_name = $2, nfo = $3, modded_by = $4
+    WHERE id = $5
+    RETURNING *
+    "#,
+        )
+        .bind(&torrent_dto.name)
+        .bind(&torrent_dto.file_name)
+        .bind(&torrent_dto.nfo)
+        .bind(&torrent_dto.modded_by)
+        .bind(&torrent_dto.id)
+        .fetch_one(pool.get_ref())
+        .await?,
+    )))
 }
 
 /// `GET /api/torrent/download/{id}`
