@@ -1,5 +1,6 @@
 use actix_web::post;
 use actix_web::{web, HttpResponse};
+use actix_web_validator::Json;
 use digest::Digest;
 
 use laguna_backend_model::{register::RegisterDTO, user::User};
@@ -7,7 +8,6 @@ use sha2::Sha256;
 use sqlx::PgPool;
 
 use crate::error::APIError;
-use crate::state::UserState;
 
 /// `POST /api/user/auth/register`
 /// # Example
@@ -22,19 +22,13 @@ use crate::state::UserState;
 ///         "password": "test123",
 ///      }'
 /// ```
-/// ### Response (on successful register)
-/// HTTP/1.1 200 OK
-/// ```text
-/// RegistrationSuccess
-/// ```
-/// ### Response (on already registered)
-/// HTTP/1.1 208 Already Reported
-/// ```json
-/// "AlreadyRegistered"
-/// ```
+/// ### Response
+/// 1. On successful register: HTTP/1.1 200 OK
+/// 2. On already registered: HTTP/1.1 208 Already Reported
+/// 3. On invalid format (ie. too long, too short, not email, etc.): HTTP/1.1 400 Bad Request
 #[post("/register")]
 pub async fn register(
-    register_dto: web::Json<RegisterDTO>,
+    register_dto: Json<RegisterDTO>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
     let fetched_user =
@@ -45,7 +39,7 @@ pub async fn register(
             .await?;
 
     if let Some(_) = fetched_user {
-        return Ok(HttpResponse::AlreadyReported().json(UserState::AlreadyRegistered));
+        return Ok(HttpResponse::AlreadyReported().finish());
     }
     // TODO: Verify email
     sqlx::query(
@@ -59,5 +53,5 @@ pub async fn register(
     .bind(format!("{:x}", Sha256::digest(&register_dto.password)))
     .execute(pool.get_ref())
     .await?;
-    Ok(HttpResponse::Ok().json(UserState::RegisterSuccess))
+    Ok(HttpResponse::Ok().finish())
 }

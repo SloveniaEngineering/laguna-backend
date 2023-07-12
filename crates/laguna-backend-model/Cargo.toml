@@ -23,3 +23,7 @@ uuid = { version = "*", features = ["serde", "v4", "fast-rng"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_bytes = "0.11.11"
 chrono = { version = "*", features = ["serde"] } 
+fake = { version = "2.6", features=["derive", "always-true-rng"]}
+rand = "*"
+validator = { version = "0.16", features = ["derive", "unic"] }
+actix-web-validator = "5.0.1"

@@ -4,10 +4,7 @@ use laguna_backend_model::user::{User, UserDTO};
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::{
-    error::{APIError, UserError},
-    state::UserState,
-};
+use crate::error::{user::UserError, APIError};
 
 /// `GET /api/user/me`
 /// # Example
@@ -93,16 +90,13 @@ pub async fn get_user(
 /// ```
 /// ## Response
 /// HTTP/1.1 200 OK
-/// ```json
-/// "DeleteSuccess"
-/// ```
 #[delete("/me")]
 pub async fn delete_me(user: UserDTO, pool: web::Data<PgPool>) -> Result<HttpResponse, APIError> {
     sqlx::query("DELETE FROM \"User\" WHERE id = $1")
         .bind(user.id)
         .execute(pool.get_ref())
         .await?;
-    Ok(HttpResponse::Ok().json(UserState::DeleteSuccess))
+    Ok(HttpResponse::Ok().finish())
 }
 
 /// `DELETE /api/user/delete/{id}`
@@ -116,9 +110,6 @@ pub async fn delete_me(user: UserDTO, pool: web::Data<PgPool>) -> Result<HttpRes
 /// ```
 /// ## Response
 /// HTTP/1.1 200 OK
-/// ```json
-/// "DeleteSuccess"
-/// ```
 #[delete("/{id}")]
 pub async fn delete_user(
     id: web::Path<Uuid>,
@@ -128,5 +119,5 @@ pub async fn delete_user(
         .bind(*id)
         .execute(pool.get_ref())
         .await?;
-    Ok(HttpResponse::Ok().json(UserState::DeleteSuccess))
+    Ok(HttpResponse::Ok().finish())
 }

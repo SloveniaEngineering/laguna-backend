@@ -1,6 +1,7 @@
 use actix_jwt_auth_middleware::TokenSigner;
 use actix_web::post;
 use actix_web::{web, HttpResponse};
+use actix_web_validator::Json;
 use chrono::Utc;
 use digest::Digest;
 use jwt_compact::alg::Hs256;
@@ -11,8 +12,7 @@ use laguna_backend_model::user::{User, UserDTO};
 use sha2::Sha256;
 use sqlx::PgPool;
 
-use crate::error::{APIError, LoginError};
-use crate::state::UserState;
+use crate::error::APIError;
 
 /// `POST /api/user/auth/login`
 /// # Example
@@ -53,14 +53,13 @@ use crate::state::UserState;
 ///     }
 /// }
 /// ```
-/// ### Response (on invalid password ("test12"))
-/// HTTP/1.1 401 Unauthorized
-/// ```json
-/// "InvalidCredentials"
-/// ```
+/// ### Response
+/// 1. On successful login: HTTP/1.1 200 OK
+/// 2. On invalid password/email/username: HTTP/1.1 401 Unauthorized
+/// 3. On invalid format (ie. too long, too short, not email, etc.): HTTP/1.1 400 Bad Request
 #[post("/login")]
 pub async fn login(
-    login_dto: web::Json<LoginDTO>,
+    login_dto: Json<LoginDTO>,
     pool: web::Data<PgPool>,
     signer: web::Data<TokenSigner<UserDTO, Hs256>>,
 ) -> Result<HttpResponse, APIError> {
@@ -90,10 +89,10 @@ pub async fn login(
                     REFRESH_TOKEN_HEADER_NAME,
                     signer.create_refresh_header_value(&user.clone().into())?,
                 ))
-                .json(UserState::LoginSuccess { user: user.into() }));
+                .json(UserDTO::from(user)));
         }
     }
 
     // SECURITY: Don't report "Password" or "Username" invalid to avoid brute-force attacks.
-    Ok(HttpResponse::Unauthorized().json(LoginError::InvalidCredentials))
+    Ok(HttpResponse::Unauthorized().finish())
 }

@@ -285,6 +285,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "actix-web-validator"
+version = "5.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f40ee5ed4e266dad8d980f964c5ddd746f1f4f85b7f3b54f7099ab861ec6d746"
+dependencies = [
+ "actix-http",
+ "actix-router",
+ "actix-web",
+ "bytes",
+ "futures",
+ "futures-util",
+ "log",
+ "mime",
+ "serde",
+ "serde_json",
+ "serde_qs",
+ "serde_urlencoded",
+ "thiserror",
+ "validator",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1136,6 +1158,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "darling"
+version = "0.20.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0558d22a7b463ed0241e993f76f09f30b126687447751a8638587b864e4b3944"
+dependencies = [
+ "darling_core 0.20.1",
+ "darling_macro 0.20.1",
+]
+
+[[package]]
 name = "darling_core"
 version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1164,6 +1196,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "darling_core"
+version = "0.20.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab8bfa2e259f8ee1ce5e97824a3c55ec4404a0d772ca7fa96bf19f0752a046eb"
+dependencies = [
+ "fnv",
+ "ident_case",
+ "proc-macro2",
+ "quote",
+ "strsim 0.10.0",
+ "syn 2.0.25",
+]
+
+[[package]]
 name = "darling_macro"
 version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1183,6 +1229,17 @@ dependencies = [
  "darling_core 0.14.4",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "darling_macro"
+version = "0.20.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "29a358ff9f12ec09c3e61fef9b5a9902623a695a46a917b07f269bff1445611a"
+dependencies = [
+ "darling_core 0.20.1",
+ "quote",
+ "syn 2.0.25",
 ]
 
 [[package]]
@@ -1342,6 +1399,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
+name = "dummy"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8da904daa6ce71bb51e03fd0529b08bad4b18bae89e176873c7bae9eb91a19ce"
+dependencies = [
+ "darling 0.20.1",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.25",
+]
+
+[[package]]
 name = "either"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1458,6 +1527,18 @@ name = "event-listener"
 version = "2.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
+
+[[package]]
+name = "fake"
+version = "2.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a44c765350db469b774425ff1c833890b16ceb9612fb5d7c4bbdf4a1b55f876"
+dependencies = [
+ "dummy",
+ "rand",
+ "rand_core",
+ "unidecode",
+]
 
 [[package]]
 name = "fastrand"
@@ -1927,6 +2008,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "if_chain"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb56e1aa765b4b4f3aadfab769793b7087bb03a4ea4920644a6d238e2df5b9ed"
+
+[[package]]
 name = "indexmap"
 version = "1.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2107,20 +2194,26 @@ dependencies = [
  "actix-jwt-auth-middleware",
  "actix-multipart",
  "actix-web",
+ "actix-web-validator",
  "chrono",
  "cookie 0.17.0",
  "derive_more",
  "digest",
  "env_logger",
+ "fake",
+ "futures",
  "jwt-compact",
  "laguna-backend-middleware",
  "laguna-backend-model",
  "log",
  "serde",
+ "serde_bencode",
  "serde_json",
  "sha2",
  "sqlx 0.6.3",
+ "sqlx-cli",
  "uuid",
+ "validator",
 ]
 
 [[package]]
@@ -2158,15 +2251,19 @@ version = "0.1.0"
 dependencies = [
  "actix-jwt-auth-middleware",
  "actix-web",
+ "actix-web-validator",
  "chrono",
  "digest",
  "env_logger",
+ "fake",
  "log",
+ "rand",
  "serde",
  "serde_bytes",
  "sha2",
  "sqlx 0.6.3",
  "uuid",
+ "validator",
 ]
 
 [[package]]
@@ -3252,6 +3349,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_bencode"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "934d8bdbaa0126dafaea9a8833424a211d9661897717846c6bb782349ca1c30d"
+dependencies = [
+ "serde",
+ "serde_bytes",
+]
+
+[[package]]
 name = "serde_bytes"
 version = "0.11.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3299,6 +3406,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6018081315db179d0ce57b1fe4b62a12a0028c9cf9bbef868c9cf477b3c34ae"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "serde_qs"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8cac3f1e2ca2fe333923a1ae72caca910b98ed0630bb35ef6f8c8517d6e81afa"
+dependencies = [
+ "actix-web",
+ "futures",
+ "percent-encoding",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -4128,6 +4248,47 @@ dependencies = [
 ]
 
 [[package]]
+name = "unic-char-property"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8c57a407d9b6fa02b4795eb81c5b6652060a15a7903ea981f3d723e6c0be221"
+dependencies = [
+ "unic-char-range",
+]
+
+[[package]]
+name = "unic-char-range"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0398022d5f700414f6b899e10b8348231abf9173fa93144cbc1a43b9793c1fbc"
+
+[[package]]
+name = "unic-common"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "80d7ff825a6a654ee85a63e80f92f054f904f21e7d12da4e22f9834a4aaa35bc"
+
+[[package]]
+name = "unic-ucd-common"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e9b78b910beafa1aae5c59bf00877c6cece1c5db28a1241ad801e86cecdff4ad"
+dependencies = [
+ "unic-char-property",
+ "unic-char-range",
+ "unic-ucd-version",
+]
+
+[[package]]
+name = "unic-ucd-version"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96bd2f2237fe450fcd0a1d2f5f4e91711124f7857ba2e964247776ebeeb7b0c4"
+dependencies = [
+ "unic-common",
+]
+
+[[package]]
 name = "unicase"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4176,6 +4337,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39ec24b3121d976906ece63c9daad25b85969647682eee313cb5779fdd69e14e"
 
 [[package]]
+name = "unidecode"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "402bb19d8e03f1d1a7450e2bd613980869438e0666331be3e073089124aa1adc"
+
+[[package]]
 name = "universal-hash"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4217,6 +4384,49 @@ dependencies = [
  "getrandom",
  "rand",
  "serde",
+]
+
+[[package]]
+name = "validator"
+version = "0.16.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b92f40481c04ff1f4f61f304d61793c7b56ff76ac1469f1beb199b1445b253bd"
+dependencies = [
+ "idna",
+ "lazy_static",
+ "regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "unic-ucd-common",
+ "url",
+ "validator_derive",
+]
+
+[[package]]
+name = "validator_derive"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc44ca3088bb3ba384d9aecf40c6a23a676ce23e09bdaca2073d99c207f864af"
+dependencies = [
+ "if_chain",
+ "lazy_static",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "syn 1.0.109",
+ "validator_types",
+]
+
+[[package]]
+name = "validator_types"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "111abfe30072511849c5910134e8baf8dc05de4c0e5903d681cbd5c9c4d611e3"
+dependencies = [
+ "proc-macro2",
+ "syn 1.0.109",
 ]
 
 [[package]]
