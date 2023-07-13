@@ -64,16 +64,14 @@ Crate structure in Rust: https://doc.rust-lang.org/cargo/guide/project-layout.ht
 
 # Testing
 
+Testing requires `sqlx-cli` to be installed.
+
 1. Run `scripts/test.sh` to run all tests.
 
-> **Warning**
-> all tests use same test DB, so they should not be run in parallel hence `--test-threads=1`.
+# Documentation
 
-In the future we will fix this by using different test DBs for each batch of tests.
-
-# Generating documentation
-
-1. Run `scripts/doc.sh` to generate useful documentation.
+Documentation is auto-generated on PR or push to `master`. 
+It can be accessed via GitHub Pages at https://sloveniaengineering.github.io/laguna-backend.
 
 How to write doc comments in Rust: https://doc.rust-lang.org/rustdoc/how-to-write-documentation.html.
 

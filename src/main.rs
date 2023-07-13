@@ -5,7 +5,7 @@ use actix_jwt_auth_middleware::use_jwt::UseJWTOnApp;
 use actix_jwt_auth_middleware::Authority;
 use actix_jwt_auth_middleware::TokenSigner;
 use actix_web::http::header;
-use actix_web::{middleware, web, App, HttpResponse, HttpServer};
+use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer};
 
 use chrono::Duration;
 use jwt_compact::alg::Hs256;
@@ -92,7 +92,7 @@ async fn main() -> Result<(), sqlx::Error> {
             ])
             .max_age(3600);
         App::new()
-            .wrap(middleware::Logger::default())
+            .wrap(Logger::default())
             .wrap(cors)
             .app_data(web::Data::new(pool.clone()))
             .service(
