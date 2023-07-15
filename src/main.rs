@@ -113,9 +113,9 @@ async fn main() -> Result<(), sqlx::Error> {
                                 web::scope("/delete")
                                     .service(delete_me)
                                     .service(delete_user),
-                            )
-                            .service(web::scope("/misc").service(get_app_info)),
+                            ),
                     )
+                    .service(web::scope("/misc").service(get_app_info))
                     .service(
                         web::scope("/torrent")
                             .service(web::scope("/download").service(get_torrent_download))
