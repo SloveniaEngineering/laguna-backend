@@ -68,10 +68,14 @@ Testing requires `sqlx-cli` to be installed.
 
 1. Run `scripts/test.sh` to run all tests.
 
+To delete test databases if tests failed use `scripts/dbdroptest.sh`.
+
 # Documentation
 
 Documentation is auto-generated on PR or push to `master`. 
 It can be accessed via GitHub Pages at https://sloveniaengineering.github.io/laguna-backend.
+
+To generate and open local documentation run `scripts/doc.sh`.
 
 How to write doc comments in Rust: https://doc.rust-lang.org/rustdoc/how-to-write-documentation.html.
 
