@@ -50,8 +50,8 @@ In the future we will add powershell scripts for Windows.
 - `crates/` contains Cargo Workspace members (sub-Crates) of the project.
   - `laguna-backend-internal/` is a crate that contains re-exports of all other `crates/*` and is used by `laguna-backend` (root crate) to access all other crates.
     - `laguna-backend-internal/src/lib.rs` re-exporting can be seen here.
-  - `laguna-backend-api/` contains API endpoints and DTOs (data-transfer-objects) used by [laguna-frontend](https://github.com/SloveniaEngineering/laguna-frontend).
-  - `laguna-backend-model/` contains DB models and relations.
+  - `laguna-backend-api/` contains API endpoints.
+  - `laguna-backend-model/` contains DB models, relations and DTOs (data-transfer-objects) used by [laguna-frontend](https://github.com/SloveniaEngineering/laguna-frontend).
   - `laguna-backend-middleware/` contains application logic from API to DB.
 - `migrations/` contains SQL migrations for DB.
 - `scripts/` contains Bash scripts for development, testing and deploy.
