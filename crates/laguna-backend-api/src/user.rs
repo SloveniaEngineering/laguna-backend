@@ -20,17 +20,17 @@ use crate::error::{user::UserError, APIError};
 /// HTTP/1.1 200 OK
 /// ```json
 /// {
-///     "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
-///     "username": "test",
-///     "first_login": "2023-07-10T12:42:32.396647Z",
-///     "last_login": "2023-07-10T12:43:19.216047Z",
-///     "avatar_url": null,
-///     "role": "Normie",
-///     "behaviour": "Lurker",
-///     "is_active": true,
-///     "has_verified_email": false,
-///     "is_history_private": true,
-///     "is_profile_private": true
+///   "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
+///   "username": "test",
+///   "first_login": "2023-07-10T12:42:32.396647Z",
+///   "last_login": "2023-07-10T12:43:19.216047Z",
+///   "avatar_url": null,
+///   "role": "Normie",
+///   "behaviour": "Lurker",
+///   "is_active": true,
+///   "has_verified_email": false,
+///   "is_history_private": true,
+///   "is_profile_private": true
 /// }
 /// ```
 #[get("/me")]

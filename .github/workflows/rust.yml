@@ -63,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build Docs
-        run: cargo doc --no-deps --document-private-items --workspace
+        run: cargo doc --no-deps --document-private-items --workspace --features dox
       - name: Doc Index Page Redirection
         run: echo '<meta http-equiv="refresh" content="1; url=laguna_backend/index.html">' > target/doc/index.html
       - name: Deploy Docs

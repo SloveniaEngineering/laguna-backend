@@ -37,3 +37,10 @@ sqlx-cli = { version = "0.7.0", default-features = false, features = [
     "rustls",
     "postgres",
 ] }
+
+[features]
+# Dummy feature until build scripts can detect cfg(doc).
+# See: https://github.com/rust-lang/cargo/issues/8811
+# See: https://github.com/rust-lang/cargo/issues/8944
+# It seems that it was discontinued.
+dox = []
