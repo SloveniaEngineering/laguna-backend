@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
 
-/// http://bittorrent.org/beps/bep_0052.html
-/// http://bittorrent.org/beps/bep_0023.html
-/// http://bittorrent.org/beps/bep_0007.html
+/// <http://bittorrent.org/beps/bep_0052.html>
+/// <http://bittorrent.org/beps/bep_0023.html>
+/// <http://bittorrent.org/beps/bep_0007.html>
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, sqlx::FromRow)]
 pub struct Torrent {
     pub id: Uuid,
