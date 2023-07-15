@@ -2,7 +2,7 @@
 pub const USERNAME_MAX_LEN: usize = 30;
 pub const USERNAME_MIN_LEN: usize = 6;
 
-pub const PASSWORD_MAX_LEN: usize = 30;
+pub const PASSWORD_MAX_LEN: usize = 100;
 pub const PASSWORD_MIN_LEN: usize = 6;
 
 pub const EMAIL_MAX_LEN: usize = 50;

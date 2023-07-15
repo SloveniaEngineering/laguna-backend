@@ -32,10 +32,8 @@ use crate::error::{torrent::TorrentError, APIError};
 ///    "uploaded_at": "2023-07-10T12:42:32.396647Z",
 ///    "uploaded_by": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
 ///    "modded_by": null,
-///    "payload": ""
 /// }
 /// ```
-/// This only gets you torrent metadata (stored in DB).
 #[get("/{id}")]
 pub async fn get_torrent(
     id: web::Path<Uuid>,
@@ -80,8 +78,6 @@ pub async fn get_torrent(
 ///   "modded_by": null,
 /// }
 /// ```
-/// Updates torrent metadata (not file).
-/// Certain fields are not allowed to be updated.
 /// Returns updated [`TorrentDTO`].
 #[patch("/")]
 pub async fn patch_torrent(
@@ -92,7 +88,7 @@ pub async fn patch_torrent(
         sqlx::query_as::<_, Torrent>(
             r#"
     UPDATE "Torrent" 
-    SET title = $1 file_name = $2, nfo = $3, modded_by = $4
+    SET title = $1, file_name = $2, nfo = $3, modded_by = $4
     WHERE id = $5
     RETURNING *
     "#,

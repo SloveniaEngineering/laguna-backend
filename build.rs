@@ -1,10 +1,10 @@
-use std::{fs, env};
+use std::{env, fs};
 
 fn main() {
     println!("cargo:rerun-if-changed=migrations");
     println!("cargo:rerun-if-changed=assets");
     if let Ok(_) = env::var("CARGO_FEATURE_DOX") {
-        println!("cargo:warning=Copying logos to documentation.");
+        println!("cargo:warning=Copying logos to documentation. CARGO_FEATURE_DOX is set.");
         fs::copy("assets/logo.png", "target/doc/logo.png")
             .expect("Failed to copy crate logo when building documentation.");
         fs::copy("assets/favicon.ico", "target/doc/favicon.ico")

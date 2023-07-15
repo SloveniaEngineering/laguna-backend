@@ -15,7 +15,7 @@ pub struct RegisterDTO {
         non_control_character,
         length(min = "USERNAME_MIN_LEN", max = "USERNAME_MAX_LEN")
     )]
-    #[dummy(faker = "6..30")]
+    #[dummy(faker = "USERNAME_MIN_LEN..USERNAME_MAX_LEN")]
     pub username: String,
     #[validate(
         non_control_character,
@@ -29,6 +29,6 @@ pub struct RegisterDTO {
         non_control_character,
         length(min = "PASSWORD_MIN_LEN", max = "PASSWORD_MAX_LEN")
     )]
-    #[dummy(faker = "Password(6..30)")]
+    #[dummy(faker = "Password(PASSWORD_MIN_LEN..PASSWORD_MAX_LEN)")]
     pub password: String,
 }

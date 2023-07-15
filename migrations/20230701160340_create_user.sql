@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS "User" (
     id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     username VARCHAR(30) UNIQUE NOT NULL,
     email VARCHAR(50) UNIQUE NOT NULL,
+    -- Unwritten upper limit: 100 characters.
     password TEXT NOT NULL,
     -- AKA. date joined
     first_login TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
