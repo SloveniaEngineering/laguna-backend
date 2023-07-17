@@ -1,0 +1,31 @@
+# Compose file for laguna-backend and postgres database
+
+services:
+  laguna:
+    image: laguna-backend
+    environment:
+     - DATABASE_URL=postgres://postgres:postgres@database:5432/laguna_db
+    # - RUST_LOG=info
+    # - HOST=0.0.0.0
+    # - PORT=6969
+    # - FRONTEND_HOST=0.0.0.0
+    # - FRONTEND_PORT=4200
+    ports:
+      - "6969:6969/tcp"
+    depends_on:
+      - database
+    networks:
+      - backend
+
+  database:
+    image: postgres:latest
+    volumes:
+      - ./data:/var/lib/postgresql
+    environment:
+     - POSTGRES_USER=postgres
+     - POSTGRES_PASSWORD=postgres
+    networks:
+      - backend
+
+networks:
+  backend:
