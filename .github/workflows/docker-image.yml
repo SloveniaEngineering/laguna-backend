@@ -25,5 +25,7 @@ jobs:
         
     - name: Build the Docker image
       run: |
-        docker build . --file Dockerfile --tag ghcr.io/sloveniaengineering/laguna-backend:${{github.sha}}
-        docker push ghcr.io/sloveniaengineering/laguna-backend:${{github.sha}}
+        docker build . --file Dockerfile --tag laguna-backend
+        docker tag laguna-backend ghcr.io/sloveniaengineering/laguna-backend:${{github.sha}}
+        docker tag laguna-backend ghcr.io/sloveniaengineering/laguna-backend:latest
+        docker push --all-tags ghcr.io/sloveniaengineering/laguna-backend
