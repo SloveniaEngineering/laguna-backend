@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Usage: Scripts/dbdroptest.sh
+# Usage: scripts/dbdroptest.sh
 # Usage with non-tty terminals: scripts/dbdroptest_fixtty.sh scripts/dbdroptest.sh
 
 # Drop all databases with _laguna_test_db in name.
