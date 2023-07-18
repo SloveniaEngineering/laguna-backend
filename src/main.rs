@@ -19,7 +19,7 @@ use laguna::api::misc::get_app_info;
 use laguna::api::register::register;
 
 use laguna::api::torrent::get_torrent;
-use laguna::api::torrent::get_torrents_with_filter;
+use laguna::api::torrent::patch_torrent;
 use laguna::api::torrent::put_torrent;
 use laguna::api::user::delete_me;
 use laguna::api::user::delete_user;
@@ -119,8 +119,8 @@ async fn main() -> Result<(), sqlx::Error> {
                     .service(web::scope("/misc").service(get_app_info))
                     .service(
                         web::scope("/torrent")
-                            .service(web::scope("/upload").service(put_torrent))
-                            .service(get_torrents_with_filter)
+                            .service(put_torrent)
+                            .service(patch_torrent)
                             .service(get_torrent),
                     ),
             )

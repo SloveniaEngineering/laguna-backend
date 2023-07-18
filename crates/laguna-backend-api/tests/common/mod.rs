@@ -21,7 +21,7 @@ use jwt_compact::{
     TimeOptions,
 };
 use laguna_backend_api::error::APIError;
-use laguna_backend_api::torrent::{get_torrent, get_torrents_with_filter, put_torrent};
+use laguna_backend_api::torrent::{get_torrent, patch_torrent, put_torrent};
 use laguna_backend_api::{
     login::login,
     register::register,
@@ -114,8 +114,8 @@ pub(crate) async fn setup() -> (
                     .service(
                         web::scope("/torrent")
                             .service(get_torrent)
-                            .service(get_torrents_with_filter)
-                            .service(web::scope("/upload").service(put_torrent)),
+                            .service(patch_torrent)
+                            .service(put_torrent),
                     ),
             )
             .default_service(web::to(|| HttpResponse::NotFound())),

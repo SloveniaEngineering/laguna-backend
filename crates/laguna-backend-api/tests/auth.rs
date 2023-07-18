@@ -57,10 +57,10 @@ async fn test_login() {
 #[actix_web::test]
 async fn test_login_with_wrong_username() {
     let (pool, database_url, app) = common::setup().await;
-    let (register_dto, user_dto, _, _) = common::new_user(&app).await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
     let login_res = common::login_user(
         LoginDTO {
-            username_or_email: user_dto.username[..user_dto.username.len() / 2].to_string(),
+            username_or_email: register_dto.username[..register_dto.username.len() / 2].to_string(),
             password: register_dto.password,
         },
         &app,
@@ -76,7 +76,7 @@ async fn test_login_with_wrong_email() {
     let (register_dto, _, _, _) = common::new_user(&app).await;
     let login_res = common::login_user(
         LoginDTO {
-            username_or_email: register_dto.email[..register_dto.email.len() - 1].to_string() + "x",
+            username_or_email: register_dto.email[..register_dto.email.len() / 2].to_string() + "x",
             password: register_dto.password,
         },
         &app,
@@ -93,7 +93,7 @@ async fn test_login_with_wrong_password() {
     let login_res = common::login_user(
         LoginDTO {
             username_or_email: user_dto.username,
-            password: register_dto.password[..register_dto.password.len() - 1].to_string() + "x",
+            password: register_dto.password[..register_dto.password.len() / 2].to_string() + "x",
         },
         &app,
     )
