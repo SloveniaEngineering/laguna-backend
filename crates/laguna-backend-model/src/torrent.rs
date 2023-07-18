@@ -9,7 +9,7 @@ use validator::Validate;
 pub enum SpeedLevel {
     Lowspeed,
     Mediumspeed,
-    Highspeed
+    Highspeed,
 }
 
 /// <http://bittorrent.org/beps/bep_0052.html>

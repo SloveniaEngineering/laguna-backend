@@ -39,7 +39,6 @@ env_logger = "*"
 actix-files = "0.6.2"
 actix-multipart = "*"
 serde = { version = "1.0", features = ["derive"]}
-fake = "2.6.1"
 validator = { version = "0.16", features = ["derive"] }
 actix-web-validator = "5.0.1"
 futures = "*"
@@ -48,11 +47,15 @@ serde_bencode = "0.2.3"
 [dev-dependencies]
 actix-http = "3.3.1"
 serde_json = "1"
+fake = { version = "2.6.1" }
+# Explanation of "testx" workaround: 
+# See: https://github.com/cksac/fake-rs/issues/53
+laguna-backend-model = { path = "../laguna-backend-model", features = ["testx"] }
 
 # CLI for sqlx.
 # More: https://github.com/launchbadge/sqlx/blob/main/sqlx-cli/README.md
-sqlx-cli = { version = "0.7.0", default-features = false, features = [
-    "rustls",
-    "postgres",
-] }
+# sqlx-cli = { version = "0.7.0", default-features = false, features = [
+#    "rustls",
+#    "postgres",
+# ] }
 

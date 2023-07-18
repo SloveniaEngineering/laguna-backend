@@ -4,7 +4,8 @@ mod common;
 
 use actix_web::http::StatusCode;
 
-use fake::{Fake, Faker};
+use fake::Fake;
+use fake::Faker;
 
 use laguna_backend_model::{login::LoginDTO, register::RegisterDTO};
 
@@ -70,7 +71,7 @@ async fn test_login_with_wrong_password() {
     let login_res = common::login_user(
         LoginDTO {
             username_or_email: user_dto.username,
-            password: register_dto.password + "x",
+            password: register_dto.password[..register_dto.password.len() - 1].to_string() + "x",
         },
         &app,
     )
@@ -163,7 +164,7 @@ async fn test_register_username_with_control_characters() {
 async fn test_register_email_with_control_characters() {
     let (pool, database_url, app) = common::setup().await;
     let mut register_dto = Faker.fake::<RegisterDTO>();
-    register_dto.email = String::from("a\nb\t\r");
+    register_dto.email = String::from("a\nb\t\r@x.y");
     let register_res = common::register_user(register_dto, &app).await;
     assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
     common::teardown(pool, database_url).await;
