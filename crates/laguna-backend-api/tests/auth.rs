@@ -26,6 +26,28 @@ async fn test_register_twice() {
 }
 
 #[actix_web::test]
+async fn test_register_with_existing_username() {
+    let (pool, database_url, app) = common::setup().await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let mut register_dto2 = Faker.fake::<RegisterDTO>();
+    register_dto2.username = register_dto.username;
+    let register_res = common::register_user(register_dto2, &app).await;
+    assert_eq!(register_res.status(), StatusCode::ALREADY_REPORTED);
+    common::teardown(pool, database_url).await;
+}
+
+#[actix_web::test]
+async fn test_register_with_existing_email() {
+    let (pool, database_url, app) = common::setup().await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let mut register_dto2 = Faker.fake::<RegisterDTO>();
+    register_dto2.email = register_dto.email;
+    let register_res = common::register_user(register_dto2, &app).await;
+    assert_eq!(register_res.status(), StatusCode::ALREADY_REPORTED);
+    common::teardown(pool, database_url).await;
+}
+
+#[actix_web::test]
 async fn test_login() {
     let (pool, database_url, app) = common::setup().await;
     let (_, _, _, _) = common::new_user(&app).await;
@@ -179,3 +201,4 @@ async fn test_register_password_with_control_characters() {
     assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
     common::teardown(pool, database_url).await;
 }
+
