@@ -25,6 +25,18 @@ impl From<io::Error> for APIError {
     }
 }
 
+impl From<torrent::TorrentError> for APIError {
+    fn from(torrent_error: torrent::TorrentError) -> Self {
+        Self::TorrentError(torrent_error)
+    }
+}
+
+impl From<torrent::BencodeError> for APIError {
+    fn from(bencode_error: torrent::BencodeError) -> Self {
+        Self::TorrentError(bencode_error.into())
+    }
+}
+
 impl From<sqlx::Error> for APIError {
     fn from(value: sqlx::Error) -> Self {
         Self::SqlxError(value)

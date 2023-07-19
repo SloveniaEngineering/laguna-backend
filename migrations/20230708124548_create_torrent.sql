@@ -7,7 +7,7 @@ CREATE TYPE SpeedLevel AS ENUM ('Lowspeed', 'Mediumspeed', 'Highspeed');
 CREATE TABLE IF NOT EXISTS "Torrent" (
     id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     announce_url VARCHAR(255) NOT NULL,
-    size INTEGER NOT NULL,
+    length INTEGER NOT NULL,
     title VARCHAR(100) NOT NULL,
     file_name VARCHAR(100) NOT NULL,
     -- https://en.wikipedia.org/wiki/.nfo

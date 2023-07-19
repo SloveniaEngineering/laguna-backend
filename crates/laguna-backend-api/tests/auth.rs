@@ -201,4 +201,3 @@ async fn test_register_password_with_control_characters() {
     assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
     common::teardown(pool, database_url).await;
 }
-

@@ -446,6 +446,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "atomic"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c59bdb34bc650a32731b31bd8f0829cc15d24a708ee31559e0bb34f2bc320cba"
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -930,9 +936,12 @@ version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0a44c765350db469b774425ff1c833890b16ceb9612fb5d7c4bbdf4a1b55f876"
 dependencies = [
+ "chrono",
  "dummy",
+ "http",
  "rand",
  "unidecode",
+ "uuid",
 ]
 
 [[package]]
@@ -1469,6 +1478,7 @@ dependencies = [
  "log",
  "rand",
  "serde",
+ "serde_bencode",
  "serde_bytes",
  "sha2",
  "sqlx",
@@ -2092,6 +2102,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "sha1_smol"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae1a47186c03a32177042e55dbc5fd5aee900b8e0069a8d70fba96a9375cd012"
+
+[[package]]
 name = "sha2"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2604,9 +2620,12 @@ version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "79daa5ed5740825c40b389c5e50312b9c86df53fccd33f281df655642b43869d"
 dependencies = [
+ "atomic",
  "getrandom",
+ "md-5",
  "rand",
  "serde",
+ "sha1_smol",
 ]
 
 [[package]]

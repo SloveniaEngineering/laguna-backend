@@ -35,9 +35,10 @@ serde_bytes = "0.11.11"
 chrono = { version = "*", features = ["serde"] } 
 validator = { version = "0.16", features = ["derive", "unic"] }
 actix-web-validator = "5.0.1"
+serde_bencode = "0.2.3"
 
 # Mark as optional when we don't use feature "testx".
-fake = { version = "2.6", features=["derive"], optional = true }
+fake = { version = "2.6", features=["derive", "uuid", "chrono", "http"], optional = true }
 rand = { version = "*", optional = true }
 
 [features]
