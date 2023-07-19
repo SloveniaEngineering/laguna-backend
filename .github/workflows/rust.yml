@@ -64,6 +64,9 @@ jobs:
     if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Docs
         run: cargo doc --no-deps --document-private-items --workspace --features dox
       - name: Doc Index Page Redirection
