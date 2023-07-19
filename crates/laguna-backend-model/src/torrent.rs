@@ -21,7 +21,7 @@ pub enum SpeedLevel {
 pub struct Torrent {
     pub id: Uuid,
     pub announce_url: String,
-    pub size: i64,
+    pub length: i64,
     pub title: String,
     pub file_name: String,
     pub nfo: Option<String>,
@@ -40,7 +40,7 @@ pub struct Torrent {
 pub struct TorrentDTO {
     pub id: Uuid,
     pub announce_url: String,
-    pub size: i64,
+    pub length: i64,
     #[validate(
         non_control_character,
         length(min = "TORRENT_TITLE_MIN_LEN", max = "TORRENT_TITLE_MAX_LEN")
@@ -68,7 +68,7 @@ impl From<Torrent> for TorrentDTO {
         Self {
             id: torrent.id,
             announce_url: torrent.announce_url,
-            size: torrent.size,
+            length: torrent.length,
             title: torrent.title,
             file_name: torrent.file_name,
             nfo: torrent.nfo,

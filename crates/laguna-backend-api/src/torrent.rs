@@ -30,15 +30,24 @@ use crate::error::{torrent::TorrentError, APIError};
 /// HTTP/1.1 200 OK
 /// ```json
 /// {
-///    "title": "test",
-///    "file_name": "test_upload",
-///    "nfo": null,
-///    "info_hash": "aae8b4b6a0b9b6b5b4b6b5b4b6b5b4b6b5b4b6b5",
-///    "uploaded_at": "2023-07-10T12:42:32.396647Z",
-///    "uploaded_by": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
-///    "modded_by": null,
+///   "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
+///   "announce_url": "http://127.0.0.1:6969/api/torrent/announce",
+///   "length": 100,
+///   "title": "TEST (2020)",
+///   "file_name": "test2020.txt",
+///   "nfo": null,
+///   "leech_count": 0,
+///   "seed_count": 0,
+///   "completed_count": 0,
+///   "speedlevel": "Lowspeed",
+///   "info_hash": "aae8b4b6a0b9b6b5b4b6b5b4b6b5b4b6b5b4b6b5",
+///   "uploaded_at": "2023-07-10T12:42:32.396647Z",
+///   "uploaded_by": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
+///   "modded_at": null,
+///   "modded_by": null
 /// }
 /// ```
+/// For scheme see [`TorrentDTO`].
 #[get("/{id}")]
 pub async fn get_torrent(
     id: web::Path<Uuid>,
@@ -153,10 +162,11 @@ pub async fn put_torrent(
         }
         sqlx::query(
             r#"
-            INSERT INTO "Torrent" (title, length, file_name, nfo, info_hash, uploaded_at, uploaded_by, speedlevel)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO "Torrent" (announce_url, title, length, file_name, nfo, info_hash, uploaded_at, uploaded_by, speedlevel)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
+        .bind(&torrent_put_dto.announce_url.unwrap_or_else(|| "".to_string())) // TODO: What to do if no announce-url is here?
         .bind(&torrent_put_dto.title)
         .bind(&torrent_put_dto.info.length)
         .bind(&torrent_put_dto.info.name)
