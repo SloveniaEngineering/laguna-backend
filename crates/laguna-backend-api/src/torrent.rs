@@ -135,6 +135,7 @@ pub async fn patch_torrent(
 /// 1. On upload success: HTTP/1.1 200 OK
 /// 2. If torrent already exists: HTTP/1.1 208 Already Reported
 /// 3. On invalid torrent format or no content-type: HTTP/1.1 400 Bad Request
+/// 4. On non-multipart (or corrupt multipart form-data): HTTP/1.1 422 Unprocessable Entity
 #[put("/")]
 pub async fn put_torrent(
     mut payload: Multipart,
