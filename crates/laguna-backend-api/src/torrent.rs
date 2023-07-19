@@ -153,11 +153,12 @@ pub async fn put_torrent(
         }
         sqlx::query(
             r#"
-            INSERT INTO "Torrent" (title, file_name, nfo, info_hash, uploaded_at, uploaded_by, speedlevel)
+            INSERT INTO "Torrent" (title, length, file_name, nfo, info_hash, uploaded_at, uploaded_by, speedlevel)
             VALUES ($1, $2, $3, $4, $5, $6)
             "#,
         )
         .bind(&torrent_put_dto.title)
+        .bind(&torrent_put_dto.info.length)
         .bind(&torrent_put_dto.info.name)
         .bind(&torrent_put_dto.nfo)
         .bind(format!("{:x}", info_hash))
