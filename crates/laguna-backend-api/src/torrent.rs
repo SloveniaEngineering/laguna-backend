@@ -122,7 +122,6 @@ pub async fn patch_torrent(
 /// # Example
 /// ## Request
 /// ```sh
-/// ```
 /// curl -X PUT \
 ///      -i 'http://127.0.0.1:6969/api/torrent/' \
 ///      -H 'X-Access-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODk3NjY1NjksImlhdCI6MTY4OTc2NjUwOSwiaWQiOiI5NGU3MWE3My1mNDkyLTQwZTYtOTM1YS1mN2RiNjFlMjI1MTciLCJ1c2VybmFtZSI6InRlc3R4eHgiLCJmaXJzdF9sb2dpbiI6IjIwMjMtMDctMTlUMTE6MzQ6MzYuMDMyMjc5WiIsImxhc3RfbG9naW4iOiIyMDIzLTA3LTE5VDExOjM1OjA5LjIzOTcyN1oiLCJhdmF0YXJfdXJsIjpudWxsLCJyb2xlIjoiTm9ybWllIiwiYmVoYXZpb3VyIjoiTHVya2VyIiwiaXNfYWN0aXZlIjp0cnVlLCJoYXNfdmVyaWZpZWRfZW1haWwiOmZhbHNlLCJpc19oaXN0b3J5X3ByaXZhdGUiOnRydWUsImlzX3Byb2ZpbGVfcHJpdmF0ZSI6dHJ1ZX0.4PsBEXr3Zvnop2ztqt1rdnG1CXxIPnB-RYeGU74hrhw' \
