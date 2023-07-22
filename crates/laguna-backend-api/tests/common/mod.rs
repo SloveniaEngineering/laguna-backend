@@ -225,3 +225,14 @@ pub(crate) async fn as_logged_in(
         .append_header((REFRESH_TOKEN_HEADER_NAME, refresh_token));
     app.call(req.to_request()).await
 }
+
+// Replaces the last character of the string with its successor, guaranteeing that the new string is different from the original.
+// We need this because we have tests (using fake data) that require different strings than original which Faker cannot guarantee.
+// TODO: Find a better way
+pub(crate) fn different_string(string: String) -> String {
+    string[..string.len() - 1].to_owned()
+        + char::from_u32(string.chars().last().unwrap() as u32 + 1)
+            .unwrap()
+            .to_string()
+            .as_str()
+}
