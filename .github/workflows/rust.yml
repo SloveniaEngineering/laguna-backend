@@ -78,6 +78,8 @@ jobs:
         uses:                   actions/checkout@v3
         with:
           submodules: 'true'
+      - name: Install sqlx-cli
+        run: cargo install --force sqlx-cli --no-default-features --features rustls,postgres
       - name:                   Generate code coverage
         run: |
           DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/laguna_cov_db cargo tarpaulin --all-features --workspace --timeout 120 --out Xml
