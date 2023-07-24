@@ -64,6 +64,8 @@ async fn main() -> Result<(), sqlx::Error> {
                 TokenSigner::new()
                     .signing_key(key.clone())
                     .algorithm(Hs256)
+                    .access_token_lifetime(Duration::days(1))
+                    .refresh_token_lifetime(Duration::days(3))
                     .time_options(TimeOptions::from_leeway(Duration::days(1)))
                     .build()
                     .expect("Cannot create token signer"),
