@@ -56,7 +56,7 @@ jobs:
       run: cargo install --force sqlx-cli --no-default-features --features rustls,postgres
     - name: Check compile time queries
       run: |
-        cargo scripts/dbsetup.sh laguna_db_check_queries
+        scripts/dbsetup.sh laguna_db_check_queries
         DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/laguna_db_check_queries cargo sqlx prepare --check -- --workspace
         sqlx database --drop laguna_db_check_queries
     - name: Setup database and run tests
