@@ -38,7 +38,7 @@ pub async fn register(
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
     let fetched_user =
-        sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE username = $1 AND email = $2")
+        sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE username = $1 OR email = $2")
             .bind(&register_dto.username)
             .bind(&register_dto.email)
             .fetch_optional(pool.get_ref())
