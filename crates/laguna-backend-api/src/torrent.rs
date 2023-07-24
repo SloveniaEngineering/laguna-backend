@@ -83,12 +83,19 @@ pub async fn get_torrent(
 /// ```json
 /// {
 ///   "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
-///   "title": "TEST (2020)",
-///   "file_name": "test_upload",
+///   "announce_url": "http://127.0.0.1:6969/api/torrent/announce",
+///   "length": 100,
+///   "title": "Test, the movie (2020)",
+///   "file_name": "test_upload.mp4",
 ///   "nfo": null,
+///   "leech_count": 0,
+///   "seed_count": 0,
+///   "completed_count": 0,
+///   "speedlevel": "Lowspeed",
 ///   "info_hash": "aae8b4b6a0b9b6b5b4b6b5b4b6b5b4b6b5b4b6b5",
 ///   "uploaded_at": "2023-07-10T12:42:32.396647Z",
 ///   "uploaded_by": "ffff45ac-1f4d-46f1-b2e3-87476dc462e6",
+///   "modded_at": null,
 ///   "modded_by": null,
 /// }
 /// ```
@@ -98,24 +105,21 @@ pub async fn patch_torrent(
     torrent_dto: Json<TorrentPatchDTO>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-    let torrent_dto = TorrentDTO::from(
-        sqlx::query_as::<_, Torrent>(
-            r#"
+    let torrent_dto = sqlx::query_as::<_, Torrent>(
+        r#"
     UPDATE "Torrent" 
-    SET title = $1, file_name = $2, nfo = $3, modded_by = $4
+    SET title = $1, file_name = $2, nfo = $3
     WHERE id = $5
     RETURNING *
     "#,
-        )
-        .bind(&torrent_dto.file_name)
-        .bind(&torrent_dto.nfo)
-        .bind(&torrent_dto.modded_by)
-        .bind(&torrent_dto.title)
-        .bind(&torrent_dto.id)
-        .fetch_one(pool.get_ref())
-        .await?,
-    );
-    Ok(HttpResponse::Ok().json(torrent_dto))
+    )
+    .bind(&torrent_dto.title)
+    .bind(&torrent_dto.file_name)
+    .bind(&torrent_dto.nfo)
+    .bind(&torrent_dto.id)
+    .fetch_one(pool.get_ref())
+    .await?;
+    Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent_dto)))
 }
 
 /// `PUT /api/torrent/`
@@ -139,6 +143,8 @@ pub async fn patch_torrent(
 pub async fn put_torrent(
     mut payload: Multipart,
     pool: web::Data<PgPool>,
+    host: web::Data<String>,
+    port: web::Data<u16>,
     user: UserDTO,
 ) -> Result<HttpResponse, APIError> {
     if let Some(mut field) = payload.try_next().await? {
@@ -166,7 +172,7 @@ pub async fn put_torrent(
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
         )
-        .bind(&torrent_put_dto.announce_url.unwrap_or_else(|| "".to_string())) // TODO: What to do if no announce-url is here?
+        .bind(&torrent_put_dto.announce_url.unwrap_or_else(|| format!("{}:{}/api/torrent/announce", host.into_inner(), port.into_inner()))) 
         .bind(&torrent_put_dto.title)
         .bind(&torrent_put_dto.info.length)
         .bind(&torrent_put_dto.info.name)

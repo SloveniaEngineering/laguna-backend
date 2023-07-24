@@ -1,16 +1,15 @@
 use actix_web::body::BoxBody;
 use actix_web::http::StatusCode;
-use actix_web::ResponseError;
-use actix_web::{http::header::ContentType, HttpResponse};
+use actix_web::{http::header::ContentType, HttpResponse, ResponseError};
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Display, Serialize, Deserialize)]
-pub enum UserError {
+pub enum PeerError {
     DoesNotExist,
 }
 
-impl ResponseError for UserError {
+impl ResponseError for PeerError {
     fn error_response(&self) -> HttpResponse<BoxBody> {
         HttpResponse::build(self.status_code())
             .content_type(ContentType::plaintext())

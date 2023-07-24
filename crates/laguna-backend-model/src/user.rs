@@ -1,3 +1,4 @@
+use crate::behaviour::Behaviour;
 use crate::consts::USERNAME_MAX_LEN;
 use crate::consts::USERNAME_MIN_LEN;
 use actix_jwt_auth_middleware::FromRequest;
@@ -12,17 +13,6 @@ pub enum Role {
     Verified,
     Mod,
     Admin,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, sqlx::Type)]
-pub enum Behaviour {
-    Lurker,
-    Downloader,
-    Freeleecher,
-    Leech,
-    Seed,
-    Choked,
-    Uploader,
 }
 
 /// User DB object.

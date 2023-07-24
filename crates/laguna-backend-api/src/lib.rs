@@ -5,6 +5,7 @@
 pub mod error;
 pub mod login;
 pub mod misc;
+pub mod peer;
 pub mod register;
 pub mod torrent;
 pub mod user;

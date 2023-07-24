@@ -1,6 +1,7 @@
 use crate::consts::{TORRENT_FILENAME_MAX_LEN, TORRENT_FILENAME_MIN_LEN};
 use crate::consts::{TORRENT_TITLE_MAX_LEN, TORRENT_TITLE_MIN_LEN};
 
+use crate::speedlevel::SpeedLevel;
 use chrono::{DateTime, Utc};
 #[cfg(feature = "testx")]
 use fake::Dummy;
@@ -8,14 +9,6 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use uuid::Uuid;
 use validator::Validate;
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, sqlx::Type)]
-#[cfg_attr(feature = "testx", derive(Dummy))]
-pub enum SpeedLevel {
-    Lowspeed,
-    Mediumspeed,
-    Highspeed,
-}
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, sqlx::FromRow)]
 pub struct Torrent {
@@ -122,10 +115,10 @@ pub struct TorrentPutDTO {
     pub created_by: Option<String>,
     // info is set by torrent client
     pub info: TorrentPutInfoDTO,
-    // url-list is set by torrent client
+    // url-list is set by torrent client (this is webtorrent specific)
     #[serde(rename = "url-list")]
     pub url_list: Option<Vec<String>>,
-    // website is set by torrent client
+    // website is set by torrent client (this is webtorrent specific)
     pub website: Option<String>,
     // nodes is set by torrent client
     pub nodes: Option<Vec<Node>>,
@@ -182,5 +175,4 @@ pub struct TorrentPatchDTO {
     #[validate(length(min = "TORRENT_FILENAME_MIN_LEN", max = "TORRENT_FILENAME_MAX_LEN"))]
     pub file_name: String,
     pub nfo: Option<String>,
-    pub modded_by: Option<Uuid>,
 }

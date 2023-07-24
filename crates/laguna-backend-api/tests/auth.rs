@@ -110,7 +110,7 @@ async fn test_login_with_wrong_password() {
 async fn test_register_password_too_long() {
     let (pool, database_url, app) = common::setup().await;
     let mut register_dto = Faker.fake::<RegisterDTO>();
-    register_dto.password = String::from("a".repeat(PASSWORD_MAX_LEN+1));
+    register_dto.password = String::from("a".repeat(PASSWORD_MAX_LEN + 1));
     let register_res = common::register_user(register_dto, &app).await;
     assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
     common::teardown(pool, database_url).await;
@@ -120,7 +120,7 @@ async fn test_register_password_too_long() {
 async fn test_register_password_too_short() {
     let (pool, database_url, app) = common::setup().await;
     let mut register_dto = Faker.fake::<RegisterDTO>();
-    register_dto.password = String::from("a".repeat(PASSWORD_MIN_LEN-1));
+    register_dto.password = String::from("a".repeat(PASSWORD_MIN_LEN - 1));
     let register_res = common::register_user(register_dto, &app).await;
     assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
     common::teardown(pool, database_url).await;
@@ -130,7 +130,7 @@ async fn test_register_password_too_short() {
 async fn test_register_username_too_long() {
     let (pool, database_url, app) = common::setup().await;
     let mut register_dto = Faker.fake::<RegisterDTO>();
-    register_dto.username = String::from("a".repeat(USERNAME_MAX_LEN+1));
+    register_dto.username = String::from("a".repeat(USERNAME_MAX_LEN + 1));
     let register_res = common::register_user(register_dto, &app).await;
     assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
     common::teardown(pool, database_url).await;
@@ -140,7 +140,7 @@ async fn test_register_username_too_long() {
 async fn test_register_username_too_short() {
     let (pool, database_url, app) = common::setup().await;
     let mut register_dto = Faker.fake::<RegisterDTO>();
-    register_dto.username = String::from("a".repeat(USERNAME_MIN_LEN-1));
+    register_dto.username = String::from("a".repeat(USERNAME_MIN_LEN - 1));
     let register_res = common::register_user(register_dto, &app).await;
     assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
     common::teardown(pool, database_url).await;
@@ -150,7 +150,7 @@ async fn test_register_username_too_short() {
 async fn test_register_email_too_long() {
     let (pool, database_url, app) = common::setup().await;
     let mut register_dto = Faker.fake::<RegisterDTO>();
-    register_dto.email = register_dto.email + &"a".repeat(EMAIL_MAX_LEN+1);
+    register_dto.email = register_dto.email + &"a".repeat(EMAIL_MAX_LEN + 1);
     let register_res = common::register_user(register_dto, &app).await;
     assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
     common::teardown(pool, database_url).await;
@@ -160,7 +160,7 @@ async fn test_register_email_too_long() {
 async fn test_register_email_too_short() {
     let (pool, database_url, app) = common::setup().await;
     let mut register_dto = Faker.fake::<RegisterDTO>();
-    register_dto.email = String::from("a".repeat(EMAIL_MIN_LEN-1));
+    register_dto.email = String::from("a".repeat(EMAIL_MIN_LEN - 1));
     let register_res = common::register_user(register_dto, &app).await;
     assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
     common::teardown(pool, database_url).await;

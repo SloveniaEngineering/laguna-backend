@@ -1,3 +1,4 @@
+pub mod peer;
 pub mod torrent;
 pub mod user;
 
@@ -17,6 +18,7 @@ pub enum APIError {
     UserError(user::UserError),
     MultipartError(MultipartError),
     TorrentError(torrent::TorrentError),
+    PeerError(peer::PeerError),
 }
 
 impl From<io::Error> for APIError {
@@ -28,6 +30,18 @@ impl From<io::Error> for APIError {
 impl From<torrent::TorrentError> for APIError {
     fn from(torrent_error: torrent::TorrentError) -> Self {
         Self::TorrentError(torrent_error)
+    }
+}
+
+impl From<user::UserError> for APIError {
+    fn from(user_error: user::UserError) -> Self {
+        Self::UserError(user_error)
+    }
+}
+
+impl From<peer::PeerError> for APIError {
+    fn from(peer_error: peer::PeerError) -> Self {
+        Self::PeerError(peer_error.into())
     }
 }
 
@@ -59,6 +73,7 @@ impl ResponseError for APIError {
     fn error_response(&self) -> HttpResponse<BoxBody> {
         match self {
             Self::TorrentError(torrent_error) => torrent_error.error_response(),
+            Self::PeerError(peer_error) => peer_error.error_response(),
             Self::UserError(user_error) => user_error.error_response(),
             Self::AuthError(auth_error) => auth_error.error_response(),
             Self::IOError(io_error) => HttpResponse::build(self.status_code())
@@ -76,6 +91,7 @@ impl ResponseError for APIError {
     fn status_code(&self) -> StatusCode {
         match self {
             Self::TorrentError(torrent_error) => torrent_error.status_code(),
+            Self::PeerError(peer_error) => peer_error.status_code(),
             Self::UserError(user_error) => user_error.status_code(),
             Self::AuthError(auth_error) => auth_error.status_code(),
             Self::IOError(_) => StatusCode::INTERNAL_SERVER_ERROR,

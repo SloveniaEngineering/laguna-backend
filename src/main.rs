@@ -54,6 +54,9 @@ async fn main() -> Result<(), sqlx::Error> {
         .parse::<u16>()
         .expect("PORT invalid");
 
+    let host_clone = host.clone();
+    let pool_clone = pool.clone();
+
     HttpServer::new(move || {
         let authority = Authority::<UserDTO, Hs256, _, _>::new()
             .refresh_authorizer(|| async move { Ok(()) })
@@ -98,6 +101,8 @@ async fn main() -> Result<(), sqlx::Error> {
             .wrap(Logger::default())
             .wrap(cors)
             .app_data(web::Data::new(pool.clone()))
+            .app_data(web::Data::new(host.clone()))
+            .app_data(web::Data::new(port))
             .service(
                 web::scope("/api/user/auth")
                     .service(register)
@@ -126,14 +131,13 @@ async fn main() -> Result<(), sqlx::Error> {
             )
             .default_service(web::to(|| HttpResponse::NotFound()))
     })
-    .bind((host, port))
+    .bind((host_clone, port))
     .expect("Cannot bind address")
     .run()
     .await
     .expect("Cannot start server");
 
-    // Is this necessary?
-    // pool.close().await;
+    pool_clone.close().await;
 
     Ok(())
 }
