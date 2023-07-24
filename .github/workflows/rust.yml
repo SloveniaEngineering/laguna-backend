@@ -58,7 +58,7 @@ jobs:
       run: |
         scripts/dbsetup.sh laguna_db_check_queries
         DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/laguna_db_check_queries cargo sqlx prepare --check -- --workspace
-        sqlx database --drop laguna_db_check_queries
+        DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/laguna_db_check_queries sqlx database drop
     - name: Setup database and run tests
       run: scripts/test.sh
   
