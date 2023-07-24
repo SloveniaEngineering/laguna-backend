@@ -105,6 +105,13 @@ Here is another way to do it (without dropping DB):
 It is also possible to create "reversible" migrations with `sqlx migrate add -r <migration_name>`
 which will create an `up` and `down` migration files and can be reverted with `sqlx migrate revert`.
 
+# Changing queries and using prepared statements
+
+Always prefer compile-time query to runtime query, so that errors are caught at compile time.
+
+* If a compile time (ie. `query_*!`) is changed (even if just spacing is changed (because of underlying hash of query)) it needs to be re-prepared with `scripts/prepare.sh`. This generates `sqlx-data.json` in workspace root.
+* With runtime queries you don't have to do anything.
+
 # Running
 
 1. Run `scripts/dev.sh` to run the server in development mode. You can override the following environment variables:

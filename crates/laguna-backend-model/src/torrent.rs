@@ -14,13 +14,13 @@ use validator::Validate;
 pub struct Torrent {
     pub id: Uuid,
     pub announce_url: String,
-    pub length: i64,
+    pub length: i32,
     pub title: String,
     pub file_name: String,
     pub nfo: Option<String>,
-    pub leech_count: i64,
-    pub seed_count: i64,
-    pub completed_count: i64,
+    pub leech_count: i32,
+    pub seed_count: i32,
+    pub completed_count: i32,
     pub speedlevel: SpeedLevel,
     pub info_hash: String,
     pub uploaded_at: DateTime<Utc>,
@@ -33,7 +33,7 @@ pub struct Torrent {
 pub struct TorrentDTO {
     pub id: Uuid,
     pub announce_url: String,
-    pub length: i64,
+    pub length: i32,
     #[validate(
         non_control_character,
         length(min = "TORRENT_TITLE_MIN_LEN", max = "TORRENT_TITLE_MAX_LEN")
@@ -45,9 +45,9 @@ pub struct TorrentDTO {
     )]
     pub file_name: String,
     pub nfo: Option<String>,
-    pub leech_count: i64,
-    pub seed_count: i64,
-    pub completed_count: i64,
+    pub leech_count: i32,
+    pub seed_count: i32,
+    pub completed_count: i32,
     pub speedlevel: SpeedLevel,
     pub info_hash: String,
     pub uploaded_at: DateTime<Utc>,
@@ -109,7 +109,7 @@ pub struct TorrentPutDTO {
     pub encoding: Option<String>,
     // creation date is set by torrent client
     #[serde(rename = "creation date")]
-    pub creation_date: i64,
+    pub creation_date: i32,
     // created by is set by torrent client
     #[serde(rename = "created by")]
     pub created_by: Option<String>,
@@ -130,13 +130,13 @@ pub struct TorrentPutDTO {
 // #[cfg_attr(feature = "testx", derive(Dummy))]
 pub struct TorrentPutInfoDTO {
     #[serde(rename = "file-duration")]
-    pub file_duration: Option<Vec<i64>>,
+    pub file_duration: Option<Vec<i32>>,
     #[serde(rename = "file-media")]
-    pub file_media: Option<Vec<i64>>,
-    pub length: i64,
+    pub file_media: Option<Vec<i32>>,
+    pub length: i32,
     pub name: String,
     #[serde(rename = "piece length")]
-    pub piece_length: i64,
+    pub piece_length: i32,
     #[serde(rename = "pieces")]
     pub pieces: ByteBuf,
     #[serde(rename = "root hash")]
@@ -150,21 +150,21 @@ pub struct TorrentPutInfoDTO {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "testx", derive(Dummy))]
 pub struct File {
-    pub length: i64,
+    pub length: i32,
     pub path: Vec<String>,
     pub md5sum: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-pub struct Node(String, i64);
+pub struct Node(String, i32);
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "testx", derive(Dummy))]
 pub struct TorrentPutInfoProfileDTO {
     pub acodec: Option<String>,
-    pub height: i64,
+    pub height: i32,
     pub vcodec: Option<String>,
-    pub width: i64,
+    pub width: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Validate)]

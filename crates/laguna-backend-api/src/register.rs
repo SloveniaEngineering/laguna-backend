@@ -31,26 +31,43 @@ pub async fn register(
     register_dto: Json<RegisterDTO>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-    let fetched_user =
-        sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE username = $1 OR email = $2")
-            .bind(&register_dto.username)
-            .bind(&register_dto.email)
-            .fetch_optional(pool.get_ref())
-            .await?;
+    let fetched_user = sqlx::query_as!(
+        User,
+        r#"
+            SELECT id,
+                   username,
+                   email,
+                   password,
+                   first_login,
+                   last_login,
+                   avatar_url,
+                   role AS "role: _",
+                   behaviour AS "behaviour: _",
+                   is_active,
+                   has_verified_email,
+                   is_history_private,
+                   is_profile_private
+            FROM "User" 
+            WHERE username = $1 OR email = $2"#,
+        register_dto.username,
+        register_dto.email
+    )
+    .fetch_optional(pool.get_ref())
+    .await?;
 
     if let Some(_) = fetched_user {
         return Ok(HttpResponse::AlreadyReported().finish());
     }
     // TODO: Verify email
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO "User" (username, email, password)
         VALUES ($1, $2, $3);
     "#,
+        register_dto.username,
+        register_dto.email,
+        format!("{:x}", Sha256::digest(&register_dto.password))
     )
-    .bind(&register_dto.username)
-    .bind(&register_dto.email)
-    .bind(format!("{:x}", Sha256::digest(&register_dto.password)))
     .execute(pool.get_ref())
     .await?;
     Ok(HttpResponse::Ok().finish())

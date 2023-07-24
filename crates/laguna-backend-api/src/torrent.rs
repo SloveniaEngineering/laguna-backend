@@ -53,11 +53,31 @@ pub async fn get_torrent(
     id: web::Path<Uuid>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-    let torrent = sqlx::query_as::<_, Torrent>("SELECT * FROM \"Torrent\" WHERE id = $1")
-        .bind(id.into_inner())
-        .fetch_optional(pool.get_ref())
-        .await?
-        .ok_or_else(|| TorrentError::DoesNotExist)?;
+    let torrent = sqlx::query_as!(
+        Torrent,
+        r#"
+            SELECT id,
+                   announce_url,
+                   length,
+                   title,
+                   file_name,
+                   nfo,
+                   leech_count,
+                   seed_count,
+                   completed_count,
+                   speedlevel AS "speedlevel: _",
+                   info_hash,
+                   uploaded_at,
+                   uploaded_by,
+                   modded_at,
+                   modded_by
+            FROM "Torrent" 
+            WHERE id = $1"#,
+        id.into_inner()
+    )
+    .fetch_optional(pool.get_ref())
+    .await?
+    .ok_or_else(|| TorrentError::DoesNotExist)?;
     Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent)))
 }
 
@@ -105,21 +125,36 @@ pub async fn patch_torrent(
     torrent_dto: Json<TorrentPatchDTO>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-    let torrent_dto = sqlx::query_as::<_, Torrent>(
+    let torrent = sqlx::query_as!(
+        Torrent,
         r#"
-    UPDATE "Torrent" 
-    SET title = $1, file_name = $2, nfo = $3
-    WHERE id = $5
-    RETURNING *
-    "#,
+            UPDATE "Torrent" 
+            SET title = $1, file_name = $2, nfo = $3
+            WHERE id = $4
+            RETURNING id,
+                      announce_url,
+                      length,
+                      title,
+                      file_name,
+                      nfo,
+                      leech_count,
+                      seed_count,
+                      completed_count,
+                      speedlevel AS "speedlevel: _",
+                      info_hash,
+                      uploaded_at,
+                      uploaded_by,
+                      modded_at,
+                      modded_by
+        "#,
+        torrent_dto.title,
+        torrent_dto.file_name,
+        torrent_dto.nfo,
+        torrent_dto.id
     )
-    .bind(&torrent_dto.title)
-    .bind(&torrent_dto.file_name)
-    .bind(&torrent_dto.nfo)
-    .bind(&torrent_dto.id)
     .fetch_one(pool.get_ref())
     .await?;
-    Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent_dto)))
+    Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent)))
 }
 
 /// `PUT /api/torrent/`
@@ -158,29 +193,47 @@ pub async fn put_torrent(
         }
         let torrent_put_dto = serde_bencode::from_bytes::<TorrentPutDTO>(&torrent_buf)?;
         let info_hash = Sha256::digest(serde_bencode::to_bytes(&torrent_put_dto.info)?);
-        let maybe_torrent =
-            sqlx::query_as::<_, Torrent>("SELECT * FROM \"Torrent\" WHERE info_hash = $1")
-                .bind(format!("{:x}", info_hash))
-                .fetch_optional(pool.get_ref())
-                .await?;
+        let maybe_torrent = sqlx::query_as!(
+            Torrent,
+            r#"
+                SELECT id,
+                      announce_url,
+                      length,
+                      title,
+                      file_name,
+                      nfo,
+                      leech_count,
+                      seed_count,
+                      completed_count,
+                      speedlevel AS "speedlevel: _",
+                      info_hash,
+                      uploaded_at,
+                      uploaded_by,
+                      modded_at,
+                      modded_by
+                FROM "Torrent" WHERE info_hash = $1"#,
+            format!("{:x}", info_hash)
+        )
+        .fetch_optional(pool.get_ref())
+        .await?;
         if let Some(_) = maybe_torrent {
             return Ok(HttpResponse::AlreadyReported().finish());
         }
-        sqlx::query(
+        sqlx::query!(
             r#"
             INSERT INTO "Torrent" (announce_url, title, length, file_name, nfo, info_hash, uploaded_at, uploaded_by, speedlevel)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             "#,
+            torrent_put_dto.announce_url.unwrap_or_else(|| format!("{}:{}/api/torrent/announce", host.into_inner(), port.into_inner())),
+            torrent_put_dto.title,
+            torrent_put_dto.info.length,
+            torrent_put_dto.info.name,
+            torrent_put_dto.nfo,
+            format!("{:x}", info_hash),
+            Utc::now(),
+            user.id,
+            torrent_put_dto.speedlevel as _
         )
-        .bind(&torrent_put_dto.announce_url.unwrap_or_else(|| format!("{}:{}/api/torrent/announce", host.into_inner(), port.into_inner()))) 
-        .bind(&torrent_put_dto.title)
-        .bind(&torrent_put_dto.info.length)
-        .bind(&torrent_put_dto.info.name)
-        .bind(&torrent_put_dto.nfo)
-        .bind(format!("{:x}", info_hash))
-        .bind(Utc::now())
-        .bind(user.id)
-        .bind(&torrent_put_dto.speedlevel)
         .execute(pool.get_ref())
         .await?;
 

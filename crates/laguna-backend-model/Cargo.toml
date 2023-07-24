@@ -21,6 +21,7 @@ sqlx = { version = "0.6.3", features = [
     "uuid",
     "migrate",
     "macros",
+    "offline",
     "chrono",
     "json",
 ] }

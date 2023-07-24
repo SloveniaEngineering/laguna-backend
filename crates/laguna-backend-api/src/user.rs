@@ -73,13 +73,28 @@ pub async fn get_user(
     id: web::Path<Uuid>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-    Ok(HttpResponse::Ok().json(UserDTO::from(
-        sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE id = $1")
-            .bind(*id)
-            .fetch_optional(pool.get_ref())
-            .await?
-            .ok_or_else(|| UserError::DoesNotExist)?,
-    )))
+    let user = sqlx::query_as!(
+        User,
+        r#"SELECT id,
+                     username,
+                     email,
+                     password,
+                     first_login,
+                     last_login,
+                     avatar_url,
+                     role AS "role: _",
+                     behaviour AS "behaviour: _",
+                     is_active,
+                     has_verified_email,
+                     is_history_private,
+                     is_profile_private
+            FROM "User" WHERE id = $1"#,
+        id.into_inner()
+    )
+    .fetch_optional(pool.get_ref())
+    .await?
+    .ok_or_else(|| UserError::DoesNotExist)?;
+    Ok(HttpResponse::Ok().json(UserDTO::from(user)))
 }
 
 /// `DELETE /api/user/delete/me`
@@ -95,8 +110,7 @@ pub async fn get_user(
 /// HTTP/1.1 200 OK
 #[delete("/me")]
 pub async fn delete_me(user: UserDTO, pool: web::Data<PgPool>) -> Result<HttpResponse, APIError> {
-    sqlx::query("DELETE FROM \"User\" WHERE id = $1")
-        .bind(user.id)
+    sqlx::query!(r#"DELETE FROM "User" WHERE id = $1"#, user.id)
         .execute(pool.get_ref())
         .await?;
     Ok(HttpResponse::Ok().finish())
@@ -118,8 +132,7 @@ pub async fn delete_user(
     id: web::Path<Uuid>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-    sqlx::query("DELETE FROM \"User\" WHERE id = $1")
-        .bind(id.into_inner())
+    sqlx::query!(r#"DELETE FROM "User" WHERE id = $1"#, id.into_inner())
         .execute(pool.get_ref())
         .await?;
     Ok(HttpResponse::Ok().finish())
@@ -164,14 +177,28 @@ pub async fn get_user_peers(
     id: web::Path<Uuid>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-    let peers = sqlx::query_as::<_, Peer>(
+    let peers = sqlx::query_as!(
+        Peer,
         r#"
-            SELECT * 
+            SELECT id,
+                   md5_hash,
+                   info_hash,
+                   ip,
+                   port,
+                   agent,
+                   uploaded_bytes,
+                   downloaded_bytes,
+                   left_bytes,
+                   behaviour AS "behaviour: _",
+                   created_at,
+                   updated_at,
+                   user_id,
+                   torrent_id
             FROM "Peer" 
             WHERE user_id = $1
             "#,
+        id.into_inner()
     )
-    .bind(id.into_inner())
     .fetch_all(pool.get_ref())
     .await?
     .into_iter()

@@ -59,20 +59,53 @@ pub async fn login(
     pool: web::Data<PgPool>,
     signer: web::Data<TokenSigner<UserDTO, Hs256>>,
 ) -> Result<HttpResponse, APIError> {
-    let fetched_user =
-        sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE username = $1 OR email = $1")
-            .bind(&login_dto.username_or_email)
-            .fetch_optional(pool.get_ref())
-            .await?;
+    let fetched_user = sqlx::query_as!(
+        User,
+        r#"SELECT id, 
+                  username, 
+                  email, 
+                  password, 
+                  first_login, 
+                  last_login, 
+                  avatar_url,
+                  role AS "role: _",
+                  behaviour AS "behaviour: _",
+                  is_active,
+                  has_verified_email,
+                  is_history_private,
+                  is_profile_private
+        FROM "User" WHERE username = $1 OR email = $1"#,
+        &login_dto.username_or_email
+    )
+    .fetch_optional(pool.get_ref())
+    .await?;
 
     if let Some(logged_user) = fetched_user {
         if logged_user.password == format!("{:x}", Sha256::digest(&login_dto.password)) {
             // Logged user has been updated, we need to return the updated user.
-            let user = sqlx::query_as::<_, User>(
-                "UPDATE \"User\" SET last_login = $1 WHERE id = $2 RETURNING *",
+            let user = sqlx::query_as!(
+                User,
+                r#"
+                UPDATE "User"
+                SET last_login = $1
+                WHERE id = $2
+                RETURNING id, 
+                          username, 
+                          email, 
+                          password, 
+                          first_login, 
+                          last_login, 
+                          avatar_url,
+                          role AS "role: _",
+                          behaviour AS "behaviour: _",
+                          is_active,
+                          has_verified_email,
+                          is_history_private,
+                          is_profile_private
+            "#,
+                Utc::now(),
+                logged_user.id
             )
-            .bind(Utc::now())
-            .bind(logged_user.id)
             .fetch_one(pool.get_ref())
             .await?;
             return Ok(HttpResponse::Ok()
