@@ -97,6 +97,8 @@ jobs:
           --health-timeout 5s 
           --health-retries 5
     needs: test
+    # Don't coverage dependabot
+    if: github.actor != 'dependabot[bot]'
     strategy:
       fail-fast: false
       matrix:
