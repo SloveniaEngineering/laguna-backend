@@ -71,6 +71,8 @@ jobs:
             ~/.cargo/git/db
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install sqlx cli
+        run: cargo install sqlx-cli --no-default-features --features postgres,rustls
       - name: Setup database and test
         run: scripts/test.sh
 
@@ -102,6 +104,8 @@ jobs:
             ~/.cargo/git/db
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install sqlx cli
+        run: cargo install sqlx-cli --no-default-features --features postgres,rustls
       - name: Setup database and coverage
         run: |
           sqlx database create
