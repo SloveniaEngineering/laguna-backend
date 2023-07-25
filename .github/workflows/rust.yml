@@ -132,7 +132,7 @@ jobs:
           sqlx database create
           cargo tarpaulin --all-features --workspace --timeout 120 --out Xml
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3 # Make sure to use v3 because it allows tokenless upload
         with:
           fail_ci_if_error: true
 
