@@ -124,8 +124,8 @@ jobs:
           override: true
       - name: Install PostgreSQL client
         run: |
-          sudo apt-get update
-          sudo apt-get install --yes postgresql-client
+          apt-get update
+          apt-get install --yes postgresql-client
       - uses: actions/cache@v3
         with:
           path: |
