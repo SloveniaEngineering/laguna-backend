@@ -52,8 +52,12 @@ jobs:
     needs: build
     strategy:
       fail-fast: false
+      # NOTE: Only use Linux for testing
+      # Server will likely be deployed on linux
+      # GH Actions doesn't support containers on Windows
+      # MacOS doesn't have docker installed by default
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest]
         rust: [stable, beta, nightly]
     runs-on: ${{ matrix.os }}
     steps:
@@ -77,11 +81,28 @@ jobs:
         run: scripts/test.sh
 
   coverage:
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
     needs: test
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # NOTE: Only use Linux for testing
+        # Server will likely be deployed on linux
+        # GH Actions doesn't support containers on Windows
+        # MacOS doesn't have docker installed by default
+        os: [ubuntu-latest]
         rust: [stable, beta, nightly]
     runs-on: ${{ matrix.os }}
     container:
