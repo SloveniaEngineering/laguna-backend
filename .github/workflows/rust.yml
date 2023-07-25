@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        rust: [stable, beta, nightly]
+        rust: [stable]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -58,7 +58,7 @@ jobs:
       # MacOS doesn't have docker installed by default
       matrix:
         os: [ubuntu-latest]
-        rust: [stable, beta, nightly]
+        rust: [stable]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -107,13 +107,13 @@ jobs:
         # GH Actions doesn't support containers on Windows
         # MacOS doesn't have docker installed by default
         os: [ubuntu-latest]
-        rust: [stable, beta, nightly]
+        rust: [stable]
     runs-on: ${{ matrix.os }}
     container:
       image: xd009642/tarpaulin
       options: --security-opt seccomp=unconfined
     env:
-      DATABASE_URL: postgres://postgres:postgres@host.docker.internal:5432/laguna_db_coverage
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/laguna_db_coverage
     steps:
       - uses: actions/checkout@v3
         with:
@@ -122,6 +122,10 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           override: true
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
       - uses: actions/cache@v3
         with:
           path: |
