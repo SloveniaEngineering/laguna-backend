@@ -74,7 +74,7 @@ jobs:
       image: xd009642/tarpaulin:develop
       options: --security-opt seccomp=unconfined
     env:
-      DATABASE_URL: "postgres://postgres:postgres@127.0.0.1:5432/laguna_db_coverage"
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/laguna_db_coverage"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -84,7 +84,7 @@ jobs:
         run: cargo install --force sqlx-cli --no-default-features --features rustls,postgres
       - name: Generate code coverage
         run: |
-          scripts/dbsetup.sh laguna_db_coverage
+          sqlx database create
           cargo tarpaulin --all-features --workspace --timeout 120 --out Xml
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
