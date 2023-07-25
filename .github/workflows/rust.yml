@@ -113,7 +113,7 @@ jobs:
       image: xd009642/tarpaulin
       options: --security-opt seccomp=unconfined
     env:
-      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/laguna_db_coverage
+      DATABASE_URL: postgres://postgres:postgres@host.docker.internal:5432/laguna_db_coverage
     steps:
       - uses: actions/checkout@v3
         with:
