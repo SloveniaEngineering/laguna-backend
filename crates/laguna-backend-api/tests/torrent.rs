@@ -9,10 +9,13 @@ use futures::stream;
 mod common;
 
 #[actix_web::test]
+#[ignore = "Not yet implemented fully"]
+#[cfg(not(tarpaulin))]
 async fn test_get_torrent() {}
 
 #[actix_web::test]
 #[ignore = "Not yet implemented fully"]
+#[cfg(not(tarpaulin))]
 async fn test_put_torrent() {
     let (pool, database_url, app) = common::setup().await;
     let (_, _user_dto, access_token, refresh_token) = common::new_user(&app).await;
@@ -42,4 +45,6 @@ async fn test_put_torrent() {
 }
 
 #[actix_web::test]
+#[ignore = "Not yet implemented fully"]
+#[cfg(not(tarpaulin))]
 async fn test_patch_torrent() {}

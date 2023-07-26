@@ -124,7 +124,7 @@ pub(crate) async fn setup() -> (
     )
     .await;
 
-    (pool, database_url, Box::new(app))
+    (pool, database_url, app)
 }
 
 pub(crate) async fn teardown(pool: PgPool, database_url: String) {

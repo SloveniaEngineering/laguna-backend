@@ -59,6 +59,102 @@ async fn test_login() {
 }
 
 #[actix_web::test]
+async fn test_login_with_password_control_char() {
+    let (pool, database_url, app) = common::setup().await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let login_res = common::login_user(
+        LoginDTO {
+            username_or_email: register_dto.username,
+            password: String::from("a\nb\r\t"),
+        },
+        &app,
+    )
+    .await;
+    assert_eq!(login_res.status(), StatusCode::BAD_REQUEST);
+    common::teardown(pool, database_url).await;
+}
+
+#[actix_web::test]
+async fn test_login_with_username_or_email_control_char() {
+    let (pool, database_url, app) = common::setup().await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let login_res = common::login_user(
+        LoginDTO {
+            username_or_email: String::from("a\nb\r\t@x.y"),
+            password: register_dto.password,
+        },
+        &app,
+    )
+    .await;
+    assert_eq!(login_res.status(), StatusCode::BAD_REQUEST);
+    common::teardown(pool, database_url).await;
+}
+
+#[actix_web::test]
+async fn test_login_with_username_or_email_too_long() {
+    let (pool, database_url, app) = common::setup().await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let login_res = common::login_user(
+        LoginDTO {
+            username_or_email: String::from("a".repeat(USERNAME_MAX_LEN + 1)),
+            password: register_dto.password,
+        },
+        &app,
+    )
+    .await;
+    assert_eq!(login_res.status(), StatusCode::BAD_REQUEST);
+    common::teardown(pool, database_url).await;
+}
+
+#[actix_web::test]
+async fn test_login_with_password_too_long() {
+    let (pool, database_url, app) = common::setup().await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let login_res = common::login_user(
+        LoginDTO {
+            username_or_email: register_dto.username,
+            password: String::from("a".repeat(PASSWORD_MAX_LEN + 1)),
+        },
+        &app,
+    )
+    .await;
+    assert_eq!(login_res.status(), StatusCode::BAD_REQUEST);
+    common::teardown(pool, database_url).await;
+}
+
+#[actix_web::test]
+async fn test_login_with_password_too_short() {
+    let (pool, database_url, app) = common::setup().await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let login_res = common::login_user(
+        LoginDTO {
+            username_or_email: register_dto.username,
+            password: String::from("a".repeat(PASSWORD_MIN_LEN - 1)),
+        },
+        &app,
+    )
+    .await;
+    assert_eq!(login_res.status(), StatusCode::BAD_REQUEST);
+    common::teardown(pool, database_url).await;
+}
+
+#[actix_web::test]
+async fn test_login_with_username_or_email_too_short() {
+    let (pool, database_url, app) = common::setup().await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let login_res = common::login_user(
+        LoginDTO {
+            username_or_email: String::from("a".repeat(USERNAME_MIN_LEN - 1)),
+            password: register_dto.password,
+        },
+        &app,
+    )
+    .await;
+    assert_eq!(login_res.status(), StatusCode::BAD_REQUEST);
+    common::teardown(pool, database_url).await;
+}
+
+#[actix_web::test]
 async fn test_login_with_wrong_username() {
     let (pool, database_url, app) = common::setup().await;
     let (register_dto, _, _, _) = common::new_user(&app).await;

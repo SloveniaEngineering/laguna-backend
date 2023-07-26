@@ -132,9 +132,31 @@ pub async fn delete_user(
     id: web::Path<Uuid>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-    sqlx::query!(r#"DELETE FROM "User" WHERE id = $1"#, id.into_inner())
-        .execute(pool.get_ref())
-        .await?;
+    // HACK: Use RETURNING * to get error if no user was deleted.
+    sqlx::query_as!(
+        User,
+        r#"
+        DELETE FROM "User" 
+        WHERE id = $1 
+        RETURNING id,
+                  username,
+                  email,
+                  password,
+                  first_login,
+                  last_login,
+                  avatar_url,
+                  role AS "role: _",
+                  behaviour AS "behaviour: _",
+                  is_active,
+                  has_verified_email,
+                  is_history_private,
+                  is_profile_private
+        "#,
+        id.into_inner()
+    )
+    .fetch_optional(pool.get_ref())
+    .await?
+    .ok_or_else(|| UserError::DoesNotExist)?;
     Ok(HttpResponse::Ok().finish())
 }
 

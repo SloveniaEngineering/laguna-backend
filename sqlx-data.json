@@ -516,6 +516,125 @@
     },
     "query": "DELETE FROM \"User\" WHERE id = $1"
   },
+  "79c5b39be770b0e5d2833e66ab2ac14c44c7d24560f1cc91b490d7f6f3c59106": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "email",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "password",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "first_login",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "last_login",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "avatar_url",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "role: _",
+          "ordinal": 7,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Normie",
+                  "Verified",
+                  "Mod",
+                  "Admin"
+                ]
+              },
+              "name": "role"
+            }
+          }
+        },
+        {
+          "name": "behaviour: _",
+          "ordinal": 8,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Lurker",
+                  "Downloader",
+                  "Freeleecher",
+                  "Leech",
+                  "Seed",
+                  "Choked",
+                  "Uploader"
+                ]
+              },
+              "name": "behaviour"
+            }
+          }
+        },
+        {
+          "name": "is_active",
+          "ordinal": 9,
+          "type_info": "Bool"
+        },
+        {
+          "name": "has_verified_email",
+          "ordinal": 10,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_history_private",
+          "ordinal": 11,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_profile_private",
+          "ordinal": 12,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        DELETE FROM \"User\" \n        WHERE id = $1 \n        RETURNING id,\n                  username,\n                  email,\n                  password,\n                  first_login,\n                  last_login,\n                  avatar_url,\n                  role AS \"role: _\",\n                  behaviour AS \"behaviour: _\",\n                  is_active,\n                  has_verified_email,\n                  is_history_private,\n                  is_profile_private\n        "
+  },
   "9f03a4d71c58e6cc1b54f9589dda681e40b8915ed75ac8b4074b0d4b10013b33": {
     "describe": {
       "columns": [

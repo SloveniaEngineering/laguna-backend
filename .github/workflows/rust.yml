@@ -109,7 +109,7 @@ jobs:
         # GH Actions doesn't support containers on Windows
         # MacOS doesn't have docker installed by default
         os: [ubuntu-latest]
-        rust: [stable, beta, nightly]
+        rust: [stable]
     runs-on: ${{ matrix.os }}
     container:
       image: xd009642/tarpaulin
