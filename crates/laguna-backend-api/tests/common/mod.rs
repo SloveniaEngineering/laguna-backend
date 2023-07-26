@@ -53,7 +53,7 @@ pub(crate) async fn setup() -> (
     let database_url = format!(
         "{}{}",
         env::var("TEST_DATABASE_BASE_URL").expect("TEST_DATABASE_BASE_URL must be set"),
-        Uuid::new_v4().to_string() 
+        Uuid::new_v4().to_string()
     );
 
     let database_create_command = Command::new("sqlx")
