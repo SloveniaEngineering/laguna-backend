@@ -82,7 +82,7 @@ jobs:
       - name: Run tests
         run: cargo test --all --features testx -- --nocapture
     env:
-      TEST_DATABASE_BASE_URL: postgres://postgres:postgres@postgres:5432/laguna_test_db
+      TEST_DATABASE_BASE_URL: postgres://postgres:postgres@127.0.0.1:5432/laguna_test_db
 
   coverage:
     services:
