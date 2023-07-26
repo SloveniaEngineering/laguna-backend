@@ -50,10 +50,10 @@ pub(crate) async fn setup() -> (
         env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
     });
 
-    let database_uuid = Uuid::new_v4().to_string();
     let database_url = format!(
-        "postgres://postgres:postgres@localhost:5432/{}_laguna_test_db",
-        database_uuid
+        "{}{}",
+        env::var("TEST_DATABASE_BASE_URL").expect("TEST_DATABASE_BASE_URL must be set"),
+        Uuid::new_v4().to_string() 
     );
 
     let database_create_command = Command::new("sqlx")

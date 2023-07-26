@@ -69,7 +69,7 @@ Testing requires `sqlx-cli` to be installed.
 
 1. Run `scripts/test.sh` to run all tests.
 
-To delete test databases if tests failed use `scripts/dbdroptest.sh`.
+To delete test zombie databases if tests failed use `scripts/dbdroptest.sh`.
 
 # Documentation
 

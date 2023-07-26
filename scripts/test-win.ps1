@@ -1,11 +1,9 @@
 # Clean any previous default values
-$PSDefaultParameterValues.Remove("env:RUST_BACKTRACE")
-$PSDefaultParameterValues.Remove("env:RUST_LOG")
+$PSDefaultParameterValues.Remove("env:TEST_DATABASE_BASE_URL");
 
 $PSDefaultParameterValues = @{
-    "env:RUST_BACKTRACE"="0";
-    "env:RUST_LOG"="debug"
+    "env:TEST_DATABASE_BASE_URL"="postgres://postgres:postgres@127.0.0.1:5432/laguna_test_db"
 }
 
 # Run all tests and show their output
-cargo test --all -- --nocapture
+cargo test --all --features testx -- --nocapture

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-export RUST_BACKTRACE=${RUST_BACKTRACE:-0}
-export RUST_LOG=${RUST_BACKTRACE:-debug}
+export TEST_DATABASE_BASE_URL=${TEST_DATABASE_BASE_URL:-postgres://postgres:postgres@127.0.0.1:5432/laguna_test_db}
 
 # Run all tests and show their output
-cargo test --all -- --nocapture
+cargo test --all --features testx -- --nocapture
