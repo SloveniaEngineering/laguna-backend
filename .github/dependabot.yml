@@ -1,6 +1,7 @@
 version: 2
 updates:
   - directory: /
+    target-branch: dev
     open-pull-requests-limit: 5
     package-ecosystem: "github-actions"
     schedule:
@@ -15,6 +16,7 @@ updates:
 
   # Laguna workspace
   - directory: /
+    target-branch: dev
     open-pull-requests-limit: 5
     package-ecosystem: "cargo"
     schedule:
