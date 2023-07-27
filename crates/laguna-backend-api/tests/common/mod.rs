@@ -102,18 +102,6 @@ pub(crate) async fn setup() -> (
                     .service(register)
                     .service(login),
             )
-            .app_data(web::Data::new(Laguna {
-                version: env::var("CARGO_PKG_VERSION").expect("CARGO_PKG_VERSION not set"),
-                authors: env::var("CARGO_PKG_AUTHORS")
-                    .expect("CARGO_PKG_AUTHORS not set")
-                    .split(":")
-                    .map(ToString::to_string)
-                    .collect::<Vec<String>>(),
-                license: env::var("CARGO_PKG_LICENSE").expect("CARGO_PKG_LICENSE not set"),
-                description: env::var("CARGO_PKG_DESCRIPTION")
-                    .expect("CARGO_PKG_DESCRIPTION not set"),
-                repository: env::var("CARGO_PKG_REPOSITORY").expect("CARGO_PKG_REPOSITORY not set"),
-            }))
             .service(web::scope("/misc").service(get_app_info))
             .use_jwt(
                 authority,

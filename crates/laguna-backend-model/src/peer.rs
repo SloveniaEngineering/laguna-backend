@@ -4,7 +4,6 @@ use uuid::Uuid;
 
 use crate::behaviour::Behaviour;
 
-
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, sqlx::FromRow)]
 pub struct Peer {
     pub id: Uuid,
