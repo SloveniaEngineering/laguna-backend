@@ -1,0 +1,9 @@
+# Make coverage non-blocking check, only as informational.
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true

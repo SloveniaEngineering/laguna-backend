@@ -30,7 +30,7 @@ In the future we will add powershell scripts for Windows.
 > **Note**
 > This guide uses Linux `scripts/*.sh`, but scrips for Windows are also available via `scripts/*-win.ps1`.
 
-1. Clone this repo and `cd` into it.
+1. Clone this repo `git clone --recurse-submodules https://github.com/SloveniaEngineering/laguna-backend` and `cd` into it.
 2. Run `cargo install sqlx-cli --no-default-features --features rustls,postgres`.
 3. Run `cargo install cargo-watch`.
 4. Make sure Postgres daemon is running, then do `scripts/dbsetup.sh laguna_db` to create `laguna_db` local DB with tables.
@@ -51,8 +51,8 @@ In the future we will add powershell scripts for Windows.
 - `crates/` contains Cargo Workspace members (sub-Crates) of the project.
   - `laguna-backend-internal/` is a crate that contains re-exports of all other `crates/*` and is used by `laguna-backend` (root crate) to access all other crates.
     - `laguna-backend-internal/src/lib.rs` re-exporting can be seen here.
-  - `laguna-backend-api/` contains API endpoints and DTOs (data-transfer-objects) used by [laguna-frontend](https://github.com/SloveniaEngineering/laguna-frontend).
-  - `laguna-backend-model/` contains DB models and relations.
+  - `laguna-backend-api/` contains API endpoints.
+  - `laguna-backend-model/` contains DB models, relations and DTOs (data-transfer-objects) used by [laguna-frontend](https://github.com/SloveniaEngineering/laguna-frontend).
   - `laguna-backend-middleware/` contains application logic from API to DB.
 - `migrations/` contains SQL migrations for DB.
 - `scripts/` contains Bash scripts for development, testing and deploy.
@@ -65,16 +65,18 @@ Crate structure in Rust: https://doc.rust-lang.org/cargo/guide/project-layout.ht
 
 # Testing
 
+Testing requires `sqlx-cli` to be installed.
+
 1. Run `scripts/test.sh` to run all tests.
 
-> **Warning**
-> all tests use same test DB, so they should not be run in parallel hence `--test-threads=1`.
+To delete test zombie databases if tests failed use `scripts/dbdroptest.sh`.
 
-In the future we will fix this by using different test DBs for each batch of tests.
+# Documentation
 
-# Generating documentation
+Documentation is auto-generated on PR or push to `master`. 
+It can be accessed via GitHub Pages at https://sloveniaengineering.github.io/laguna-backend.
 
-1. Run `scripts/doc.sh` to generate useful documentation.
+To generate and open local documentation run `scripts/doc.sh`.
 
 How to write doc comments in Rust: https://doc.rust-lang.org/rustdoc/how-to-write-documentation.html.
 
@@ -103,6 +105,13 @@ Here is another way to do it (without dropping DB):
 
 It is also possible to create "reversible" migrations with `sqlx migrate add -r <migration_name>`
 which will create an `up` and `down` migration files and can be reverted with `sqlx migrate revert`.
+
+# Changing queries and using prepared statements
+
+Always prefer compile-time query to runtime query, so that errors are caught at compile time.
+
+* If a compile time (ie. `query_*!`) is changed (even if just spacing is changed (because of underlying hash of query)) it needs to be re-prepared with `scripts/prepare.sh`. This generates `sqlx-data.json` in workspace root.
+* With runtime queries you don't have to do anything.
 
 # Running
 

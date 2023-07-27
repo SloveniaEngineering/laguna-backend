@@ -2,6 +2,16 @@
 name = "laguna-backend"
 version = "0.1.0"
 edition = "2021"
+license = "Apache-2.0"
+readme = "README.md"
+authors = [
+    "kenpaicat <133065911+kenpaicat@users.noreply.github.com>",
+    "kozabrada123 <59031733+kozabrada123@users.noreply.github.com>",
+    "LinuxHeki <linuxheki@gmail.com>",
+]
+description = "Laguna backend source tree"
+repository = "https://github.com/SloveniaEngineering/laguna-backend"
+documentation = "https://sloveniaengineering.github.io/laguna-backend"
 
 [workspace]
 members = ["crates/*"]
@@ -11,6 +21,7 @@ actix-web = "4"
 sqlx = { version = "0.6.3", features = [
     "runtime-actix-rustls",
     "postgres",
+    "offline",
     "uuid",
     "migrate",
     "macros",
@@ -29,11 +40,21 @@ laguna = { package = "laguna-backend-internal", path = "crates/laguna-backend-in
 actix-cors = "0.6.4"
 
 [dev-dependencies]
-cargo-watch = "8.4.0"
+# fake = { version = "2.6", features=["derive"]}
+# rand = "*"
+# CLI dependency
+# cargo-watch = "8.4.0"
 
 # CLI for sqlx.
 # More: https://github.com/launchbadge/sqlx/blob/main/sqlx-cli/README.md
-sqlx-cli = { version = "0.7.1", default-features = false, features = [
-    "rustls",
-    "postgres",
-] }
+# sqlx-cli = { version = "0.7.0", default-features = false, features = [
+#    "rustls",
+#    "postgres",
+# ] }
+
+[features]
+# Dummy feature until build scripts can detect cfg(doc).
+# See: https://github.com/rust-lang/cargo/issues/8811
+# See: https://github.com/rust-lang/cargo/issues/8944
+# It seems that it was discontinued.
+dox = []

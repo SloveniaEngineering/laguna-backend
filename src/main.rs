@@ -1,3 +1,6 @@
+#![doc(html_logo_url = "https://sloveniaengineering.github.io/laguna-backend/logo.png")]
+#![doc(html_favicon_url = "https://sloveniaengineering.github.io/laguna-backend/favicon.ico")]
+#![doc(issue_tracker_base_url = "https://github.com/SloveniaEngineering/laguna-backend")]
 use actix_cors::Cors;
 
 use actix_jwt_auth_middleware::use_jwt::UseJWTOnApp;
@@ -5,7 +8,7 @@ use actix_jwt_auth_middleware::use_jwt::UseJWTOnApp;
 use actix_jwt_auth_middleware::Authority;
 use actix_jwt_auth_middleware::TokenSigner;
 use actix_web::http::header;
-use actix_web::{middleware, web, App, HttpResponse, HttpServer};
+use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer};
 
 use chrono::Duration;
 use jwt_compact::alg::Hs256;
@@ -16,9 +19,7 @@ use laguna::api::misc::get_app_info;
 use laguna::api::register::register;
 
 use laguna::api::torrent::get_torrent;
-use laguna::api::torrent::get_torrent_download;
-use laguna::api::torrent::get_torrent_with_info_hash;
-use laguna::api::torrent::get_torrents_with_filter;
+use laguna::api::torrent::patch_torrent;
 use laguna::api::torrent::put_torrent;
 use laguna::api::user::delete_me;
 use laguna::api::user::delete_user;
@@ -52,6 +53,9 @@ async fn main() -> Result<(), sqlx::Error> {
         .expect("PORT not specified")
         .parse::<u16>()
         .expect("PORT invalid");
+
+    let host_clone = host.clone();
+    let pool_clone = pool.clone();
 
     HttpServer::new(move || {
         let authority = Authority::<UserDTO, Hs256, _, _>::new()
@@ -96,9 +100,11 @@ async fn main() -> Result<(), sqlx::Error> {
             ])
             .max_age(3600);
         App::new()
-            .wrap(middleware::Logger::default())
+            .wrap(Logger::default())
             .wrap(cors)
             .app_data(web::Data::new(pool.clone()))
+            .app_data(web::Data::new(host.clone()))
+            .app_data(web::Data::new(port))
             .service(
                 web::scope("/api/user/auth")
                     .service(register)
@@ -120,23 +126,20 @@ async fn main() -> Result<(), sqlx::Error> {
                     .service(web::scope("/misc").service(get_app_info))
                     .service(
                         web::scope("/torrent")
-                            .service(web::scope("/download").service(get_torrent_download))
-                            .service(web::scope("/upload").service(put_torrent))
-                            .service(get_torrent_with_info_hash)
-                            .service(get_torrents_with_filter)
+                            .service(put_torrent)
+                            .service(patch_torrent)
                             .service(get_torrent),
                     ),
             )
             .default_service(web::to(|| HttpResponse::NotFound()))
     })
-    .bind((host, port))
+    .bind((host_clone, port))
     .expect("Cannot bind address")
     .run()
     .await
     .expect("Cannot start server");
 
-    // Is this necessary?
-    // pool.close().await;
+    pool_clone.close().await;
 
     Ok(())
 }

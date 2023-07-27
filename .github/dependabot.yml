@@ -10,7 +10,6 @@ updates:
       timezone: "Europe/Ljubljana"
     labels:
       - "A-CI/CD"
-      - "S-UNSTAGED"
       - "T-Dep"
       - "D-1"
 
@@ -25,6 +24,5 @@ updates:
       timezone: "Europe/Ljubljana"
     labels:
       - "A-CI/CD"
-      - "S-UNSTAGED"
       - "T-Dep"
       - "D-1"

@@ -32,7 +32,7 @@ jobs:
             ~/.cargo/git/db
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Build
+      - name: Run build
         run: cargo build
 
   test:
@@ -62,6 +62,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.rust }}
@@ -75,10 +77,12 @@ jobs:
             ~/.cargo/git/db
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install sqlx cli
+      - name: Install sqlx cli for tests
         run: cargo install sqlx-cli --no-default-features --features postgres,rustls
-      - name: Setup database and test
-        run: scripts/test.sh
+      - name: Run tests
+        run: cargo test --all --features testx -- --nocapture
+    env:
+      TEST_DATABASE_BASE_URL: postgres://postgres:postgres@127.0.0.1:5432/laguna_test_db
 
   coverage:
     services:
@@ -95,6 +99,8 @@ jobs:
           --health-timeout 5s 
           --health-retries 5
     needs: test
+    # Don't coverage dependabot
+    if: github.actor != 'dependabot[bot]'
     strategy:
       fail-fast: false
       matrix:
@@ -103,19 +109,23 @@ jobs:
         # GH Actions doesn't support containers on Windows
         # MacOS doesn't have docker installed by default
         os: [ubuntu-latest]
-        rust: [stable, beta, nightly]
+        rust: [stable]
     runs-on: ${{ matrix.os }}
     container:
       image: xd009642/tarpaulin
       options: --security-opt seccomp=unconfined
-    env:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/laguna_db_coverage
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.rust }}
           override: true
+      - name: Install PostgreSQL client
+        run: |
+          apt-get update
+          apt-get install --yes postgresql-client
       - uses: actions/cache@v3
         with:
           path: |
@@ -125,16 +135,19 @@ jobs:
             ~/.cargo/git/db
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install sqlx cli
+      - name: Install sqlx cli for tests
         run: cargo install sqlx-cli --no-default-features --features postgres,rustls
-      - name: Setup database and coverage
+      - name: Generate coverage data
         run: |
-          sqlx database create
-          cargo tarpaulin --all-features --workspace --timeout 120 --out Xml
+          cargo tarpaulin --workspace --timeout 120 --out Xml --features testx
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v3 # Make sure to use v3 because it allows tokenless upload
         with:
           fail_ci_if_error: true
+    env:
+      # TEST_DATABASE_URL=TEST_DATABASE_BASE_URL+UUIDv4 (determined by Rust's uuid crate)
+      # All databases will be created with this base.
+      TEST_DATABASE_BASE_URL: postgres://postgres:postgres@postgres:5432/laguna_test_db
 
   deploy_docs:
     needs: [build, test]
@@ -145,9 +158,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build Docs
-        run: cargo doc --no-deps --document-private-items --workspace
+        run: cargo doc --no-deps --document-private-items --workspace --features dox
       - name: Doc Index Page Redirection
-        run: echo '<meta http-equiv="refresh" content="1; url=laguna_backend/index.html">' > target/doc/index.html
+        run: echo '<meta http-equiv="refresh" content="0; url=laguna_backend/index.html">' > target/doc/index.html
       - name: Deploy Docs
         uses: peaceiris/actions-gh-pages@v3
         with:

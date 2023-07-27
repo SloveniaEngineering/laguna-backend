@@ -1,7 +1,11 @@
+use crate::behaviour::Behaviour;
+use crate::consts::USERNAME_MAX_LEN;
+use crate::consts::USERNAME_MIN_LEN;
 use actix_jwt_auth_middleware::FromRequest;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use validator::Validate;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, sqlx::Type)]
 pub enum Role {
@@ -9,17 +13,6 @@ pub enum Role {
     Verified,
     Mod,
     Admin,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, sqlx::Type)]
-pub enum Behaviour {
-    Lurker,
-    Downloader,
-    Freeleecher,
-    Leech,
-    Seed,
-    Choked,
-    Uploader,
 }
 
 /// User DB object.
@@ -52,10 +45,14 @@ pub struct User {
 /// 1. `email`
 /// 2. `password`
 /// Also, [`UserDTO`] has `last_login` as an [`Option`].
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, FromRequest)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, FromRequest, Validate)]
 pub struct UserDTO {
     /// The user's id
     pub id: Uuid,
+    #[validate(
+        non_control_character,
+        length(min = "USERNAME_MIN_LEN", max = "USERNAME_MAX_LEN")
+    )]
     pub username: String,
     pub first_login: DateTime<Utc>,
     pub last_login: Option<DateTime<Utc>>,
