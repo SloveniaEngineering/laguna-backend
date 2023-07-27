@@ -1445,6 +1445,7 @@ dependencies = [
  "laguna-backend-api",
  "laguna-backend-middleware",
  "laguna-backend-model",
+ "laguna-backend-tracker",
 ]
 
 [[package]]
@@ -1488,6 +1489,28 @@ dependencies = [
  "uuid",
  "validator",
 ]
+
+[[package]]
+name = "laguna-backend-tracker"
+version = "0.1.0"
+dependencies = [
+ "laguna-backend-tracker-http",
+ "laguna-backend-tracker-udp",
+ "laguna-backend-tracker-ws",
+ "serde",
+]
+
+[[package]]
+name = "laguna-backend-tracker-http"
+version = "0.1.0"
+
+[[package]]
+name = "laguna-backend-tracker-udp"
+version = "0.1.0"
+
+[[package]]
+name = "laguna-backend-tracker-ws"
+version = "0.1.0"
 
 [[package]]
 name = "language-tags"

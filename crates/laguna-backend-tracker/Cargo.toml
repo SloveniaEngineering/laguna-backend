@@ -1,0 +1,26 @@
+[package]
+name = "laguna-backend-tracker"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+readme = "README.md"
+authors = [
+    "kenpaicat <133065911+kenpaicat@users.noreply.github.com>",
+    "kozabrada123 <59031733+kozabrada123@users.noreply.github.com>",
+    "LinuxHeki <linuxheki@gmail.com>",
+]
+description = "Laguna backend source tree"
+repository = "https://github.com/SloveniaEngineering/laguna-backend"
+documentation = "https://sloveniaengineering.github.io/laguna-backend"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+laguna-backend-tracker-http = { path = "../laguna-backend-tracker-http", optional = true }
+laguna-backend-tracker-udp = { path = "../laguna-backend-tracker-udp", optional = true }
+laguna-backend-tracker-ws = { path = "../laguna-backend-tracker-ws", optional = true }
+
+[features]
+http = ["dep:laguna-backend-tracker-http"]
+udp = ["dep:laguna-backend-tracker-udp"]
+ws = ["dep:laguna-backend-tracker-ws"]
+default = ["http", "udp", "ws"]
