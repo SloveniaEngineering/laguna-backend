@@ -14,6 +14,7 @@
 8. [Running](#running)
 9. [CI/CD & PRs](#cicd--prs)
 10. [API documentation](#api-documentation)
+11. [Performance optimization](#performance-optimization)
 
 # Requirements
 
@@ -146,3 +147,7 @@ Checks can be surpassed by `Maintainer`s.
 # API documentation
 
 API documentation is available at https://sloveniaengineering.github.io/laguna-backend/.
+
+# Performance optimization
+
+See `.cargo/config.toml` for more info.
