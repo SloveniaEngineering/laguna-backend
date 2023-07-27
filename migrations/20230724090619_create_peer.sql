@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS "Peer" (
     md5_hash VARCHAR(60),
     info_hash TEXT,
     ip TEXT,
-    port INTEGER,
+    port INTEGER NOT NULL,
     agent TEXT,
     uploaded_bytes INTEGER,
     downloaded_bytes INTEGER,

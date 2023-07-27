@@ -20,7 +20,7 @@ use crate::error::{user::UserError, APIError};
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
 /// ```
 /// ## Response
-/// HTTP/1.1 200 OK
+/// * Normal behaviour: HTTP/1.1 200 OK
 /// ```json
 /// {
 ///   "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
@@ -36,6 +36,7 @@ use crate::error::{user::UserError, APIError};
 ///   "is_profile_private": true
 /// }
 /// ```
+/// * Otherwise its already filtered out by auth middleware.
 #[get("/me")]
 pub async fn get_me(user: UserDTO) -> Result<HttpResponse, APIError> {
     Ok(HttpResponse::Ok().json(user))
@@ -52,7 +53,7 @@ pub async fn get_me(user: UserDTO) -> Result<HttpResponse, APIError> {
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
 /// ```
 /// ## Response
-/// HTTP/1.1 200 OK
+/// * If user was found: HTTP/1.1 200 OK
 /// ```json
 /// {
 ///     "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
@@ -68,6 +69,7 @@ pub async fn get_me(user: UserDTO) -> Result<HttpResponse, APIError> {
 ///     "is_profile_private": true
 /// }
 /// ```
+/// * If user was not found: HTTP/1.1 404 Not Found
 #[get("/{id}")]
 pub async fn get_user(
     id: web::Path<Uuid>,
@@ -107,7 +109,8 @@ pub async fn get_user(
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
 /// ```
 /// ## Response
-/// HTTP/1.1 200 OK
+/// * If user was deleted: HTTP/1.1 200 OK
+/// * If DELETE failed in DB: 500 Internal Server Error
 #[delete("/me")]
 pub async fn delete_me(user: UserDTO, pool: web::Data<PgPool>) -> Result<HttpResponse, APIError> {
     sqlx::query!(r#"DELETE FROM "User" WHERE id = $1"#, user.id)
@@ -126,7 +129,9 @@ pub async fn delete_me(user: UserDTO, pool: web::Data<PgPool>) -> Result<HttpRes
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
 /// ```
 /// ## Response
-/// HTTP/1.1 200 OK
+/// * If user was deleted: HTTP/1.1 200 OK
+/// * If user was not found: HTTP/1.1 404 Not Found
+/// * If DELETE failed in DB: 500 Internal Server Error
 #[delete("/{id}")]
 pub async fn delete_user(
     id: web::Path<Uuid>,

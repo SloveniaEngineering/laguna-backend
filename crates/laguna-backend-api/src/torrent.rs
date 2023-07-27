@@ -27,7 +27,7 @@ use crate::error::{torrent::TorrentError, APIError};
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
 /// ```
 /// ## Response
-/// HTTP/1.1 200 OK
+/// * HTTP/1.1 200 OK
 /// ```json
 /// {
 ///   "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
@@ -47,6 +47,7 @@ use crate::error::{torrent::TorrentError, APIError};
 ///   "modded_by": null
 /// }
 /// ```
+/// * If DB operation fails: HTTP/1.1 500 Internal Server Error
 /// For scheme see [`TorrentDTO`].
 #[get("/{id}")]
 pub async fn get_torrent(
@@ -99,7 +100,7 @@ pub async fn get_torrent(
 ///      }'
 /// ```
 /// ## Response
-/// HTTP/1.1 200 OK
+/// * HTTP/1.1 200 OK
 /// ```json
 /// {
 ///   "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
@@ -119,6 +120,7 @@ pub async fn get_torrent(
 ///   "modded_by": null,
 /// }
 /// ```
+/// * If DB operation fails: HTTP/1.1 500 Internal Server Error
 /// Returns updated [`TorrentDTO`].
 #[patch("/")]
 pub async fn patch_torrent(
@@ -174,6 +176,7 @@ pub async fn patch_torrent(
 /// 2. If torrent already exists: HTTP/1.1 208 Already Reported
 /// 3. On invalid torrent format or no content-type: HTTP/1.1 400 Bad Request
 /// 4. On non-multipart (or corrupt multipart form-data): HTTP/1.1 422 Unprocessable Entity
+/// 5. If any DB operation fails: HTTP/1.1 500 Internal Server Error
 #[put("/")]
 pub async fn put_torrent(
     mut payload: Multipart,

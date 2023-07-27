@@ -21,6 +21,7 @@ use jwt_compact::{
     TimeOptions,
 };
 use laguna_backend_api::error::APIError;
+use laguna_backend_api::misc::get_app_info;
 use laguna_backend_api::torrent::{get_torrent, patch_torrent, put_torrent};
 use laguna_backend_api::{
     login::login,
@@ -28,6 +29,7 @@ use laguna_backend_api::{
     user::{delete_me, delete_user, get_me, get_user},
 };
 use laguna_backend_middleware::consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME};
+use laguna_backend_model::misc::Laguna;
 use laguna_backend_model::{login::LoginDTO, register::RegisterDTO, user::UserDTO};
 use std::env;
 use std::future::Future;
@@ -100,6 +102,19 @@ pub(crate) async fn setup() -> (
                     .service(register)
                     .service(login),
             )
+            .app_data(web::Data::new(Laguna {
+                version: env::var("CARGO_PKG_VERSION").expect("CARGO_PKG_VERSION not set"),
+                authors: env::var("CARGO_PKG_AUTHORS")
+                    .expect("CARGO_PKG_AUTHORS not set")
+                    .split(":")
+                    .map(ToString::to_string)
+                    .collect::<Vec<String>>(),
+                license: env::var("CARGO_PKG_LICENSE").expect("CARGO_PKG_LICENSE not set"),
+                description: env::var("CARGO_PKG_DESCRIPTION")
+                    .expect("CARGO_PKG_DESCRIPTION not set"),
+                repository: env::var("CARGO_PKG_REPOSITORY").expect("CARGO_PKG_REPOSITORY not set"),
+            }))
+            .service(web::scope("/misc").service(get_app_info))
             .use_jwt(
                 authority,
                 web::scope("/api")
