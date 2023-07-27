@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PeerId(pub [u8; 20]);
 
-
 /// Peer client identification enum.
 /// Resources:
 /// - <https://wiki.theory.org/BitTorrentSpecification>
