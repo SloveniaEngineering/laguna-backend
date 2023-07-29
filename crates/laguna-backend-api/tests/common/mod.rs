@@ -22,15 +22,20 @@ use jwt_compact::{
 };
 use laguna_backend_api::error::APIError;
 use laguna_backend_api::misc::get_app_info;
-use laguna_backend_api::torrent::{get_torrent, patch_torrent, put_torrent};
+use laguna_backend_api::torrent::{torrent_get, torrent_patch, torrent_put};
+use laguna_backend_api::user::user_patch;
 use laguna_backend_api::{
     login::login,
     register::register,
-    user::{delete_me, delete_user, get_me, get_user},
+    user::{user_delete, user_get, user_me_delete, user_me_get},
 };
+use laguna_backend_dto::meta::AppInfoDTO;
+use laguna_backend_dto::user::UserDTO;
+use laguna_backend_dto::{login::LoginDTO, register::RegisterDTO};
+use laguna_backend_middleware::auth::AuthorizationMiddlewareFactory;
 use laguna_backend_middleware::consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME};
-use laguna_backend_model::misc::Laguna;
-use laguna_backend_model::{login::LoginDTO, register::RegisterDTO, user::UserDTO};
+use laguna_backend_model::role::Role;
+use laguna_backend_model::user::User;
 use std::env;
 use std::future::Future;
 use std::pin::Pin;
@@ -99,28 +104,30 @@ pub(crate) async fn setup() -> (
             .app_data(web::Data::new(pool.clone()))
             .service(
                 web::scope("/api/user/auth")
-                    .service(register)
-                    .service(login),
+                    .route("/register", web::post().to(register))
+                    .route("/login", web::post().to(login)),
             )
-            .service(web::scope("/misc").service(get_app_info))
             .use_jwt(
                 authority,
                 web::scope("/api")
                     .service(
                         web::scope("/user")
-                            .service(get_me)
-                            .service(get_user)
-                            .service(
-                                web::scope("/delete")
-                                    .service(delete_me)
-                                    .service(delete_user),
+                            .route("/", web::patch().to(user_patch))
+                            .route("/me", web::get().to(user_me_get))
+                            .route("/{id}", web::get().to(user_get))
+                            .route("/me", web::delete().to(user_me_delete))
+                            .route(
+                                "/{id}",
+                                web::delete().to(user_delete).wrap(
+                                    AuthorizationMiddlewareFactory::new(key.clone(), Role::Admin),
+                                ),
                             ),
                     )
                     .service(
                         web::scope("/torrent")
-                            .service(get_torrent)
-                            .service(patch_torrent)
-                            .service(put_torrent),
+                            .route("/", web::get().to(torrent_get))
+                            .route("/", web::put().to(torrent_put))
+                            .route("/", web::patch().to(torrent_patch)),
                     ),
             )
             .default_service(web::to(|| HttpResponse::NotFound())),
@@ -143,14 +150,63 @@ pub(crate) async fn teardown(pool: PgPool, database_url: String) {
         .expect("sqlx database drop command failed");
 }
 
-/// It is guaranteed that the user will be registered and logged in successfully or fail the test.
-/// Returns the access token and refresh token.
+/// Registers and logs in a default user (Normie) with fake data.
 pub(crate) async fn new_user(
     app: &impl dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
 ) -> (RegisterDTO, UserDTO, HeaderValue, HeaderValue) {
     new_user_with(Faker.fake::<RegisterDTO>(), &app).await
 }
 
+/// Registers and logs in a Verified user with fake data.
+pub(crate) async fn new_verified_user(
+    app: &impl dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
+    pool: &PgPool,
+) -> (RegisterDTO, UserDTO, HeaderValue, HeaderValue) {
+    let (register_dto, user_dto, _, _) = new_user_with(Faker.fake::<RegisterDTO>(), &app).await;
+    sqlx::query("UPDATE \"User\" SET role = 'Verified' WHERE id = $1")
+        .bind(user_dto.id)
+        .execute(pool)
+        .await
+        .expect("Unable to set user to 'Verified'");
+    // Get the updated tokens for the updated user.
+    let (user_dto, access_token, refresh_token) =
+        login_user_safe(LoginDTO::from(register_dto.clone()), &app).await;
+    (register_dto, user_dto, access_token, refresh_token)
+}
+
+/// Registers and logs in a Moderator user with fake data.
+pub(crate) async fn new_mod_user(
+    app: &impl dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
+    pool: &PgPool,
+) -> (RegisterDTO, UserDTO, HeaderValue, HeaderValue) {
+    let (register_dto, user_dto, _, _) = new_user_with(Faker.fake::<RegisterDTO>(), &app).await;
+    sqlx::query("UPDATE \"User\" SET role = 'Mod' WHERE id = $1")
+        .bind(user_dto.id)
+        .execute(pool)
+        .await
+        .expect("Unable to set user to 'Mod'");
+    let (user_dto, access_token, refresh_token) =
+        login_user_safe(LoginDTO::from(register_dto.clone()), &app).await;
+    (register_dto, user_dto, access_token, refresh_token)
+}
+
+/// Registers and logs in an Admin user with fake data.
+pub(crate) async fn new_admin_user(
+    app: &impl dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
+    pool: &PgPool,
+) -> (RegisterDTO, UserDTO, HeaderValue, HeaderValue) {
+    let (register_dto, user_dto, _, _) = new_user_with(Faker.fake::<RegisterDTO>(), &app).await;
+    sqlx::query("UPDATE \"User\" SET role = 'Admin' WHERE id = $1")
+        .bind(user_dto.id)
+        .execute(pool)
+        .await
+        .expect("Unable to set user to 'Admin'");
+    let (user_dto, access_token, refresh_token) =
+        login_user_safe(LoginDTO::from(register_dto.clone()), &app).await;
+    (register_dto, user_dto, access_token, refresh_token)
+}
+
+/// Registers and logs in a Normie user given a RegisterDTO.
 pub(crate) async fn new_user_with(
     register_dto: RegisterDTO,
     app: &impl Service<Request, Response = ServiceResponse, Error = actix_web::Error>,

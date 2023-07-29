@@ -1426,6 +1426,7 @@ dependencies = [
  "fake",
  "futures",
  "jwt-compact",
+ "laguna-backend-dto",
  "laguna-backend-middleware",
  "laguna-backend-model",
  "log",
@@ -1439,10 +1440,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "laguna-backend-dto"
+version = "0.1.0"
+dependencies = [
+ "actix-jwt-auth-middleware",
+ "actix-web",
+ "actix-web-validator",
+ "chrono",
+ "fake",
+ "laguna-backend-model",
+ "rand",
+ "serde",
+ "serde_bytes",
+ "uuid",
+ "validator",
+]
+
+[[package]]
 name = "laguna-backend-internal"
 version = "0.1.0"
 dependencies = [
  "laguna-backend-api",
+ "laguna-backend-dto",
  "laguna-backend-middleware",
  "laguna-backend-model",
 ]
@@ -1458,9 +1477,13 @@ dependencies = [
  "derive_more",
  "digest",
  "env_logger",
+ "futures-util",
  "jwt-compact",
+ "laguna-backend-dto",
+ "laguna-backend-model",
  "log",
  "serde",
+ "serde_json",
  "sha2",
  "sql-builder",
  "sqlx",

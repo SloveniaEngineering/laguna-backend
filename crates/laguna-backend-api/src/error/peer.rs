@@ -18,7 +18,7 @@ impl ResponseError for PeerError {
 
     fn status_code(&self) -> StatusCode {
         match self {
-            Self::DoesNotExist => StatusCode::NOT_FOUND,
+            Self::DoesNotExist => StatusCode::BAD_REQUEST,
         }
     }
 }

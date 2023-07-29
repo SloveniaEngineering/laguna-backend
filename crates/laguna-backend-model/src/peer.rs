@@ -21,6 +21,3 @@ pub struct Peer {
     pub user_id: Uuid,
     pub torrent_id: Uuid,
 }
-
-// For now.
-pub type PeerDTO = Peer;

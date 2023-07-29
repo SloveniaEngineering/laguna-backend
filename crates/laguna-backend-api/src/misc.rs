@@ -1,7 +1,6 @@
-use actix_web::get;
 use actix_web::web;
 use actix_web::HttpResponse;
-use laguna_backend_model::misc::Laguna;
+use laguna_backend_dto::meta::AppInfoDTO;
 
 /// GET `/misc/laguna`
 /// # Example
@@ -22,7 +21,6 @@ use laguna_backend_model::misc::Laguna;
 ///   "repository": "https://github.com/SloveniaEngineering/laguna-backend"
 /// }
 /// ```
-#[get("/laguna")]
-pub async fn get_app_info(laguna: web::Data<Laguna>) -> HttpResponse {
+pub async fn get_app_info(laguna: web::Data<AppInfoDTO>) -> HttpResponse {
     HttpResponse::Ok().json(laguna)
 }

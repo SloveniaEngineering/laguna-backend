@@ -8,6 +8,7 @@ use actix_jwt_auth_middleware::use_jwt::UseJWTOnApp;
 use actix_jwt_auth_middleware::Authority;
 use actix_jwt_auth_middleware::TokenSigner;
 use actix_web::http::header;
+
 use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer};
 
 use chrono::Duration;
@@ -18,17 +19,23 @@ use laguna::api::login::login;
 use laguna::api::misc::get_app_info;
 use laguna::api::register::register;
 
-use laguna::api::torrent::get_torrent;
-use laguna::api::torrent::patch_torrent;
-use laguna::api::torrent::put_torrent;
-use laguna::api::user::delete_me;
-use laguna::api::user::delete_user;
-use laguna::api::user::get_me;
-use laguna::api::user::get_user;
+use laguna::api::torrent::torrent_get;
+use laguna::api::torrent::torrent_patch;
+use laguna::api::torrent::torrent_put;
+use laguna::api::user::user_delete;
+use laguna::api::user::user_get;
+use laguna::api::user::user_me_delete;
+use laguna::api::user::user_me_get;
+
+use laguna::api::user::user_patch;
+use laguna::api::user::user_peers_get;
+use laguna::dto::meta::AppInfoDTO;
+use laguna::middleware::auth::AuthorizationMiddlewareFactory;
 use laguna::middleware::consts::ACCESS_TOKEN_HEADER_NAME;
 use laguna::middleware::consts::REFRESH_TOKEN_HEADER_NAME;
-use laguna::model::misc::Laguna;
-use laguna::model::user::UserDTO;
+
+use laguna::dto::user::UserDTO;
+use laguna::model::role::Role;
 use std::env;
 
 use sqlx::postgres::PgPoolOptions;
@@ -106,7 +113,7 @@ async fn main() -> Result<(), sqlx::Error> {
             .app_data(web::Data::new(pool.clone()))
             .app_data(web::Data::new(host.clone()))
             .app_data(web::Data::new(port))
-            .app_data(web::Data::new(Laguna {
+            .app_data(web::Data::new(AppInfoDTO {
                 version: env::var("CARGO_PKG_VERSION").expect("CARGO_PKG_VERSION not set"),
                 authors: env::var("CARGO_PKG_AUTHORS")
                     .expect("CARGO_PKG_AUTHORS not set")
@@ -120,28 +127,32 @@ async fn main() -> Result<(), sqlx::Error> {
             }))
             .service(
                 web::scope("/api/user/auth")
-                    .service(register)
-                    .service(login),
+                    .route("/register", web::post().to(register))
+                    .route("/login", web::post().to(login)),
             )
-            .service(web::scope("/misc").service(get_app_info))
+            .service(web::scope("/misc").route("/", web::get().to(get_app_info)))
             .use_jwt(
                 authority,
                 web::scope("/api")
                     .service(
                         web::scope("/user")
-                            .service(get_me)
-                            .service(get_user)
-                            .service(
-                                web::scope("/delete")
-                                    .service(delete_me)
-                                    .service(delete_user),
-                            ),
+                            .route("/", web::patch().to(user_patch))
+                            .route("/me", web::get().to(user_me_get))
+                            .route("/{id}", web::get().to(user_get))
+                            .route("/me", web::delete().to(user_me_delete))
+                            .route(
+                                "/{id}",
+                                web::delete().to(user_delete).wrap(
+                                    AuthorizationMiddlewareFactory::new(key.clone(), Role::Admin),
+                                ),
+                            )
+                            .route("/{id}/peers", web::get().to(user_peers_get)),
                     )
                     .service(
                         web::scope("/torrent")
-                            .service(put_torrent)
-                            .service(patch_torrent)
-                            .service(get_torrent),
+                            .route("/", web::get().to(torrent_get))
+                            .route("/", web::put().to(torrent_put))
+                            .route("/", web::patch().to(torrent_patch)),
                     ),
             )
             .default_service(web::to(|| HttpResponse::NotFound()))

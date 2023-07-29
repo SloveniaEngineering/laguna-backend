@@ -1,6 +1,8 @@
 use validator::{validate_email, validate_length, validate_non_control_character, ValidationError};
 
-use crate::consts::{EMAIL_MAX_LEN, EMAIL_MIN_LEN, USERNAME_MAX_LEN, USERNAME_MIN_LEN};
+use laguna_backend_model::consts::{
+    EMAIL_MAX_LEN, EMAIL_MIN_LEN, USERNAME_MAX_LEN, USERNAME_MIN_LEN,
+};
 
 pub fn validate_username_or_email(username_or_email: &str) -> Result<(), ValidationError> {
     if username_or_email.contains('@') {

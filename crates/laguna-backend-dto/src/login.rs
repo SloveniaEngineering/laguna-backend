@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::consts::{PASSWORD_MAX_LEN, PASSWORD_MIN_LEN};
 use crate::register::RegisterDTO;
 use crate::validators::login::validate_username_or_email;
+use laguna_backend_model::consts::{PASSWORD_MAX_LEN, PASSWORD_MIN_LEN};
 use validator::Validate;
 
 #[derive(Debug, Serialize, Deserialize, Validate)]

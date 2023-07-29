@@ -7,13 +7,13 @@ use actix_web::http::StatusCode;
 use fake::Fake;
 use fake::Faker;
 
+use laguna_backend_dto::{login::LoginDTO, register::RegisterDTO};
 use laguna_backend_model::consts::EMAIL_MAX_LEN;
 use laguna_backend_model::consts::EMAIL_MIN_LEN;
 use laguna_backend_model::consts::PASSWORD_MAX_LEN;
 use laguna_backend_model::consts::PASSWORD_MIN_LEN;
 use laguna_backend_model::consts::USERNAME_MAX_LEN;
 use laguna_backend_model::consts::USERNAME_MIN_LEN;
-use laguna_backend_model::{login::LoginDTO, register::RegisterDTO};
 
 use crate::common::different_string;
 

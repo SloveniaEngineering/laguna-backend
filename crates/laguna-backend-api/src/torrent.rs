@@ -1,12 +1,11 @@
 use actix_multipart::Multipart;
-use actix_web::{get, patch, put, web, HttpResponse};
+use actix_web::{web, HttpResponse};
 use actix_web_validator::Json;
 
 use chrono::Utc;
-use laguna_backend_model::{
-    torrent::{Torrent, TorrentDTO, TorrentPatchDTO, TorrentPutDTO},
-    user::UserDTO,
-};
+use laguna_backend_dto::torrent::{TorrentDTO, TorrentPatchDTO, TorrentPutDTO};
+use laguna_backend_dto::user::UserDTO;
+use laguna_backend_model::torrent::Torrent;
 
 use digest::Digest;
 use futures::{StreamExt, TryStreamExt};
@@ -49,8 +48,7 @@ use crate::error::{torrent::TorrentError, APIError};
 /// ```
 /// * If DB operation fails: HTTP/1.1 500 Internal Server Error
 /// For scheme see [`TorrentDTO`].
-#[get("/{id}")]
-pub async fn get_torrent(
+pub async fn torrent_get(
     id: web::Path<Uuid>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
@@ -122,8 +120,7 @@ pub async fn get_torrent(
 /// ```
 /// * If DB operation fails: HTTP/1.1 500 Internal Server Error
 /// Returns updated [`TorrentDTO`].
-#[patch("/")]
-pub async fn patch_torrent(
+pub async fn torrent_patch(
     torrent_dto: Json<TorrentPatchDTO>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
@@ -177,8 +174,7 @@ pub async fn patch_torrent(
 /// 3. On invalid torrent format or no content-type: HTTP/1.1 400 Bad Request
 /// 4. On non-multipart (or corrupt multipart form-data): HTTP/1.1 422 Unprocessable Entity
 /// 5. If any DB operation fails: HTTP/1.1 500 Internal Server Error
-#[put("/")]
-pub async fn put_torrent(
+pub async fn torrent_put(
     mut payload: Multipart,
     pool: web::Data<PgPool>,
     host: web::Data<String>,
