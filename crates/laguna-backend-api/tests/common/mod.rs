@@ -68,7 +68,7 @@ pub async fn setup_with_settings(
 
     let secret_key = Hs256Key::new(settings.application.auth.secret_key.as_str());
 
-    let (token_signer, authority) = crate::setup_authority!(secret_key);
+    let (token_signer, authority) = crate::setup_authority!(secret_key, settings);
     let pool_clone = pool.clone();
 
     let app = setup_with_config(move |service_config| {
@@ -203,8 +203,12 @@ pub(crate) fn setup_authority(
                 .algorithm(Hs256)
                 .access_token_name(ACCESS_TOKEN_HEADER_NAME)
                 .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
-                .access_token_lifetime(Duration::seconds(ACCESS_TOKEN_LIFETIME_SECONDS))
-                .refresh_token_lifetime(Duration::seconds(REFRESH_TOKEN_LIFETIME_SECONDS))
+                .access_token_lifetime(Duration::seconds(
+                    settings.application.auth.access_token_lifetime_seconds,
+                ))
+                .refresh_token_lifetime(Duration::seconds(
+                    settings.application.auth.refresh_token_lifetime_seconds,
+                ))
                 .build()
                 .expect("Cannot create token signer"),
         ))
@@ -217,19 +221,21 @@ pub(crate) fn setup_authority(
 
 #[macro_export]
 macro_rules! setup_authority {
-    ($secret_key:ident) => {{
+    ($secret_key:ident, $settings:ident) => {{
         use ::laguna_backend_middleware::consts::ACCESS_TOKEN_HEADER_NAME;
-        use ::laguna_backend_middleware::consts::ACCESS_TOKEN_LIFETIME_SECONDS;
         use ::laguna_backend_middleware::consts::REFRESH_TOKEN_HEADER_NAME;
-        use ::laguna_backend_middleware::consts::REFRESH_TOKEN_LIFETIME_SECONDS;
         (
             TokenSigner::<UserDTO, Hs256>::new()
                 .signing_key($secret_key.clone())
                 .algorithm(Hs256)
                 .access_token_name(ACCESS_TOKEN_HEADER_NAME)
                 .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
-                .access_token_lifetime(Duration::seconds(ACCESS_TOKEN_LIFETIME_SECONDS))
-                .refresh_token_lifetime(Duration::seconds(REFRESH_TOKEN_LIFETIME_SECONDS))
+                .access_token_lifetime(Duration::seconds(
+                    $settings.application.auth.access_token_lifetime_seconds,
+                ))
+                .refresh_token_lifetime(Duration::seconds(
+                    $settings.application.auth.refresh_token_lifetime_seconds,
+                ))
                 .build()
                 .expect("Cannot create token signer"),
             Authority::<UserDTO, Hs256, _, _>::new()

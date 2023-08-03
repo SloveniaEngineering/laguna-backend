@@ -28,6 +28,8 @@ pub struct ApplicationSettings {
 #[serde(rename_all = "kebab-case")]
 pub struct AuthSettings {
     pub secret_key: String,
+    pub access_token_lifetime_seconds: i64,
+    pub refresh_token_lifetime_seconds: i64,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
