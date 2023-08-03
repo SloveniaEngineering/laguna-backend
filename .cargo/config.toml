@@ -26,3 +26,6 @@ strip = "symbols"
 panic = "abort"
 # Incremental compilation
 codegen-units = 256
+
+[env]
+WORKSPACE_ROOT = { value = "", relative = true }
