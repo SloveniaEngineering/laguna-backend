@@ -13,7 +13,7 @@ use laguna_backend_model::user::User;
 use sha2::Sha256;
 use sqlx::PgPool;
 
-use crate::error::APIError;
+use crate::error::{APIError, user::UserError};
 
 /// `POST /api/user/auth/login`
 /// # Example
@@ -61,20 +61,22 @@ pub async fn login(
 ) -> Result<HttpResponse, APIError> {
     let fetched_user = sqlx::query_as!(
         User,
-        r#"SELECT id, 
-                  username, 
-                  email, 
-                  password, 
-                  first_login, 
-                  last_login, 
-                  avatar_url,
-                  role AS "role: _",
-                  behaviour AS "behaviour: _",
-                  is_active,
-                  has_verified_email,
-                  is_history_private,
-                  is_profile_private
-        FROM "User" WHERE username = $1 OR email = $1"#,
+        r#"
+        SELECT id, 
+               username, 
+               email, 
+               password, 
+               first_login, 
+               last_login, 
+               avatar_url,
+               role AS "role: _",
+               behaviour AS "behaviour: _",
+               is_active,
+               has_verified_email,
+               is_history_private,
+               is_profile_private
+        FROM "User" WHERE username = $1 OR email = $1
+        "#,
         &login_dto.username_or_email
     )
     .fetch_optional(pool.get_ref())
@@ -106,8 +108,9 @@ pub async fn login(
                 Utc::now(),
                 logged_user.id
             )
-            .fetch_one(pool.get_ref())
-            .await?;
+            .fetch_optional(pool.get_ref())
+            .await?
+            .ok_or_else(|| UserError::DidntUpdate)?;
             return Ok(HttpResponse::Ok()
                 // TODO: get rid of clones
                 .append_header((

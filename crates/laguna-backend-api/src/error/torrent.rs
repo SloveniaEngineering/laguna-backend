@@ -9,6 +9,7 @@ pub use serde_bencode::Error as BencodeError;
 pub enum TorrentError {
     DoesNotExist,
     BencodeError(String),
+    DidntCreate,
 }
 
 impl From<BencodeError> for TorrentError {
@@ -28,6 +29,7 @@ impl ResponseError for TorrentError {
         match self {
             Self::DoesNotExist => StatusCode::BAD_REQUEST,
             Self::BencodeError(_) => StatusCode::BAD_REQUEST,
+            Self::DidntCreate => StatusCode::BAD_REQUEST,
         }
     }
 }

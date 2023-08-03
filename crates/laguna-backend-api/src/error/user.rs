@@ -10,6 +10,7 @@ pub enum UserError {
     DoesNotExist,
     ExclusiveAccess,
     DidntCreate,
+    DidntUpdate,
 }
 
 impl ResponseError for UserError {
@@ -24,6 +25,7 @@ impl ResponseError for UserError {
             Self::ExclusiveAccess => StatusCode::FORBIDDEN,
             Self::DoesNotExist => StatusCode::BAD_REQUEST,
             Self::DidntCreate => StatusCode::BAD_REQUEST,
+            Self::DidntUpdate => StatusCode::BAD_REQUEST,
         }
     }
 }
