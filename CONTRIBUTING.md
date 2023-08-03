@@ -7,14 +7,15 @@
 1. [Requirements](#requirements)
 2. [Setup & First run](#setup--first-run)
 3. [Testing](#testing)
-4. [Generating documentation](#generating-documentation)
-5. [Generating coverage](#generating-coverage)
-6. [Fixing warnings](#fixing-warnings)
-7. [Migrations and model changes](#migrations-and-model-changes)
-8. [CI Workflow](#ci-workflow)
-9. [Performance optimization](#performance-optimization)
-10. [Project structure](#project-structure)
-11. [Submitting changes](#submitting-changes)
+4. [Configuration](#configuration)
+5. [Generating documentation](#generating-documentation)
+6. [Generating coverage](#generating-coverage)
+7. [Fixing warnings](#fixing-warnings)
+8. [Migrations and model changes](#migrations-and-model-changes)
+9. [CI Workflow](#ci-workflow)
+10. [Performance optimization](#performance-optimization)
+11. [Project structure](#project-structure)
+12. [Submitting changes](#submitting-changes)
 
 ## Requirements
 
@@ -36,8 +37,7 @@ In the future we will add powershell scripts for Windows.
 4. Make sure Postgres daemon is running, then do `scripts/dbsetup.sh laguna_db` to create `laguna_db` local DB with tables.
 5. Run **and watch for changes** with `scripts/dev.sh` or just run with `cargo run`.
 
-> **Note**
-> `scripts/dev.sh` watches for changes in source code and if change is detected automatically recompiles and restarts the server.
+> **Note** > `scripts/dev.sh` watches for changes in source code and if change is detected automatically recompiles and restarts the server.
 
 ## Testing
 
@@ -45,9 +45,17 @@ In the future we will add powershell scripts for Windows.
 
 To delete test zombie databases if tests failed use `scripts/dbdroptest.sh`.
 
+## Configuration
+
+Most of the configuration can be done via config files in `configs/` directory. Both testing and development use `dev.toml` config.
+
+When testing, however, `application.database.name` is always overriden to `laguna_test_db + <random UUIDv4>` for each test ensuring clean DB per test.
+
+To extend config with custom fields see `crates/laguna-backend-config` crate.
+
 ## Generating Documentation
 
-Documentation is auto-generated on push to `master`. 
+Documentation is auto-generated on push to `master`.
 It can be accessed via GitHub Pages at https://sloveniaengineering.github.io/laguna-backend.
 
 To generate and open identical local documentation run `scripts/doc.sh`.
@@ -82,7 +90,7 @@ which will create an `up` and `down` migration files and can be reverted with `s
 
 Always prefer compile-time query to runtime query, so that errors are caught at compile time.
 
-* If a compile time (ie. `query_*!`) is changed (even if just spacing is changed (because of underlying hash of query)) it needs to be re-prepared with `scripts/prepare.sh`. 
+- If a compile time (ie. `query_*!`) is changed (even if just spacing is changed (because of underlying hash of query)) it needs to be re-prepared with `scripts/prepare.sh`.
   This generates `sqlx-data.json` in workspace root.
 
 ## CI Workflow
@@ -119,8 +127,7 @@ See `.cargo/config.toml` for more info.
 
 ## Submitting changes
 
-> **Warning**
-> **Don't fork** and contribute, just clone and contribute.
+> **Warning** > **Don't fork** and contribute, just clone and contribute.
 > This is because some token CI permissions are acting weird with forks.
 
 Because of that, if you want to contribute you have to be in the `SloveniaEngineering` GitHub organization.
