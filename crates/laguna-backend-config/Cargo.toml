@@ -1,0 +1,10 @@
+[package]
+name = "laguna-backend-config"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+actix-settings = "*"
+const_format = "*"

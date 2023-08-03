@@ -9,7 +9,7 @@ use std::fmt;
 
 use futures_util::future::LocalBoxFuture;
 use jwt_compact::alg::{Hs256, Hs256Key};
-use jwt_compact::{AlgorithmExt, UntrustedToken, ValidationError};
+use jwt_compact::{AlgorithmExt, UntrustedToken};
 use laguna_backend_dto::user::UserDTO;
 use laguna_backend_model::role::Role;
 use std::future::ready;
@@ -58,13 +58,6 @@ pub struct AuthorizationMiddleware<S> {
 #[derive(Debug)]
 pub enum AuthorizationError {
     UnauthorizedRole { min_role: Role, actual_role: Role },
-    InvalidToken(ValidationError),
-}
-
-impl From<ValidationError> for AuthorizationError {
-    fn from(value: ValidationError) -> Self {
-        Self::InvalidToken(value)
-    }
 }
 
 impl fmt::Display for AuthorizationError {
@@ -80,9 +73,6 @@ impl fmt::Display for AuthorizationError {
                     min_role, actual_role
                 )
             }
-            Self::InvalidToken(validation_error) => {
-                write!(f, "{}", validation_error)
-            }
         }
     }
 }
@@ -90,14 +80,12 @@ impl fmt::Display for AuthorizationError {
 impl ResponseError for AuthorizationError {
     fn status_code(&self) -> StatusCode {
         match self {
-            Self::InvalidToken(_) => StatusCode::BAD_REQUEST,
             Self::UnauthorizedRole { .. } => StatusCode::UNAUTHORIZED,
         }
     }
 
     fn error_response(&self) -> HttpResponse {
         match self {
-            Self::InvalidToken(_) => HttpResponse::BadRequest().body(format!("{}", self)),
             Self::UnauthorizedRole { .. } => HttpResponse::Unauthorized().body(format!("{}", self)),
         }
     }
@@ -122,18 +110,12 @@ where
             // SECURITY: Token is trusted at this point but additional verification is however still performed.
             // NOTE: This is probably not a huge bottleneck and is a consequence of using external libraries for authentication (not authorization).
             let access_token = UntrustedToken::new(access_token_header.to_str().unwrap()).unwrap();
-            let integrity = Hs256.validate_integrity::<UserDTO>(&access_token, &self.key);
-            if let Err(validation_error) = integrity {
-                return Box::pin(async move {
-                    Result::<Self::Response, Self::Error>::Err(
-                        AuthorizationError::from(validation_error).into(),
-                    )
-                });
-            }
+            let signed_access_token = Hs256
+                .validate_for_signed_token::<UserDTO>(&access_token, &self.key)
+                .unwrap();
             // SAFETY: .unwrap() is safe because we checked for error.
-            let integrity = integrity.unwrap();
             let min_role = self.min_role;
-            let role = integrity.claims().custom.role;
+            let role = signed_access_token.token.claims().custom.role;
             if role < min_role {
                 return Box::pin(async move {
                     Result::<Self::Response, Self::Error>::Err(
@@ -146,9 +128,7 @@ where
                 });
             }
         }
-
         let fut = self.service.call(req);
-
         Box::pin(async move {
             let res = fut.await?;
             Ok(res)

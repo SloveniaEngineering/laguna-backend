@@ -36,33 +36,36 @@ use laguna::middleware::consts::REFRESH_TOKEN_HEADER_NAME;
 
 use laguna::dto::user::UserDTO;
 use laguna::model::role::Role;
+use laguna_config::CONFIG_DEV;
+
 use std::env;
 
+use actix_settings::ApplySettings;
+use laguna_config::Settings;
 use sqlx::postgres::PgPoolOptions;
 
 #[actix_web::main]
 async fn main() -> Result<(), sqlx::Error> {
-    // Logging level from RUST_LOG env variable.
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    let mut settings = Settings::parse_toml(CONFIG_DEV).expect("Failed to parse settings");
+
+    if settings.actix.enable_log {
+        env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    }
+
+    Settings::override_field_with_env_var(&mut settings.application.auth.secret_key, "SECRET_KEY").expect("Failed to override field with env var");
 
     // Database connection setup.
     let pool = PgPoolOptions::new()
         .max_connections(100)
-        .connect(&env::var("DATABASE_URL").expect("DATABASE_URL not set"))
+        .connect(settings.application.database.url().as_str())
         .await?;
 
     // Run database migrations.
     sqlx::migrate!("./migrations").run(&pool).await?;
 
     // Server setup
-    let key = Hs256Key::new("some random shit");
-    let host = env::var("HOST").expect("HOST not specified");
-    let port = env::var("PORT")
-        .expect("PORT not specified")
-        .parse::<u16>()
-        .expect("PORT invalid");
-
-    let host_clone = host.clone();
+    let secret_key = Hs256Key::new(settings.application.auth.secret_key.as_str());
+    let frontend_address = settings.application.frontend.address();
     let pool_clone = pool.clone();
 
     HttpServer::new(move || {
@@ -73,7 +76,7 @@ async fn main() -> Result<(), sqlx::Error> {
             .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
             .token_signer(Some(
                 TokenSigner::new()
-                    .signing_key(key.clone())
+                    .signing_key(secret_key.clone())
                     .algorithm(Hs256)
                     .access_token_lifetime(Duration::days(1))
                     .refresh_token_lifetime(Duration::days(3))
@@ -81,18 +84,11 @@ async fn main() -> Result<(), sqlx::Error> {
                     .build()
                     .expect("Cannot create token signer"),
             ))
-            .verifying_key(key.clone())
+            .verifying_key(secret_key.clone())
             .build()
             .expect("Cannot create key authority");
         let cors = Cors::default()
-            .allowed_origin(
-                format!(
-                    "{}:{}",
-                    env::var("FRONTEND_HOST").expect("FRONTEND_HOST not set"),
-                    env::var("FRONTEND_PORT").expect("FRONTEND_PORT not set")
-                )
-                .as_str(),
-            )
+            .allowed_origin(frontend_address.to_string().as_str())
             .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "PATCH"])
             .allowed_headers(vec![
                 header::ORIGIN,
@@ -111,8 +107,6 @@ async fn main() -> Result<(), sqlx::Error> {
             .wrap(Logger::default())
             .wrap(cors)
             .app_data(web::Data::new(pool.clone()))
-            .app_data(web::Data::new(host.clone()))
-            .app_data(web::Data::new(port))
             .app_data(web::Data::new(AppInfoDTO {
                 version: env::var("CARGO_PKG_VERSION").expect("CARGO_PKG_VERSION not set"),
                 authors: env::var("CARGO_PKG_AUTHORS")
@@ -143,7 +137,10 @@ async fn main() -> Result<(), sqlx::Error> {
                             .route(
                                 "/{id}",
                                 web::delete().to(user_delete).wrap(
-                                    AuthorizationMiddlewareFactory::new(key.clone(), Role::Admin),
+                                    AuthorizationMiddlewareFactory::new(
+                                        secret_key.clone(),
+                                        Role::Admin,
+                                    ),
                                 ),
                             )
                             .route("/{id}/peers", web::get().to(user_peers_get)),
@@ -157,8 +154,7 @@ async fn main() -> Result<(), sqlx::Error> {
             )
             .default_service(web::to(|| HttpResponse::NotFound()))
     })
-    .bind((host_clone, port))
-    .expect("Cannot bind address")
+    .apply_settings(&settings)
     .run()
     .await
     .expect("Cannot start server");
