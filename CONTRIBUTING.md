@@ -113,6 +113,10 @@ See `.cargo/config.toml` for more info.
   - `laguna-backend-model/` contains DB models and relations.
   - `laguna-backend-config/` contains custom config structs and functions that work with `configs/` directory and `actix-settings`. `laguna-backend-config` is not a workspace member.
   - `laguna-backend-middleware/` contains application logic from API to DB.
+  - `laguna-backend-tracker/` contains torrent tracking system commons.
+  - `laguna-backend-tracker-http` implements TCP-based (HTTP) tracker.
+  - `laguna-backend-tracker-udp` implements UDP-based tracker.
+  - `laguna-backend-tracker-ws` implements WebRTC-based (WebSocker) tracker.
 - `migrations/` contains SQL migrations for DB.
 - `configs/` contains config files for development, testing and deploy.
 - `scripts/` contains scripts for development, testing and deploy.
