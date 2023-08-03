@@ -2,9 +2,9 @@ name: Rust
 
 on:
   push:
-    branches: [master]
+    branches: [master, dev]
   pull_request:
-    branches: [master]
+    branches: [master, dev]
 
 env:
   CARGO_TERM_COLOR: always
@@ -78,7 +78,10 @@ jobs:
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Install sqlx cli for tests
-        run: cargo install sqlx-cli --no-default-features --features postgres,rustls
+        uses: baptiste0928/cargo-install@v2
+        with:
+          crate: sqlx-cli
+          args: --no-default-features --features postgres,rustls
       - name: Run tests
         run: cargo test --all --features testx -- --nocapture
 
@@ -130,8 +133,11 @@ jobs:
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Install sqlx cli for tests
-        run: cargo install sqlx-cli --no-default-features --features postgres,rustls
-      - name: Generate coverage data on tests
+        uses: baptiste0928/cargo-install@v2
+        with:
+          crate: sqlx-cli
+          args: --no-default-features --features postgres,rustls
+      - name: Generate coverage data
         run: |
           cargo tarpaulin --workspace --timeout 120 --out Xml --features testx
       - name: Upload to codecov.io
