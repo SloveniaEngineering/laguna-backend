@@ -14,11 +14,12 @@ use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer};
 use chrono::Duration;
 use jwt_compact::alg::Hs256;
 use jwt_compact::alg::Hs256Key;
-use jwt_compact::TimeOptions;
+
 use laguna::api::login::login;
 use laguna::api::misc::get_app_info;
 use laguna::api::register::register;
 
+use jwt_compact::TimeOptions;
 use laguna::api::torrent::torrent_get;
 use laguna::api::torrent::torrent_patch;
 use laguna::api::torrent::torrent_put;
@@ -32,9 +33,11 @@ use laguna::api::user::user_peers_get;
 use laguna::dto::meta::AppInfoDTO;
 use laguna::middleware::auth::AuthorizationMiddlewareFactory;
 use laguna::middleware::consts::ACCESS_TOKEN_HEADER_NAME;
+use laguna::middleware::consts::ACCESS_TOKEN_LIFETIME_SECONDS;
 use laguna::middleware::consts::REFRESH_TOKEN_HEADER_NAME;
 
 use laguna::dto::user::UserDTO;
+use laguna::middleware::consts::REFRESH_TOKEN_LIFETIME_SECONDS;
 use laguna::model::role::Role;
 use laguna_config::CONFIG_DEV;
 
@@ -75,13 +78,15 @@ async fn main() -> Result<(), sqlx::Error> {
             .enable_header_tokens(true)
             .access_token_name(ACCESS_TOKEN_HEADER_NAME)
             .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
+            .time_options(TimeOptions::from_leeway(Duration::seconds(5)))
             .token_signer(Some(
                 TokenSigner::new()
                     .signing_key(secret_key.clone())
                     .algorithm(Hs256)
-                    .access_token_lifetime(Duration::days(1))
-                    .refresh_token_lifetime(Duration::days(3))
-                    .time_options(TimeOptions::from_leeway(Duration::days(1)))
+                    .access_token_name(ACCESS_TOKEN_HEADER_NAME)
+                    .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
+                    .access_token_lifetime(Duration::seconds(ACCESS_TOKEN_LIFETIME_SECONDS))
+                    .refresh_token_lifetime(Duration::seconds(REFRESH_TOKEN_LIFETIME_SECONDS))
                     .build()
                     .expect("Cannot create token signer"),
             ))

@@ -14,10 +14,8 @@ use actix_web::{
 use chrono::Duration;
 use env_logger;
 use fake::{Fake, Faker};
-use jwt_compact::{
-    alg::{Hs256, Hs256Key},
-    TimeOptions,
-};
+use jwt_compact::alg::{Hs256, Hs256Key};
+use jwt_compact::TimeOptions;
 
 use laguna_backend_api::misc::get_app_info;
 use laguna_backend_api::torrent::{torrent_get, torrent_patch, torrent_put};
@@ -45,13 +43,25 @@ use sqlx::{postgres::PgPoolOptions, PgPool};
 
 static ENV_LOGGER_INIT: Once = Once::new();
 
+pub(crate) fn get_dev_settings() -> Settings {
+    Settings::parse_toml(CONFIG_DEV).expect("Failed to parse settings")
+}
+
 pub(crate) async fn setup() -> (
     PgPool,
     String,
     impl Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
 ) {
-    let mut settings = Settings::parse_toml(CONFIG_DEV).expect("Failed to parse settings");
+    setup_with_settings(get_dev_settings()).await
+}
 
+pub async fn setup_with_settings(
+    mut settings: Settings,
+) -> (
+    PgPool,
+    String,
+    impl Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
+) {
     setup_logging(&settings);
 
     let (pool, database_url) = setup_db(&mut settings).await;
@@ -184,12 +194,17 @@ pub(crate) fn setup_authority(
         .refresh_authorizer(|| async move { Ok(()) })
         .enable_header_tokens(true)
         .access_token_name(ACCESS_TOKEN_HEADER_NAME)
+        .algorithm(Hs256)
+        .time_options(TimeOptions::from_leeway(Duration::seconds(5)))
         .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
         .token_signer(Some(
             TokenSigner::new()
                 .signing_key(secret_key.clone())
                 .algorithm(Hs256)
-                .time_options(TimeOptions::from_leeway(Duration::days(1)))
+                .access_token_name(ACCESS_TOKEN_HEADER_NAME)
+                .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
+                .access_token_lifetime(Duration::seconds(ACCESS_TOKEN_LIFETIME_SECONDS))
+                .refresh_token_lifetime(Duration::seconds(REFRESH_TOKEN_LIFETIME_SECONDS))
                 .build()
                 .expect("Cannot create token signer"),
         ))
@@ -203,18 +218,25 @@ pub(crate) fn setup_authority(
 #[macro_export]
 macro_rules! setup_authority {
     ($secret_key:ident) => {{
-        let token_signer = TokenSigner::new()
-            .signing_key($secret_key.clone())
-            .algorithm(Hs256)
-            .time_options(TimeOptions::from_leeway(Duration::days(1)))
-            .build()
-            .expect("Cannot create token signer");
+        use ::laguna_backend_middleware::consts::ACCESS_TOKEN_HEADER_NAME;
+        use ::laguna_backend_middleware::consts::ACCESS_TOKEN_LIFETIME_SECONDS;
+        use ::laguna_backend_middleware::consts::REFRESH_TOKEN_HEADER_NAME;
+        use ::laguna_backend_middleware::consts::REFRESH_TOKEN_LIFETIME_SECONDS;
         (
-            token_signer.clone(),
+            TokenSigner::<UserDTO, Hs256>::new()
+                .signing_key($secret_key.clone())
+                .algorithm(Hs256)
+                .access_token_name(ACCESS_TOKEN_HEADER_NAME)
+                .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
+                .access_token_lifetime(Duration::seconds(ACCESS_TOKEN_LIFETIME_SECONDS))
+                .refresh_token_lifetime(Duration::seconds(REFRESH_TOKEN_LIFETIME_SECONDS))
+                .build()
+                .expect("Cannot create token signer"),
             Authority::<UserDTO, Hs256, _, _>::new()
                 .refresh_authorizer(|| async move { Ok(()) })
                 .enable_header_tokens(true)
-                .token_signer(Some(token_signer))
+                .time_options(TimeOptions::from_leeway(Duration::seconds(5)))
+                .algorithm(Hs256)
                 .access_token_name(ACCESS_TOKEN_HEADER_NAME)
                 .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
                 .verifying_key($secret_key.clone())

@@ -2,10 +2,26 @@
 // #[path = "common/mod.rs"]
 mod common;
 
+use std::thread;
+
+use actix_jwt_auth_middleware::TokenSigner;
 use actix_web::http::StatusCode;
+use actix_web::web;
+use chrono::Duration;
+use common::{get_dev_settings, setup_db, setup_with_config};
+
+use laguna_backend_api::{login::login, register::register};
+use laguna_backend_dto::user::UserDTO;
+
+use laguna_backend_middleware::consts::REFRESH_TOKEN_LIFETIME_SECONDS;
+use laguna_backend_middleware::consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME};
 
 use fake::Fake;
 use fake::Faker;
+
+use jwt_compact::alg::Hs256;
+use jwt_compact::alg::Hs256Key;
+use std::time::Duration as StdDuration;
 
 use laguna_backend_dto::{login::LoginDTO, register::RegisterDTO};
 use laguna_backend_model::consts::EMAIL_MAX_LEN;
@@ -299,5 +315,87 @@ async fn test_register_password_with_control_characters() {
     register_dto.password = String::from("a\nb\r\t");
     let register_res = common::register_user(register_dto, &app).await;
     assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
+    common::teardown(pool, database_url).await;
+}
+
+#[actix_web::test]
+async fn test_out_of_date_access_token() {
+    let mut settings = get_dev_settings();
+    let secret_key = Hs256Key::new(settings.application.auth.secret_key.as_bytes());
+    let token_signer = TokenSigner::<UserDTO, Hs256>::new()
+        .access_token_name(ACCESS_TOKEN_HEADER_NAME)
+        .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
+        .access_token_lifetime(Duration::seconds(0))
+        .refresh_token_lifetime(Duration::seconds(REFRESH_TOKEN_LIFETIME_SECONDS))
+        .algorithm(Hs256)
+        .signing_key(secret_key.clone())
+        .build()
+        .expect("Failed to build token signer");
+    let (pool, database_url) = setup_db(&mut settings).await;
+    let pool_clone = pool.clone();
+    let app = setup_with_config(move |service_config| {
+        service_config
+            .app_data(web::Data::new(pool_clone))
+            // AuthenticationService by default doesnt include token_signer into app_data, hence we get it from setup_authority!() which is kinda hacky.
+            .app_data(web::Data::new(token_signer.clone()))
+            .service(
+                web::scope("/api/user/auth")
+                    .route("/register", web::post().to(register))
+                    .route("/login", web::post().to(login)),
+            );
+    })
+    .await;
+
+    let (register_dto, _, access_token_old, _) = common::new_user(&app).await;
+
+    // Just to be sure that access token is out of date.
+    thread::sleep(StdDuration::from_secs(3));
+
+    let (_, access_token, _) = common::login_user_safe(register_dto.into(), &app).await;
+
+    // Old and new access tokens should be different.
+    assert_ne!(access_token_old, access_token);
+
+    common::teardown(pool, database_url).await;
+}
+
+#[actix_web::test]
+async fn test_out_of_date_refresh_token() {
+    let mut settings = get_dev_settings();
+    let secret_key = Hs256Key::new(settings.application.auth.secret_key.as_bytes());
+    let token_signer = TokenSigner::<UserDTO, Hs256>::new()
+        .access_token_name(ACCESS_TOKEN_HEADER_NAME)
+        .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
+        .access_token_lifetime(Duration::seconds(0))
+        .refresh_token_lifetime(Duration::seconds(0))
+        .algorithm(Hs256)
+        .signing_key(secret_key.clone())
+        .build()
+        .expect("Failed to build token signer");
+    let (pool, database_url) = setup_db(&mut settings).await;
+    let pool_clone = pool.clone();
+    let app = setup_with_config(move |service_config| {
+        service_config
+            .app_data(web::Data::new(pool_clone))
+            // AuthenticationService by default doesnt include token_signer into app_data, hence we get it from setup_authority!() which is kinda hacky.
+            .app_data(web::Data::new(token_signer.clone()))
+            .service(
+                web::scope("/api/user/auth")
+                    .route("/register", web::post().to(register))
+                    .route("/login", web::post().to(login)),
+            );
+    })
+    .await;
+
+    let (register_dto, _, _, refresh_token_old) = common::new_user(&app).await;
+
+    // Just to be sure that refresh token is out of date.
+    thread::sleep(StdDuration::from_secs(3));
+
+    let (_, _, refresh_token) = common::login_user_safe(register_dto.into(), &app).await;
+
+    // Old and new refresh tokens should be different.
+    assert_ne!(refresh_token_old, refresh_token);
+
     common::teardown(pool, database_url).await;
 }
