@@ -52,6 +52,7 @@ actix-settings = "*"
 [dev-dependencies]
 actix-http = "3.3.1"
 serde_json = "1"
+rustversion = "1.0"
 fake = { version = "2.6.1" }
 # Explanation of "testx" workaround: 
 # See: https://github.com/cksac/fake-rs/issues/53

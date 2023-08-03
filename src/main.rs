@@ -52,7 +52,8 @@ async fn main() -> Result<(), sqlx::Error> {
         env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     }
 
-    Settings::override_field_with_env_var(&mut settings.application.auth.secret_key, "SECRET_KEY").expect("Failed to override field with env var");
+    Settings::override_field_with_env_var(&mut settings.application.auth.secret_key, "SECRET_KEY")
+        .expect("Failed to override field with env var");
 
     // Database connection setup.
     let pool = PgPoolOptions::new()

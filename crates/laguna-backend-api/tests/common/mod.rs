@@ -1,31 +1,24 @@
-#![allow(unused)]
-use actix_cors::Cors;
 use actix_http::header::HeaderValue;
-use actix_http::{body::MessageBody, Error, Request};
+use actix_http::Request;
 use actix_jwt_auth_middleware::AuthenticationService;
-use actix_jwt_auth_middleware::{use_jwt::UseJWTOnApp, Authority, TokenSigner};
-use actix_settings::ApplySettings;
-use actix_web::cookie::Cookie;
-use actix_web::dev::{AppConfig, AppService};
+use actix_jwt_auth_middleware::{Authority, TokenSigner};
+
 use actix_web::test::read_body_json;
 use actix_web::web::ServiceConfig;
 use actix_web::{
-    dev::{self, Service, ServiceRequest, ServiceResponse},
-    http::{header, StatusCode},
-    middleware::Logger,
+    dev::{self, Service, ServiceResponse},
+    http::StatusCode,
     test::{init_service, TestRequest},
-    web, App, HttpRequest, HttpResponse, ResponseError,
+    web, App, HttpResponse,
 };
-use actix_web::{FromRequest, Handler};
 use chrono::Duration;
 use env_logger;
 use fake::{Fake, Faker};
-use jwt_compact::Algorithm;
 use jwt_compact::{
     alg::{Hs256, Hs256Key},
     TimeOptions,
 };
-use laguna_backend_api::error::APIError;
+
 use laguna_backend_api::misc::get_app_info;
 use laguna_backend_api::torrent::{torrent_get, torrent_patch, torrent_put};
 use laguna_backend_api::user::{user_patch, user_peers_get};
@@ -34,22 +27,18 @@ use laguna_backend_api::{
     register::register,
     user::{user_delete, user_get, user_me_delete, user_me_get},
 };
-use laguna_backend_dto::meta::AppInfoDTO;
+
 use laguna_backend_dto::user::UserDTO;
 use laguna_backend_dto::{login::LoginDTO, register::RegisterDTO};
 use laguna_backend_middleware::auth::AuthorizationMiddlewareFactory;
 use laguna_backend_middleware::consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME};
 use laguna_backend_model::role::Role;
-use laguna_backend_model::user::User;
-use laguna_config::{Settings, CONFIG_DEV_NAME, MIGRATIONS_DIR};
-use laguna_config::{CONFIG_DEV, CONFIG_DIR};
-use serde::de::DeserializeOwned;
-use serde::Serialize;
-use std::env;
-use std::future::Future;
-use std::pin::Pin;
+
+use laguna_config::CONFIG_DEV;
+use laguna_config::{Settings, MIGRATIONS_DIR};
+
 use std::process::Command;
-use std::sync::{Arc, Once};
+use std::sync::Once;
 use uuid::Uuid;
 
 use sqlx::{postgres::PgPoolOptions, PgPool};
@@ -63,76 +52,29 @@ pub(crate) async fn setup() -> (
 ) {
     let mut settings = Settings::parse_toml(CONFIG_DEV).expect("Failed to parse settings");
 
-    Settings::override_field(&mut settings.application.database.name, "laguna_test_db").expect("Cannot set database name to laguna_test_db");
+    setup_logging(&settings);
 
-    if settings.actix.enable_log {
-        ENV_LOGGER_INIT.call_once(|| {
-            env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
-        });
-    }
+    let (pool, database_url) = setup_db(&mut settings).await;
 
-    let database_url_with_uuid = format!("{}{}", settings.application.database.url(), Uuid::new_v4());
-
-    let database_create_status = Command::new("sqlx")
-        .args(&[
-            "database",
-            "reset",
-            &format!("--database-url={}", database_url_with_uuid),
-            &format!("--source={}", MIGRATIONS_DIR),
-            "-y"
-        ])
-        .status()
-        .expect("sqlx database create command failed");
-
-    assert!(database_create_status.success());
-
-    // Database connection setup.
-    let pool = PgPoolOptions::new()
-        .max_connections(100)
-        .connect(database_url_with_uuid.as_str())
-        .await
-        .expect("Failed to connect to database");
-
-    // Run database migrations.
-    sqlx::migrate!("../../migrations")
-        .run(&pool)
-        .await
-        .expect("Failed to run migrations");
-
-    // Server setup
     let secret_key = Hs256Key::new(settings.application.auth.secret_key.as_str());
-    let frontend_address = settings.application.frontend.address();
+
+    let (token_signer, authority) = crate::setup_authority!(secret_key);
     let pool_clone = pool.clone();
 
-    let authority = Authority::<UserDTO, Hs256, _, _>::new()
-        .refresh_authorizer(|| async move { Ok(()) })
-        .enable_header_tokens(true)
-        .access_token_name(ACCESS_TOKEN_HEADER_NAME)
-        .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
-        .token_signer(Some(
-            TokenSigner::new()
-                .signing_key(secret_key.clone())
-                .algorithm(Hs256)
-                .time_options(TimeOptions::from_leeway(Duration::days(1)))
-                .build()
-                .expect("Cannot create token signer"),
-        ))
-        .verifying_key(secret_key.clone())
-        .build()
-        .expect("Cannot create key authority");
-
-    let app = init_service(
-        App::new()
-            .app_data(web::Data::new(pool.clone()))
+    let app = setup_with_config(move |service_config| {
+        service_config
+            .app_data(web::Data::new(pool_clone))
+            // AuthenticationService by default doesnt include token_signer into app_data, hence we get it from setup_authority!() which is kinda hacky.
+            .app_data(web::Data::new(token_signer.clone()))
             .service(
                 web::scope("/api/user/auth")
                     .route("/register", web::post().to(register))
                     .route("/login", web::post().to(login)),
             )
             .service(web::scope("/misc").route("/", web::get().to(get_app_info)))
-            .use_jwt(
-                authority,
+            .service(
                 web::scope("/api")
+                    .wrap(AuthenticationService::new(authority))
                     .service(
                         web::scope("/user")
                             .route("/", web::patch().to(user_patch))
@@ -157,11 +99,17 @@ pub(crate) async fn setup() -> (
                             .route("/", web::patch().to(torrent_patch)),
                     ),
             )
-            .default_service(web::to(|| HttpResponse::NotFound())),
-    )
+            .default_service(web::to(|| HttpResponse::NotFound()));
+    })
     .await;
 
-    (pool, settings.application.database.url().to_string(), app)
+    (pool, database_url, app)
+}
+
+pub async fn setup_with_config<F: FnOnce(&mut ServiceConfig) -> ()>(
+    config_fn: F,
+) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
+    init_service(App::new().configure(config_fn)).await
 }
 
 pub(crate) async fn teardown(pool: PgPool, database_url: String) {
@@ -175,6 +123,105 @@ pub(crate) async fn teardown(pool: PgPool, database_url: String) {
         ])
         .status()
         .expect("sqlx database drop command failed");
+
+    assert!(database_drop_command.success());
+}
+
+pub(crate) fn setup_logging(settings: &Settings) {
+    if settings.actix.enable_log {
+        ENV_LOGGER_INIT.call_once(|| {
+            env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
+        });
+    }
+}
+
+pub(crate) async fn setup_db(settings: &mut Settings) -> (PgPool, String) {
+    Settings::override_field(&mut settings.application.database.name, "laguna_test_db")
+        .expect("Cannot set database name to laguna_test_db");
+
+    let database_url_with_uuid =
+        format!("{}{}", settings.application.database.url(), Uuid::new_v4());
+    let database_create_status = Command::new("sqlx")
+        .args(&[
+            "database",
+            "reset",
+            &format!("--database-url={}", database_url_with_uuid),
+            &format!("--source={}", MIGRATIONS_DIR),
+            "-y",
+        ])
+        .status()
+        .expect("sqlx database create command failed");
+
+    assert!(database_create_status.success());
+
+    // Database connection setup.
+    let pool = PgPoolOptions::new()
+        .max_connections(1)
+        .connect(database_url_with_uuid.as_str())
+        .await
+        .expect("Failed to connect to database");
+
+    // Run database migrations.
+    sqlx::migrate!("../../migrations")
+        .run(&pool)
+        .await
+        .expect("Failed to run migrations");
+
+    (pool, database_url_with_uuid)
+}
+
+// Waiting for this to resolve: https://github.com/rust-lang/rust/pull/93582.
+// Use macro in the meantime.
+#[rustversion::nightly]
+#[feature(impl_trait_in_fn_trait_return)]
+pub(crate) fn setup_authority(
+    settings: &Settings,
+) -> Authority<UserDTO, Hs256, impl Fn() -> impl Future<Output = Result<(), actix_web::Error>>, ()>
+{
+    let secret_key = Hs256Key::new(settings.application.auth.secret_key.as_str());
+
+    let authority = Authority::<UserDTO, Hs256, _, _>::new()
+        .refresh_authorizer(|| async move { Ok(()) })
+        .enable_header_tokens(true)
+        .access_token_name(ACCESS_TOKEN_HEADER_NAME)
+        .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
+        .token_signer(Some(
+            TokenSigner::new()
+                .signing_key(secret_key.clone())
+                .algorithm(Hs256)
+                .time_options(TimeOptions::from_leeway(Duration::days(1)))
+                .build()
+                .expect("Cannot create token signer"),
+        ))
+        .verifying_key(secret_key.clone())
+        .build()
+        .expect("Cannot create key authority");
+
+    authority
+}
+
+#[macro_export]
+macro_rules! setup_authority {
+    ($secret_key:ident) => {{
+        let token_signer = TokenSigner::new()
+            .signing_key($secret_key.clone())
+            .algorithm(Hs256)
+            .time_options(TimeOptions::from_leeway(Duration::days(1)))
+            .build()
+            .expect("Cannot create token signer");
+        (
+            token_signer.clone(),
+            Authority::<UserDTO, Hs256, _, _>::new()
+                .refresh_authorizer(|| async move { Ok(()) })
+                .enable_header_tokens(true)
+                .token_signer(Some(token_signer))
+                .access_token_name(ACCESS_TOKEN_HEADER_NAME)
+                .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
+                .verifying_key($secret_key.clone())
+                .build()
+                .expect("Cannot create key authority"),
+        )
+    }};
 }
 
 /// Registers and logs in a default user (Normie) with fake data.
@@ -185,6 +232,7 @@ pub(crate) async fn new_user(
 }
 
 /// Registers and logs in a Verified user with fake data.
+#[allow(dead_code)]
 pub(crate) async fn new_verified_user(
     app: &impl dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
     pool: &PgPool,
@@ -202,6 +250,7 @@ pub(crate) async fn new_verified_user(
 }
 
 /// Registers and logs in a Moderator user with fake data.
+#[allow(dead_code)]
 pub(crate) async fn new_mod_user(
     app: &impl dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
     pool: &PgPool,
@@ -218,6 +267,7 @@ pub(crate) async fn new_mod_user(
 }
 
 /// Registers and logs in an Admin user with fake data.
+#[allow(dead_code)]
 pub(crate) async fn new_admin_user(
     app: &impl dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
     pool: &PgPool,
@@ -302,6 +352,7 @@ pub(crate) async fn login_user(
     .unwrap()
 }
 
+#[allow(dead_code)]
 pub(crate) async fn as_logged_in(
     access_token: HeaderValue,
     refresh_token: HeaderValue,
@@ -317,6 +368,7 @@ pub(crate) async fn as_logged_in(
 // Replaces the last character of the string with its successor, guaranteeing that the new string is different from the original.
 // We need this because we have tests (using fake data) that require different strings than original which Faker cannot guarantee.
 // TODO: Find a better way
+#[allow(dead_code)]
 pub(crate) fn different_string(string: String) -> String {
     string[..string.len() - 1].to_owned()
         + char::from_u32(string.chars().last().unwrap() as u32 + 1)
