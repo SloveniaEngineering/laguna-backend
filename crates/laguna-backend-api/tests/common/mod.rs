@@ -140,7 +140,7 @@ pub(crate) async fn teardown(pool: PgPool, database_url: String) {
 pub(crate) fn setup_logging(settings: &Settings) {
     if settings.actix.enable_log {
         ENV_LOGGER_INIT.call_once(|| {
-            env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
+            env_logger::init_from_env(env_logger::Env::new().default_filter_or("warning"));
         });
     }
 }

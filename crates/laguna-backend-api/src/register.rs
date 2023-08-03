@@ -7,7 +7,7 @@ use laguna_backend_model::user::User;
 use sha2::Sha256;
 use sqlx::PgPool;
 
-use crate::error::APIError;
+use crate::error::{APIError, user::UserError};
 
 /// `POST /api/user/auth/register`
 /// # Example
@@ -59,16 +59,31 @@ pub async fn register(
         return Ok(HttpResponse::AlreadyReported().finish());
     }
     // TODO: Verify email
-    sqlx::query!(
+    sqlx::query_as!(
+        User,
         r#"
         INSERT INTO "User" (username, email, password)
-        VALUES ($1, $2, $3);
+        VALUES ($1, $2, $3)
+        RETURNING id,
+                  username,
+                  email,
+                  password,
+                  first_login,
+                  last_login,
+                  avatar_url,
+                  role AS "role: _",
+                  behaviour AS "behaviour: _",
+                  is_active,
+                  has_verified_email,
+                  is_history_private,
+                  is_profile_private;
     "#,
         register_dto.username,
         register_dto.email,
         format!("{:x}", Sha256::digest(&register_dto.password))
     )
-    .execute(pool.get_ref())
-    .await?;
+    .fetch_optional(pool.get_ref())
+    .await?
+    .ok_or_else(|| UserError::DidntCreate)?;
     Ok(HttpResponse::Ok().finish())
 }

@@ -11,6 +11,7 @@ use common::get_dev_settings;
 use fake::Fake;
 use fake::Faker;
 
+use laguna_backend_model::user::User;
 use laguna_config::Settings;
 use std::time::Duration as StdDuration;
 
@@ -359,5 +360,36 @@ async fn test_out_of_date_refresh_token() {
     // Old and new refresh tokens should be different.
     assert_ne!(refresh_token_old, refresh_token);
 
+    common::teardown(pool, database_url).await;
+}
+
+
+#[actix_web::test]
+async fn test_sql_username_injection_attempt_on_register() {
+    let (pool, database_url, app) = common::setup().await;
+    let mut register_dto = Faker.fake::<RegisterDTO>();
+    register_dto.username = String::from("aaaaaaa'; DROP TABLE \"User\"; --");
+    let register_res = common::register_user(register_dto.clone(), &app).await;
+    assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
+    let users = sqlx::query_as::<_, User>(r#"
+        SELECT id,
+               username,
+               email,
+               password,
+               first_login,
+               last_login,
+               avatar_url,
+               role,
+               behaviour,
+               is_active,
+               has_verified_email,
+               is_history_private,
+               is_profile_private
+        FROM "User"
+        "#)
+        .fetch_all(&pool)
+        .await
+        .expect("Failed to fetch all users");
+    assert_eq!(users.len(), 0);
     common::teardown(pool, database_url).await;
 }

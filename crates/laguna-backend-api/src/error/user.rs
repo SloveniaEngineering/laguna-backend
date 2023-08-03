@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 pub enum UserError {
     DoesNotExist,
     ExclusiveAccess,
+    DidntCreate,
 }
 
 impl ResponseError for UserError {
@@ -20,8 +21,9 @@ impl ResponseError for UserError {
 
     fn status_code(&self) -> StatusCode {
         match self {
+            Self::ExclusiveAccess => StatusCode::FORBIDDEN,
             Self::DoesNotExist => StatusCode::BAD_REQUEST,
-            Self::ExclusiveAccess => StatusCode::UNAUTHORIZED,
+            Self::DidntCreate => StatusCode::BAD_REQUEST,
         }
     }
 }
