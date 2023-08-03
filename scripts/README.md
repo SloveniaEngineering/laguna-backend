@@ -1,3 +1,1 @@
-# General scripts for development
-
-None of these scripts should be used in CI/CD pipeline, they are exclusively for development.
+Scripts MUST be only used in development and testing.

@@ -1,9 +1,9 @@
-use actix_web::post;
 use actix_web::{web, HttpResponse};
 use actix_web_validator::Json;
 use digest::Digest;
 
-use laguna_backend_model::{register::RegisterDTO, user::User};
+use laguna_backend_dto::register::RegisterDTO;
+use laguna_backend_model::user::User;
 use sha2::Sha256;
 use sqlx::PgPool;
 
@@ -27,7 +27,6 @@ use crate::error::APIError;
 /// 2. On already registered: HTTP/1.1 208 Already Reported
 /// 3. On invalid format (ie. too long, too short, not email, etc.): HTTP/1.1 400 Bad Request
 /// 4. On DB operation failure: HTTP/1.1 500 Internal Server Error
-#[post("/register")]
 pub async fn register(
     register_dto: Json<RegisterDTO>,
     pool: web::Data<PgPool>,

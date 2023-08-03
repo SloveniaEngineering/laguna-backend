@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Laguna {
+pub struct AppInfoDTO {
     pub version: String,
     pub authors: Vec<String>,
     pub license: String,

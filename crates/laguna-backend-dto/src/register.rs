@@ -1,11 +1,11 @@
-use crate::consts::{EMAIL_MAX_LEN, EMAIL_MIN_LEN};
-use crate::consts::{PASSWORD_MAX_LEN, PASSWORD_MIN_LEN};
-use crate::consts::{USERNAME_MAX_LEN, USERNAME_MIN_LEN};
 #[cfg(feature = "testx")]
 use fake::{
     faker::internet::en::{FreeEmail, Password},
     Dummy,
 };
+use laguna_backend_model::consts::{EMAIL_MAX_LEN, EMAIL_MIN_LEN};
+use laguna_backend_model::consts::{PASSWORD_MAX_LEN, PASSWORD_MIN_LEN};
+use laguna_backend_model::consts::{USERNAME_MAX_LEN, USERNAME_MIN_LEN};
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 

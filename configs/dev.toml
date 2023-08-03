@@ -1,0 +1,38 @@
+[actix]
+hosts = [
+    ["127.0.0.1", 6969],
+    ["localhost", 6969]
+]
+mode = "development"
+enable-compression = true
+enable-log = true
+num-workers = "default"
+backlog = "default"
+max-connections = "default"
+max-connection-rate = "default"
+keep-alive = "default"
+client-timeout = "default"
+client-shutdown = "default"
+shutdown-timeout = "default"
+
+[actix.tls]
+enabled = false
+certificate = ""
+private-key = ""
+
+[application]
+
+[application.auth]
+secret-key = "some random shit"
+
+[application.database]
+proto = "postgres"
+host = "127.0.0.1"
+port = 5432
+username = "postgres"
+password = "postgres"
+name = "laguna_dev_db"
+
+[application.frontend]
+host = "127.0.0.1"
+port = 4200

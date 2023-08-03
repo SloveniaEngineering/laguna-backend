@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        rust: [stable, beta, nightly]
+        rust: [stable]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -58,7 +58,7 @@ jobs:
       # MacOS doesn't have docker installed by default
       matrix:
         os: [ubuntu-latest]
-        rust: [stable, beta, nightly]
+        rust: [stable]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -81,8 +81,6 @@ jobs:
         run: cargo install sqlx-cli --no-default-features --features postgres,rustls
       - name: Run tests
         run: cargo test --all --features testx -- --nocapture
-    env:
-      TEST_DATABASE_BASE_URL: postgres://postgres:postgres@127.0.0.1:5432/laguna_test_db
 
   coverage:
     services:
@@ -122,10 +120,6 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           override: true
-      - name: Install PostgreSQL client
-        run: |
-          apt-get update
-          apt-get install --yes postgresql-client
       - uses: actions/cache@v3
         with:
           path: |
@@ -137,17 +131,13 @@ jobs:
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Install sqlx cli for tests
         run: cargo install sqlx-cli --no-default-features --features postgres,rustls
-      - name: Generate coverage data
+      - name: Generate coverage data on tests
         run: |
           cargo tarpaulin --workspace --timeout 120 --out Xml --features testx
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v3 # Make sure to use v3 because it allows tokenless upload
         with:
           fail_ci_if_error: true
-    env:
-      # TEST_DATABASE_URL=TEST_DATABASE_BASE_URL+UUIDv4 (determined by Rust's uuid crate)
-      # All databases will be created with this base.
-      TEST_DATABASE_BASE_URL: postgres://postgres:postgres@postgres:5432/laguna_test_db
 
   deploy_docs:
     needs: [build, test]
@@ -158,7 +148,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build Docs
-        run: cargo doc --no-deps --document-private-items --workspace --features dox
+        run: cargo doc --no-deps --workspace --features dox
       - name: Doc Index Page Redirection
         run: echo '<meta http-equiv="refresh" content="0; url=laguna_backend/index.html">' > target/doc/index.html
       - name: Deploy Docs

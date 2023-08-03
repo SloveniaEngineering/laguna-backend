@@ -1,22 +1,22 @@
 # Table of contents
 
 > **Warning**
-> This document is WIP (work in progress) and is not yet complete.
-> This document is also not meant to be read linearly but rather as a reference.
+> This document is WIP (work in progress) and will likely never be complete.
+> This document is also **not meant to be read linearly** but rather as a reference.
 
 1. [Requirements](#requirements)
-2. [Setup](#setup)
-3. [Project structure](#project-structure)
-4. [Testing](#testing)
-5. [Generating documentation](#generating-documentation)
+2. [Setup & First run](#setup--first-run)
+3. [Testing](#testing)
+4. [Generating documentation](#generating-documentation)
+5. [Generating coverage](#generating-coverage)
 6. [Fixing warnings](#fixing-warnings)
 7. [Migrations and model changes](#migrations-and-model-changes)
-8. [Running](#running)
-9. [CI/CD & PRs](#cicd--prs)
-10. [API documentation](#api-documentation)
-11. [Performance optimization](#performance-optimization)
+8. [CI Workflow](#ci-workflow)
+9. [Performance optimization](#performance-optimization)
+10. [Project structure](#project-structure)
+11. [Submitting changes](#submitting-changes)
 
-# Requirements
+## Requirements
 
 1. Rust (https://www.rust-lang.org/tools/install)
 2. Postgres (https://www.postgresql.org/download/)
@@ -25,7 +25,7 @@ It is recommended to run Linux (either WSL or VM if you are not on Linux) for de
 This is because `scripts/*` are written in bash and because backend will be deployed on linux.
 In the future we will add powershell scripts for Windows.
 
-# Setup
+## Setup & First run
 
 > **Note**
 > This guide uses Linux `scripts/*.sh`, but scrips for Windows are also available via `scripts/*-win.ps1`.
@@ -34,9 +34,66 @@ In the future we will add powershell scripts for Windows.
 2. Run `cargo install sqlx-cli --no-default-features --features rustls,postgres`.
 3. Run `cargo install cargo-watch`.
 4. Make sure Postgres daemon is running, then do `scripts/dbsetup.sh laguna_db` to create `laguna_db` local DB with tables.
-5. [Running](#running) the server.
+5. Run **and watch for changes** with `scripts/dev.sh` or just run with `cargo run`.
 
-# Project structure
+> **Note**
+> `scripts/dev.sh` watches for changes in source code and if change is detected automatically recompiles and restarts the server.
+
+## Testing
+
+1. Run `scripts/test.sh` to run all tests.
+
+To delete test zombie databases if tests failed use `scripts/dbdroptest.sh`.
+
+## Generating Documentation
+
+Documentation is auto-generated on push to `master`. 
+It can be accessed via GitHub Pages at https://sloveniaengineering.github.io/laguna-backend.
+
+To generate and open identical local documentation run `scripts/doc.sh`.
+
+## Generating Coverage
+
+Coverage can be generated using `scripts/coverage.sh`.
+
+## Fixing warnings
+
+1. Run `scripts/fix.sh` to fix most warnings automatically + format code.
+
+## Migrations and model changes
+
+Here is a scenario.
+
+1. You change a model in `laguna-backend-model` crate.
+2. You also change the corresponding migration in `migrations` dir.
+3. Your migration is now out of sync with DB.
+4. Run `scripts/dbreset.sh laguna_dev_db` which drops current `laguna_dev_db`, recreates new `laguna_dev_db` and runs all migrations.
+
+Here is another way to do it (without dropping DB):
+
+1. You change a model in `laguna-backend-model` crate.
+2. You create a new migration in `migrations` crate using `sqlx migrate add <migration_name>` which contains some `ALTER` statements which probably have `DEFAULT`s.
+3. You run `sqlx migrate run` to run all migrations.
+
+It is also possible to create "reversible" migrations with `sqlx migrate add -r <migration_name>`
+which will create an `up` and `down` migration files and can be reverted with `sqlx migrate revert`.
+
+## Changing queries and using prepared statements
+
+Always prefer compile-time query to runtime query, so that errors are caught at compile time.
+
+* If a compile time (ie. `query_*!`) is changed (even if just spacing is changed (because of underlying hash of query)) it needs to be re-prepared with `scripts/prepare.sh`. 
+  This generates `sqlx-data.json` in workspace root.
+
+## CI Workflow
+
+To skip CI for a commit, add [One of the these keywords to your commit message](https://docs.github.com/en/actions/managing-workflow-runs/skipping-workflow-runs).
+
+## Performance optimization
+
+See `.cargo/config.toml` for more info.
+
+## Project structure
 
 > **Note**
 > Only important files and dirs are listed here.
@@ -52,111 +109,25 @@ In the future we will add powershell scripts for Windows.
   - `laguna-backend-internal/` is a crate that contains re-exports of all other `crates/*` and is used by `laguna-backend` (root crate) to access all other crates.
     - `laguna-backend-internal/src/lib.rs` re-exporting can be seen here.
   - `laguna-backend-api/` contains API endpoints.
-  - `laguna-backend-model/` contains DB models, relations and DTOs (data-transfer-objects) used by [laguna-frontend](https://github.com/SloveniaEngineering/laguna-frontend).
+  - `laguna-backend-dto/` contains DTOs (data-transfer-objects) used by [laguna-frontend](https://github.com/SloveniaEngineering/laguna-frontend).
+  - `laguna-backend-model/` contains DB models and relations.
+  - `laguna-backend-config/` contains custom config structs and functions that work with `configs/` directory and `actix-settings`. `laguna-backend-config` is not a workspace member.
   - `laguna-backend-middleware/` contains application logic from API to DB.
 - `migrations/` contains SQL migrations for DB.
-- `scripts/` contains Bash scripts for development, testing and deploy.
+- `configs/` contains config files for development, testing and deploy.
+- `scripts/` contains scripts for development, testing and deploy.
 
-Each Cargo Crate has its own structure defined by Rust.
-Generally they contain `src/` directory with _source code and unit tests_.
-And also `tests/` directory with _integration tests_.
-
-Crate structure in Rust: https://doc.rust-lang.org/cargo/guide/project-layout.html.
-
-# Testing
-
-Testing requires `sqlx-cli` to be installed.
-
-1. Run `scripts/test.sh` to run all tests.
-
-To delete test zombie databases if tests failed use `scripts/dbdroptest.sh`.
-
-# Documentation
-
-Documentation is auto-generated on PR or push to `master`. 
-It can be accessed via GitHub Pages at https://sloveniaengineering.github.io/laguna-backend.
-
-To generate and open local documentation run `scripts/doc.sh`.
-
-How to write doc comments in Rust: https://doc.rust-lang.org/rustdoc/how-to-write-documentation.html.
-
-# Fixing warnings and checking for errors
-
-1. Run `scripts/fix.sh` to fix most warnings automatically.
-
-or if you want to check for errors in external crates:
-
-1. `cargo check`
-
-# Migrations and model changes
-
-Here is a scenario.
-
-1. You change a model in `laguna-backend-model` crate.
-2. You also change the corresponding migration in `migrations` crate.
-3. Your migration is now out of sync with DB.
-4. Run `scripts/dbreset.sh laguna_db` which drops current `laguna_db`, recreates new `laguna_db` and runs all migrations.
-
-Here is another way to do it (without dropping DB):
-
-1. You change a model in `laguna-backend-model` crate.
-2. You create a new migration in `migrations` crate using `sqlx migrate add <migration_name>` which contains some `ALTER` statements which probably have `DEFAULT`s.
-3. You run `sqlx migrate run` to run all migrations.
-
-It is also possible to create "reversible" migrations with `sqlx migrate add -r <migration_name>`
-which will create an `up` and `down` migration files and can be reverted with `sqlx migrate revert`.
-
-# Changing queries and using prepared statements
-
-Always prefer compile-time query to runtime query, so that errors are caught at compile time.
-
-* If a compile time (ie. `query_*!`) is changed (even if just spacing is changed (because of underlying hash of query)) it needs to be re-prepared with `scripts/prepare.sh`. This generates `sqlx-data.json` in workspace root.
-* With runtime queries you don't have to do anything.
-
-# Running
-
-1. Run `scripts/dev.sh` to run the server in development mode. You can override the following environment variables:
-   1. `DATABASE_URL` - URL of the database to connect to. Defaults to `postgres://postgres:postgres@localhost:5432/laguna_db`.
-   2. `RUST_LOG` - Logging level. Defaults to `info`.
-   3. `RUST_BACKTRACE` - Backtrace level. Defaults to `full`.
-   4. `HOST` - Logging style. Defaults to `127.0.0.1` or `localhost`.
-   5. `PORT` - Port to listen on. Defaults to `6969`.
-   6. `FRONTEND_HOST` - Host of frontend. Defaults to `127.0.0.1` or `localhost`.
-   7. `FRONTEND_PORT` - Port of frontend. Defaults to `4200`.
-
-> **Note**
-> `scripts/devs.sh` watches for changes in source code and if change is detected automatically recompiles and restarts the server.
-
-For example, if your database is on a different host or port, or maybe it has a different name, you can override `DATABASE_URL` env var to point at your DB.
-This is however not recommended.
-
-#### On Linux:
-
-```bash
-DATABASE_URL=postgres://user:password@localhost:37201/my_db_name scripts/dev.sh
-```
-
-#### On Windows:
-
-```powershell
-$env:DATABASE_URL="postgres://user:password@localhost:37201/my_db_name"; scripts/dev-win.ps1
-```
-
-# CI/CD & PRs
-
-To skip CI for a commit, add [One of the these keywords to your commit message](https://docs.github.com/en/actions/managing-workflow-runs/skipping-workflow-runs).
-
-PRs won't be merged until all checks pass.
-PRs need to be reviewed by at least one `Maintainer`.
-Checks can be surpassed by `Maintainer`s.
+## Submitting changes
 
 > **Warning**
-> **Before marking PR for review, make sure that code doesn't have any warnings and unnecessary comments.**
+> **Don't fork** and contribute, just clone and contribute.
+> This is because some token CI permissions are acting weird with forks.
 
-# API documentation
+Because of that, if you want to contribute you have to be in the `SloveniaEngineering` GitHub organization.
+Message someone from the organization to add you to the organization or create an issue.
 
-API documentation is available at https://sloveniaengineering.github.io/laguna-backend/.
+### Label guide
 
-# Performance optimization
+There are many types of labels, the general syntax for them is `<TYPE>-<SUBTYPE>`
 
-See `.cargo/config.toml` for more info.
+Descriptions can be found at: https://github.com/SloveniaEngineering/laguna-backend/labels.

@@ -44,6 +44,10 @@ validator = { version = "0.16", features = ["derive"] }
 actix-web-validator = "5.0.1"
 futures = "*"
 serde_bencode = "0.2.3"
+laguna-backend-dto = { path = "../laguna-backend-dto" }
+laguna_config = { package = "laguna-backend-config", path = "../laguna-backend-config" }
+actix-cors = "*"
+actix-settings = "*"
 
 [dev-dependencies]
 actix-http = "3.3.1"
@@ -52,6 +56,7 @@ fake = { version = "2.6.1" }
 # Explanation of "testx" workaround: 
 # See: https://github.com/cksac/fake-rs/issues/53
 laguna-backend-model = { path = "../laguna-backend-model", features = ["testx"] }
+laguna-backend-dto = { path = "../laguna-backend-dto", features = ["testx"] }
 
 # CLI for sqlx.
 # More: https://github.com/launchbadge/sqlx/blob/main/sqlx-cli/README.md
