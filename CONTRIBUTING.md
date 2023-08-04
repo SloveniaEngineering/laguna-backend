@@ -16,6 +16,9 @@
 10. [Performance optimization](#performance-optimization)
 11. [Project structure](#project-structure)
 12. [Submitting changes](#submitting-changes)
+    1. [Label guide](#label-guide)
+    2. [Versioning](#versioning)
+    3. [Branching](#branching)
 
 ## Requirements
 
@@ -37,21 +40,31 @@ In the future we will add powershell scripts for Windows.
 4. Make sure Postgres daemon is running, then do `scripts/dbsetup.sh laguna_db` to create `laguna_db` local DB with tables.
 5. Run **and watch for changes** with `scripts/dev.sh` or just run with `cargo run`.
 
-> **Note** > `scripts/dev.sh` watches for changes in source code and if change is detected automatically recompiles and restarts the server.
+> **Note** 
+> `scripts/dev.sh` watches for changes in source code and if change is detected automatically recompiles and restarts the server.
 
 ## Testing
 
-1. Run `scripts/test.sh` to run all tests.
+1. Run `scripts/test.sh` to run all tests in `laguna_dev_db` using `_sqlx_test` schema rather than `public` used for local development.
 
-To delete test zombie databases if tests failed use `scripts/dbdroptest.sh`.
+To delete zombie test databases if tests failed use `scripts/dbdroptest.sh _sqlx_test`.
+
+> **Note**
+> To delete deprecated old-format zombie test databases `scripts/dbdroptest.sh laguna_test_db`.
+
+> **Note**
+> We don't delete test databases, because they are useful for debugging.
 
 ## Configuration
 
-Most of the configuration can be done via config files in `configs/` directory. Both testing and development use `dev.toml` config.
+Most of the configuration can be done via config files in `configs/` directory.
 
-When testing, however, `application.database.name` is always overriden to `laguna_test_db + <random UUIDv4>` for each test ensuring clean DB per test.
+You can override config with environment variables (in order of precedence, highest first):
 
-To extend config with custom fields see `crates/laguna-backend-config` crate.
+1. `DATABASE_URL` environment variable overrides `application.database`.
+2. For example `application.database.name` can be overriden by `APPLICATION_DATABASE_NAME` environment variable.
+
+For more info and to extend config with custom fields see `crates/laguna-backend-config` crate.
 
 ## Generating Documentation
 
@@ -127,7 +140,8 @@ See `.cargo/config.toml` for more info.
 
 ## Submitting changes
 
-> **Warning** > **Don't fork** and contribute, just clone and contribute.
+> **Warning** 
+> **Don't fork** and contribute, just clone and contribute.
 > This is because some token CI permissions are acting weird with forks.
 
 Because of that, if you want to contribute you have to be in the `SloveniaEngineering` GitHub organization.
@@ -138,3 +152,21 @@ Message someone from the organization to add you to the organization or create a
 There are many types of labels, the general syntax for them is `<TYPE>-<SUBTYPE>`
 
 Descriptions can be found at: https://github.com/SloveniaEngineering/laguna-backend/labels.
+
+Basic types are:
+
+1. `A` - Area
+2. `C` - Challenge
+3. `D` - Difficulty
+4. `M` - Special type for unsorted
+5. `T` - Type of issue/PR
+
+### Versioning
+
+This project uses [Semantic Versioning](https://semver.org/) for releases. Releases occur when `dev` is merged into `master` (aka. Git Flow).
+
+### Branching
+
+Implementing a feature or fixing a bug should be done in a separate branch with `dev` as base. Don't PR to master directly.
+
+Always rebase your branch to lastest `dev`.

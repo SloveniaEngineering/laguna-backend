@@ -2,13 +2,14 @@ use actix_http::StatusCode;
 use actix_web::test::{read_body_json, TestRequest};
 
 use laguna_backend_dto::user::UserDTO;
+use sqlx::PgPool;
 use uuid::Uuid;
 
 mod common;
 
-#[actix_web::test]
-async fn test_get_me() {
-    let (pool, database_url, app) = common::setup().await;
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_get_me(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
     let (_, user_dto, access_token, refresh_token) = common::new_user(&app).await;
     let get_me_res = common::as_logged_in(
         access_token,
@@ -20,12 +21,12 @@ async fn test_get_me() {
     .unwrap();
     assert_eq!(get_me_res.status(), StatusCode::OK);
     assert_eq!(read_body_json::<UserDTO, _>(get_me_res).await, user_dto);
-    common::teardown(pool, database_url).await;
+    Ok(())
 }
 
-#[actix_web::test]
-async fn test_get_user() {
-    let (pool, database_url, app) = common::setup().await;
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_get_user(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
     let (_, user_dto, access_token, refresh_token) = common::new_user(&app).await;
     let get_me_res = common::as_logged_in(
         access_token,
@@ -37,12 +38,12 @@ async fn test_get_user() {
     .unwrap();
     assert_eq!(get_me_res.status(), StatusCode::OK);
     assert_eq!(read_body_json::<UserDTO, _>(get_me_res).await, user_dto);
-    common::teardown(pool, database_url).await;
+    Ok(())
 }
 
-#[actix_web::test]
-async fn test_delete_me() {
-    let (pool, database_url, app) = common::setup().await;
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_delete_me(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
     let (_, _, access_token, refresh_token) = common::new_user(&app).await;
     let delete_me_res = common::as_logged_in(
         access_token,
@@ -53,12 +54,12 @@ async fn test_delete_me() {
     .await
     .unwrap();
     assert_eq!(delete_me_res.status(), StatusCode::OK);
-    common::teardown(pool, database_url).await;
+    Ok(())
 }
 
-#[actix_web::test]
-async fn test_delete_user_by_normie() {
-    let (pool, database_url, app) = common::setup().await;
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_delete_user_by_normie(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
     let (_, user_dto, access_token, refresh_token) = common::new_user(&app).await;
     let delete_me_res = common::as_logged_in(
         access_token,
@@ -71,12 +72,12 @@ async fn test_delete_user_by_normie() {
         delete_me_res.unwrap_err().as_response_error().status_code(),
         StatusCode::UNAUTHORIZED
     );
-    common::teardown(pool, database_url).await;
+    Ok(())
 }
 
-#[actix_web::test]
-async fn test_delete_user_by_verified_user() {
-    let (pool, _database_url, app) = common::setup().await;
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_delete_user_by_verified_user(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
     let (_, user_dto, access_token, refresh_token) = common::new_verified_user(&app, &pool).await;
     let delete_me_res = common::as_logged_in(
         access_token,
@@ -89,11 +90,12 @@ async fn test_delete_user_by_verified_user() {
         delete_me_res.unwrap_err().as_response_error().status_code(),
         StatusCode::UNAUTHORIZED
     );
+    Ok(())
 }
 
-#[actix_web::test]
-async fn test_delete_user_by_mod() {
-    let (pool, database_url, app) = common::setup().await;
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_delete_user_by_mod(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
     let (_, user_dto, access_token, refresh_token) = common::new_mod_user(&app, &pool).await;
     let delete_me_res = common::as_logged_in(
         access_token,
@@ -106,12 +108,12 @@ async fn test_delete_user_by_mod() {
         delete_me_res.unwrap_err().as_response_error().status_code(),
         StatusCode::UNAUTHORIZED
     );
-    common::teardown(pool, database_url).await;
+    Ok(())
 }
 
-#[actix_web::test]
-async fn test_delete_user_by_admin() {
-    let (pool, database_url, app) = common::setup().await;
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_delete_user_by_admin(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
     let (_, user_dto, access_token, refresh_token) = common::new_admin_user(&app, &pool).await;
     let delete_me_res = common::as_logged_in(
         access_token,
@@ -122,12 +124,12 @@ async fn test_delete_user_by_admin() {
     .await
     .unwrap();
     assert_eq!(delete_me_res.status(), StatusCode::OK);
-    common::teardown(pool, database_url).await;
+    Ok(())
 }
 
-#[actix_web::test]
-async fn test_delete_inexistant_user() {
-    let (pool, database_url, app) = common::setup().await;
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_delete_inexistant_user(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
     let (_, _, access_token, refresh_token) = common::new_admin_user(&app, &pool).await;
     let delete_me_res = common::as_logged_in(
         access_token,
@@ -138,12 +140,12 @@ async fn test_delete_inexistant_user() {
     .await
     .unwrap();
     assert_eq!(delete_me_res.status(), StatusCode::BAD_REQUEST);
-    common::teardown(pool, database_url).await;
+    Ok(())
 }
 
-#[actix_web::test]
-async fn test_get_inexistant_user() {
-    let (pool, database_url, app) = common::setup().await;
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_get_inexistant_user(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
     let (_, _, access_token, refresh_token) = common::new_user(&app).await;
     let get_me_res = common::as_logged_in(
         access_token,
@@ -154,5 +156,5 @@ async fn test_get_inexistant_user() {
     .await
     .unwrap();
     assert_eq!(get_me_res.status(), StatusCode::BAD_REQUEST);
-    common::teardown(pool, database_url).await;
+    Ok(())
 }

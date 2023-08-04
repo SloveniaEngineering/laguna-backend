@@ -2,7 +2,7 @@ name: Rust
 
 on:
   push:
-    branches: [master, dev]
+    branches: [master]
   pull_request:
     branches: [master, dev]
 
@@ -42,6 +42,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: laguna_dev_db
         ports:
           - 5432:5432
         options: >-
@@ -60,6 +61,8 @@ jobs:
         os: [ubuntu-latest]
         rust: [stable]
     runs-on: ${{ matrix.os }}
+    env:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/laguna_dev_db
     steps:
       - uses: actions/checkout@v3
         with:
@@ -77,11 +80,11 @@ jobs:
             ~/.cargo/git/db
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install sqlx cli for tests
-        uses: baptiste0928/cargo-install@v2
-        with:
-          crate: sqlx-cli
-          args: --no-default-features --features postgres,rustls
+      # - name: Install sqlx cli for tests
+      #  uses: baptiste0928/cargo-install@v2
+      #  with:
+      #    crate: sqlx-cli
+      #    args: --no-default-features --features postgres,rustls
       - name: Run tests
         run: cargo test --all --features testx -- --nocapture
 
@@ -92,6 +95,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: laguna_dev_db
         ports:
           - 5432:5432
         options: >-
@@ -111,6 +115,8 @@ jobs:
         # MacOS doesn't have docker installed by default
         os: [ubuntu-latest]
         rust: [stable]
+    env:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/laguna_dev_db
     runs-on: ${{ matrix.os }}
     container:
       image: xd009642/tarpaulin
@@ -132,11 +138,11 @@ jobs:
             ~/.cargo/git/db
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install sqlx cli for tests
-        uses: baptiste0928/cargo-install@v2
-        with:
-          crate: sqlx-cli
-          args: --no-default-features --features postgres,rustls
+      # - name: Install sqlx cli for tests
+      #  uses: baptiste0928/cargo-install@v2
+      #  with:
+      #    crate: sqlx-cli
+      #    args: --no-default-features --features postgres,rustls
       - name: Generate coverage data
         run: |
           cargo tarpaulin --workspace --timeout 120 --out Xml --features testx

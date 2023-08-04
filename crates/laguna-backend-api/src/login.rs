@@ -13,7 +13,7 @@ use laguna_backend_model::user::User;
 use sha2::Sha256;
 use sqlx::PgPool;
 
-use crate::error::{APIError, user::UserError};
+use crate::error::{user::UserError, APIError};
 
 /// `POST /api/user/auth/login`
 /// # Example
