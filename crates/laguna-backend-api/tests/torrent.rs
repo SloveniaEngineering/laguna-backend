@@ -5,6 +5,7 @@ use actix_http::{
 use actix_multipart::Multipart;
 use actix_web::{test::TestRequest, web::Bytes};
 use futures::stream;
+use sqlx::PgPool;
 
 mod common;
 
@@ -13,11 +14,11 @@ mod common;
 #[cfg(not(tarpaulin))]
 async fn test_get_torrent() {}
 
-#[actix_web::test]
+#[sqlx::test(migrations = "../../migrations")]
 #[ignore = "Not yet implemented fully"]
 #[cfg(not(tarpaulin))]
-async fn test_put_torrent() {
-    let (pool, database_url, app) = common::setup().await;
+async fn test_put_torrent(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
     let (_, _user_dto, access_token, refresh_token) = common::new_user(&app).await;
     let mut hmp = HeaderMap::new();
     // hmp.append(HeaderName::from_static("X-Access-Token"), access_token);
@@ -41,7 +42,7 @@ async fn test_put_torrent() {
     )
     .await
     .unwrap();
-    common::teardown(pool, database_url).await;
+    Ok(())
 }
 
 #[actix_web::test]

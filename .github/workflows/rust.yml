@@ -4,7 +4,7 @@ on:
   push:
     branches: [master]
   pull_request:
-    branches: [master]
+    branches: [master, dev]
 
 env:
   CARGO_TERM_COLOR: always
@@ -42,6 +42,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: laguna_dev_db
         ports:
           - 5432:5432
         options: >-
@@ -60,6 +61,8 @@ jobs:
         os: [ubuntu-latest]
         rust: [stable]
     runs-on: ${{ matrix.os }}
+    env:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/laguna_dev_db
     steps:
       - uses: actions/checkout@v3
         with:
@@ -77,8 +80,6 @@ jobs:
             ~/.cargo/git/db
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install sqlx cli for tests
-        run: cargo install sqlx-cli --no-default-features --features postgres,rustls
       - name: Run tests
         run: cargo test --all --features testx -- --nocapture
 
@@ -89,6 +90,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: laguna_dev_db
         ports:
           - 5432:5432
         options: >-
@@ -102,12 +104,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # NOTE: Only use Linux for testing
-        # Server will likely be deployed on linux
-        # GH Actions doesn't support containers on Windows
-        # MacOS doesn't have docker installed by default
         os: [ubuntu-latest]
         rust: [stable]
+    env:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/laguna_dev_db
     runs-on: ${{ matrix.os }}
     container:
       image: xd009642/tarpaulin
@@ -129,9 +129,7 @@ jobs:
             ~/.cargo/git/db
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install sqlx cli for tests
-        run: cargo install sqlx-cli --no-default-features --features postgres,rustls
-      - name: Generate coverage data on tests
+      - name: Generate coverage data
         run: |
           cargo tarpaulin --workspace --timeout 120 --out Xml --features testx
       - name: Upload to codecov.io

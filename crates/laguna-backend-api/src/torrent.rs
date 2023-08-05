@@ -218,10 +218,26 @@ pub async fn torrent_put(
         if let Some(_) = maybe_torrent {
             return Ok(HttpResponse::AlreadyReported().finish());
         }
-        sqlx::query!(
+        sqlx::query_as!(
+            Torrent,
             r#"
             INSERT INTO "Torrent" (announce_url, title, length, file_name, nfo, info_hash, uploaded_at, uploaded_by, speedlevel)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id,
+                      announce_url,
+                      length,
+                      title,
+                      file_name,
+                      nfo,
+                      leech_count,
+                      seed_count,
+                      completed_count,
+                      speedlevel AS "speedlevel: _",
+                      info_hash,
+                      uploaded_at,
+                      uploaded_by,
+                      modded_at,
+                      modded_by
             "#,
             torrent_put_dto.announce_url.unwrap_or_else(|| format!("{}:{}/api/torrent/announce", host.into_inner(), port.into_inner())),
             torrent_put_dto.title,
@@ -233,8 +249,9 @@ pub async fn torrent_put(
             user.id,
             torrent_put_dto.speedlevel as _
         )
-        .execute(pool.get_ref())
-        .await?;
+        .fetch_optional(pool.get_ref())
+        .await?
+        .ok_or_else(|| TorrentError::DidntCreate)?;
 
         return Ok(HttpResponse::Ok().finish());
     }

@@ -14,11 +14,12 @@ use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer};
 use chrono::Duration;
 use jwt_compact::alg::Hs256;
 use jwt_compact::alg::Hs256Key;
-use jwt_compact::TimeOptions;
+
 use laguna::api::login::login;
 use laguna::api::misc::get_app_info;
 use laguna::api::register::register;
 
+use jwt_compact::TimeOptions;
 use laguna::api::torrent::torrent_get;
 use laguna::api::torrent::torrent_patch;
 use laguna::api::torrent::torrent_put;
@@ -36,6 +37,7 @@ use laguna::middleware::consts::REFRESH_TOKEN_HEADER_NAME;
 
 use laguna::dto::user::UserDTO;
 use laguna::model::role::Role;
+use laguna_config::make_overridable_with_env_vars;
 use laguna_config::CONFIG_DEV;
 
 use std::env;
@@ -48,11 +50,11 @@ use sqlx::postgres::PgPoolOptions;
 async fn main() -> Result<(), sqlx::Error> {
     let mut settings = Settings::parse_toml(CONFIG_DEV).expect("Failed to parse settings");
 
+    make_overridable_with_env_vars(&mut settings);
+
     if settings.actix.enable_log {
         env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     }
-
-    Settings::override_field_with_env_var(&mut settings.application.auth.secret_key, "SECRET_KEY").expect("Failed to override field with env var");
 
     // Database connection setup.
     let pool = PgPoolOptions::new()
@@ -74,13 +76,19 @@ async fn main() -> Result<(), sqlx::Error> {
             .enable_header_tokens(true)
             .access_token_name(ACCESS_TOKEN_HEADER_NAME)
             .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
+            .time_options(TimeOptions::from_leeway(Duration::seconds(5)))
             .token_signer(Some(
                 TokenSigner::new()
                     .signing_key(secret_key.clone())
                     .algorithm(Hs256)
-                    .access_token_lifetime(Duration::days(1))
-                    .refresh_token_lifetime(Duration::days(3))
-                    .time_options(TimeOptions::from_leeway(Duration::days(1)))
+                    .access_token_name(ACCESS_TOKEN_HEADER_NAME)
+                    .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
+                    .access_token_lifetime(Duration::seconds(
+                        settings.application.auth.access_token_lifetime_seconds,
+                    ))
+                    .refresh_token_lifetime(Duration::seconds(
+                        settings.application.auth.refresh_token_lifetime_seconds,
+                    ))
                     .build()
                     .expect("Cannot create token signer"),
             ))

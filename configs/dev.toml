@@ -24,6 +24,8 @@ private-key = ""
 
 [application.auth]
 secret-key = "some random shit"
+access-token-lifetime-seconds = 86400 # 60 * 60 * 24 = 1 day
+refresh-token-lifetime-seconds = 259200 # 60 * 60 * 24 * 3 = 3 days
 
 [application.database]
 proto = "postgres"

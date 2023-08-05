@@ -1,36 +1,5 @@
 {
   "db": "PostgreSQL",
-  "108d81bba555d4c3896f3feb9850f85eff236d46de895b30f66c4c17bd540324": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Varchar",
-          "Varchar",
-          "Int4",
-          "Varchar",
-          "Text",
-          "Text",
-          "Timestamptz",
-          "Uuid",
-          {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "Lowspeed",
-                  "Mediumspeed",
-                  "Highspeed"
-                ]
-              },
-              "name": "speedlevel"
-            }
-          }
-        ]
-      }
-    },
-    "query": "\n            INSERT INTO \"Torrent\" (announce_url, title, length, file_name, nfo, info_hash, uploaded_at, uploaded_by, speedlevel)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n            "
-  },
   "1a03318796cb60ca5080dfb633a5b5be9acf681b24cfb443641d2c74f6eb3ce2": {
     "describe": {
       "columns": [
@@ -150,7 +119,7 @@
     },
     "query": "SELECT id,\n                     username,\n                     email,\n                     password,\n                     first_login,\n                     last_login,\n                     avatar_url,\n                     role AS \"role: _\",\n                     behaviour AS \"behaviour: _\",\n                     is_active,\n                     has_verified_email,\n                     is_history_private,\n                     is_profile_private\n            FROM \"User\" WHERE id = $1"
   },
-  "4ecaf981b2c8bcbaed55c8e9b87114b84b6623347a2dbec843ed1a105d4df454": {
+  "59e478158ba4feb0cfd395b3481f2f9787aa2bd7e2d5956b10a3abe5133ae8ce": {
     "describe": {
       "columns": [
         {
@@ -267,7 +236,7 @@
         ]
       }
     },
-    "query": "SELECT id, \n                  username, \n                  email, \n                  password, \n                  first_login, \n                  last_login, \n                  avatar_url,\n                  role AS \"role: _\",\n                  behaviour AS \"behaviour: _\",\n                  is_active,\n                  has_verified_email,\n                  is_history_private,\n                  is_profile_private\n        FROM \"User\" WHERE username = $1 OR email = $1"
+    "query": "\n        SELECT id, \n               username, \n               email, \n               password, \n               first_login, \n               last_login, \n               avatar_url,\n               role AS \"role: _\",\n               behaviour AS \"behaviour: _\",\n               is_active,\n               has_verified_email,\n               is_history_private,\n               is_profile_private\n        FROM \"User\" WHERE username = $1 OR email = $1\n        "
   },
   "6d33b5d60d43de237da67e04baa2bc770cbc8206a97a2a2f78c1f80a51f57373": {
     "describe": {
@@ -635,6 +604,140 @@
     },
     "query": "\n        DELETE FROM \"User\" \n        WHERE id = $1 \n        RETURNING id,\n                  username,\n                  email,\n                  password,\n                  first_login,\n                  last_login,\n                  avatar_url,\n                  role AS \"role: _\",\n                  behaviour AS \"behaviour: _\",\n                  is_active,\n                  has_verified_email,\n                  is_history_private,\n                  is_profile_private\n        "
   },
+  "966d3384984478c69bdf9f10cc0c1e31e6e337d5cd82fed01a46eb08a7533b7c": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "announce_url",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "length",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "title",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "file_name",
+          "ordinal": 4,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "nfo",
+          "ordinal": 5,
+          "type_info": "Text"
+        },
+        {
+          "name": "leech_count",
+          "ordinal": 6,
+          "type_info": "Int4"
+        },
+        {
+          "name": "seed_count",
+          "ordinal": 7,
+          "type_info": "Int4"
+        },
+        {
+          "name": "completed_count",
+          "ordinal": 8,
+          "type_info": "Int4"
+        },
+        {
+          "name": "speedlevel: _",
+          "ordinal": 9,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Lowspeed",
+                  "Mediumspeed",
+                  "Highspeed"
+                ]
+              },
+              "name": "speedlevel"
+            }
+          }
+        },
+        {
+          "name": "info_hash",
+          "ordinal": 10,
+          "type_info": "Text"
+        },
+        {
+          "name": "uploaded_at",
+          "ordinal": 11,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "uploaded_by",
+          "ordinal": 12,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "modded_at",
+          "ordinal": 13,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "modded_by",
+          "ordinal": 14,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Int4",
+          "Varchar",
+          "Text",
+          "Text",
+          "Timestamptz",
+          "Uuid",
+          {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Lowspeed",
+                  "Mediumspeed",
+                  "Highspeed"
+                ]
+              },
+              "name": "speedlevel"
+            }
+          }
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO \"Torrent\" (announce_url, title, length, file_name, nfo, info_hash, uploaded_at, uploaded_by, speedlevel)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n            RETURNING id,\n                      announce_url,\n                      length,\n                      title,\n                      file_name,\n                      nfo,\n                      leech_count,\n                      seed_count,\n                      completed_count,\n                      speedlevel AS \"speedlevel: _\",\n                      info_hash,\n                      uploaded_at,\n                      uploaded_by,\n                      modded_at,\n                      modded_by\n            "
+  },
   "9f03a4d71c58e6cc1b54f9589dda681e40b8915ed75ac8b4074b0d4b10013b33": {
     "describe": {
       "columns": [
@@ -868,10 +971,117 @@
     },
     "query": "\n                SELECT id,\n                      announce_url,\n                      length,\n                      title,\n                      file_name,\n                      nfo,\n                      leech_count,\n                      seed_count,\n                      completed_count,\n                      speedlevel AS \"speedlevel: _\",\n                      info_hash,\n                      uploaded_at,\n                      uploaded_by,\n                      modded_at,\n                      modded_by\n                FROM \"Torrent\" WHERE info_hash = $1"
   },
-  "b9b4c66c55bba634ed215dcee804ee43c4c4f5f487ad2b3b8ceffc14779af6d1": {
+  "ac1817b756692dd72b215e030cb77f8768bf2dac9306f63b07d0d0c19e843917": {
     "describe": {
-      "columns": [],
-      "nullable": [],
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "email",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "password",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "first_login",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "last_login",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "avatar_url",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "role: _",
+          "ordinal": 7,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Normie",
+                  "Verified",
+                  "Mod",
+                  "Admin"
+                ]
+              },
+              "name": "role"
+            }
+          }
+        },
+        {
+          "name": "behaviour: _",
+          "ordinal": 8,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Lurker",
+                  "Downloader",
+                  "Freeleecher",
+                  "Leech",
+                  "Seed",
+                  "Choked",
+                  "Uploader"
+                ]
+              },
+              "name": "behaviour"
+            }
+          }
+        },
+        {
+          "name": "is_active",
+          "ordinal": 9,
+          "type_info": "Bool"
+        },
+        {
+          "name": "has_verified_email",
+          "ordinal": 10,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_history_private",
+          "ordinal": 11,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_profile_private",
+          "ordinal": 12,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "parameters": {
         "Left": [
           "Varchar",
@@ -880,7 +1090,7 @@
         ]
       }
     },
-    "query": "\n        INSERT INTO \"User\" (username, email, password)\n        VALUES ($1, $2, $3);\n    "
+    "query": "\n        INSERT INTO \"User\" (username, email, password)\n        VALUES ($1, $2, $3)\n        RETURNING id,\n                  username,\n                  email,\n                  password,\n                  first_login,\n                  last_login,\n                  avatar_url,\n                  role AS \"role: _\",\n                  behaviour AS \"behaviour: _\",\n                  is_active,\n                  has_verified_email,\n                  is_history_private,\n                  is_profile_private;\n    "
   },
   "d077606191420954aef925f4a813b68ed405ed99ca94143b00028ffdf18de0c7": {
     "describe": {

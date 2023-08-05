@@ -7,14 +7,18 @@
 1. [Requirements](#requirements)
 2. [Setup & First run](#setup--first-run)
 3. [Testing](#testing)
-4. [Generating documentation](#generating-documentation)
-5. [Generating coverage](#generating-coverage)
-6. [Fixing warnings](#fixing-warnings)
-7. [Migrations and model changes](#migrations-and-model-changes)
-8. [CI Workflow](#ci-workflow)
-9. [Performance optimization](#performance-optimization)
-10. [Project structure](#project-structure)
-11. [Submitting changes](#submitting-changes)
+4. [Configuration](#configuration)
+5. [Generating documentation](#generating-documentation)
+6. [Generating coverage](#generating-coverage)
+7. [Fixing warnings](#fixing-warnings)
+8. [Migrations and model changes](#migrations-and-model-changes)
+9. [CI Workflow](#ci-workflow)
+10. [Performance optimization](#performance-optimization)
+11. [Project structure](#project-structure)
+12. [Submitting changes](#submitting-changes)
+    1. [Label guide](#label-guide)
+    2. [Versioning](#versioning)
+    3. [Branching](#branching)
 
 ## Requirements
 
@@ -36,18 +40,35 @@ In the future we will add powershell scripts for Windows.
 4. Make sure Postgres daemon is running, then do `scripts/dbsetup.sh laguna_db` to create `laguna_db` local DB with tables.
 5. Run **and watch for changes** with `scripts/dev.sh` or just run with `cargo run`.
 
-> **Note**
+> **Note** 
 > `scripts/dev.sh` watches for changes in source code and if change is detected automatically recompiles and restarts the server.
 
 ## Testing
 
-1. Run `scripts/test.sh` to run all tests.
+1. Run `scripts/test.sh` to run all tests in `laguna_dev_db` using `_sqlx_test` schema rather than `public` used for local development.
 
-To delete test zombie databases if tests failed use `scripts/dbdroptest.sh`.
+To delete zombie test databases if tests failed use `scripts/dbdroptest.sh _sqlx_test`.
+
+> **Note**
+> To delete deprecated old-format zombie test databases `scripts/dbdroptest.sh laguna_test_db`.
+
+> **Note**
+> We don't delete test databases, because they are useful for debugging.
+
+## Configuration
+
+Most of the configuration can be done via config files in `configs/` directory.
+
+You can override config with environment variables (in order of precedence, highest first):
+
+1. `DATABASE_URL` environment variable overrides `application.database`.
+2. For example `application.database.name` can be overriden by `APPLICATION_DATABASE_NAME` environment variable.
+
+For more info and to extend config with custom fields see `crates/laguna-backend-config` crate.
 
 ## Generating Documentation
 
-Documentation is auto-generated on push to `master`. 
+Documentation is auto-generated on push to `master`.
 It can be accessed via GitHub Pages at https://sloveniaengineering.github.io/laguna-backend.
 
 To generate and open identical local documentation run `scripts/doc.sh`.
@@ -82,7 +103,7 @@ which will create an `up` and `down` migration files and can be reverted with `s
 
 Always prefer compile-time query to runtime query, so that errors are caught at compile time.
 
-* If a compile time (ie. `query_*!`) is changed (even if just spacing is changed (because of underlying hash of query)) it needs to be re-prepared with `scripts/prepare.sh`. 
+- If a compile time (ie. `query_*!`) is changed (even if just spacing is changed (because of underlying hash of query)) it needs to be re-prepared with `scripts/prepare.sh`.
   This generates `sqlx-data.json` in workspace root.
 
 ## CI Workflow
@@ -123,7 +144,7 @@ See `.cargo/config.toml` for more info.
 
 ## Submitting changes
 
-> **Warning**
+> **Warning** 
 > **Don't fork** and contribute, just clone and contribute.
 > This is because some token CI permissions are acting weird with forks.
 
@@ -135,3 +156,21 @@ Message someone from the organization to add you to the organization or create a
 There are many types of labels, the general syntax for them is `<TYPE>-<SUBTYPE>`
 
 Descriptions can be found at: https://github.com/SloveniaEngineering/laguna-backend/labels.
+
+Basic types are:
+
+1. `A` - Area
+2. `C` - Challenge
+3. `D` - Difficulty
+4. `M` - Special type for unsorted
+5. `T` - Type of issue/PR
+
+### Versioning
+
+This project uses [Semantic Versioning](https://semver.org/) for releases. Releases occur when `dev` is merged into `master` (aka. Git Flow).
+
+### Branching
+
+Implementing a feature or fixing a bug should be done in a separate branch with `dev` as base. Don't PR to master directly.
+
+Always rebase your branch to lastest `dev`.

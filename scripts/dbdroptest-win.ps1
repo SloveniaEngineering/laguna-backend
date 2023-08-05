@@ -3,7 +3,7 @@
 # Drop all databases with _laguna_test_db in name.
 # WARNING: this does not work with non-tty terminals
 $env:PGPASSWORD='postgres'
-(psql -U postgres -q -c '\l') | Select-String -AllMatches laguna_test_db | ForEach-Object {
+(psql -U postgres -q -c '\l') | Select-String -AllMatches $args[0] | ForEach-Object {
     $db = $_.Line -split '\s*\|\s*' | Select-Object -Index 0
     # Consume the leading space
     $db_correct = $db.Substring(1)
