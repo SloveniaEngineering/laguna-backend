@@ -32,14 +32,12 @@ use laguna_backend_middleware::auth::AuthorizationMiddlewareFactory;
 use laguna_backend_middleware::consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME};
 use laguna_backend_model::role::Role;
 
+use laguna_config::Settings;
 use laguna_config::{make_overridable_with_env_vars, CONFIG_DEV};
-use laguna_config::{Settings, MIGRATIONS_DIR};
 
-use std::process::Command;
 use std::sync::Once;
-use uuid::Uuid;
 
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use sqlx::PgPool;
 
 static ENV_LOGGER_INIT: Once = Once::new();
 
@@ -114,66 +112,12 @@ pub async fn setup_with_config<F: FnOnce(&mut ServiceConfig) -> ()>(
     init_service(App::new().configure(config_fn)).await
 }
 
-#[deprecated = "Use sqlx::test macro instead"]
-#[allow(dead_code)]
-pub(crate) async fn teardown(pool: PgPool, database_url: String) {
-    pool.close().await;
-    let database_drop_command = Command::new("sqlx")
-        .args(&[
-            "database",
-            "drop",
-            &format!("--database-url={}", database_url),
-            "-y",
-        ])
-        .status()
-        .expect("sqlx database drop command failed");
-
-    assert!(database_drop_command.success());
-}
-
 pub(crate) fn setup_logging(settings: &Settings) {
     if settings.actix.enable_log {
         ENV_LOGGER_INIT.call_once(|| {
             env_logger::init_from_env(env_logger::Env::new().default_filter_or("warning"));
         });
     }
-}
-
-#[deprecated = "Use sqlx::test macro instead"]
-#[allow(dead_code)]
-pub(crate) async fn setup_db(settings: &mut Settings) -> (PgPool, String) {
-    Settings::override_field(&mut settings.application.database.name, "laguna_test_db")
-        .expect("Cannot set database name to laguna_test_db");
-
-    let database_url_with_uuid =
-        format!("{}{}", settings.application.database.url(), Uuid::new_v4());
-    let database_create_status = Command::new("sqlx")
-        .args(&[
-            "database",
-            "reset",
-            &format!("--database-url={}", database_url_with_uuid),
-            &format!("--source={}", MIGRATIONS_DIR),
-            "-y",
-        ])
-        .status()
-        .expect("sqlx database create command failed");
-
-    assert!(database_create_status.success());
-
-    // Database connection setup.
-    let pool = PgPoolOptions::new()
-        .max_connections(1)
-        .connect(database_url_with_uuid.as_str())
-        .await
-        .expect("Failed to connect to database");
-
-    // Run database migrations.
-    sqlx::migrate!("../../migrations")
-        .run(&pool)
-        .await
-        .expect("Failed to run migrations");
-
-    (pool, database_url_with_uuid)
 }
 
 // Waiting for this to resolve: https://github.com/rust-lang/rust/pull/93582.
