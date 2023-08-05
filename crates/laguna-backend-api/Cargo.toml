@@ -46,6 +46,7 @@ futures = "*"
 serde_bencode = "0.2.3"
 laguna-backend-dto = { path = "../laguna-backend-dto" }
 laguna_config = { package = "laguna-backend-config", path = "../laguna-backend-config" }
+secrecy = { version = "*", features = ["serde"] }
 actix-cors = "*"
 actix-settings = "*"
 

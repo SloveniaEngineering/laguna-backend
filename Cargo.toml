@@ -42,6 +42,7 @@ laguna_config = { package = "laguna-backend-config", path = "crates/laguna-backe
 actix-cors = "0.6.4"
 actix-settings = "*"
 const_format = "*"
+secrecy = { version = "*", features = ["serde"] }
 
 [dev-dependencies]
 # fake = { version = "2.6", features=["derive"]}

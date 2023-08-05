@@ -3,6 +3,7 @@ use std::{net::SocketAddr, env};
 use actix_settings::BasicSettings;
 use const_format::formatcp;
 use serde::{Deserialize, Serialize};
+use secrecy::{Secret, ExposeSecret};
 
 pub const WORKSPACE_ROOT: &str = env!("WORKSPACE_ROOT");
 
@@ -16,7 +17,7 @@ pub const CONFIG_PROD: &str = formatcp!("{}/{}", CONFIG_DIR, CONFIG_PROD_NAME);
 
 pub type Settings = BasicSettings<ApplicationSettings>;
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct ApplicationSettings {
     pub database: DatabaseSettings,
@@ -24,22 +25,22 @@ pub struct ApplicationSettings {
     pub frontend: FrontendSettings,
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct AuthSettings {
-    pub secret_key: String,
+    pub secret_key: Secret<String>,
     pub access_token_lifetime_seconds: i64,
     pub refresh_token_lifetime_seconds: i64,
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct DatabaseSettings {
     pub proto: String,
-    pub host: String,
+    pub host: Secret<String>,
     pub port: u16,
     pub username: String,
-    pub password: String,
+    pub password: Secret<String>,
     pub name: String,
 }
 
@@ -47,7 +48,7 @@ impl DatabaseSettings {
     pub fn url(&self) -> String {
         format!(
             "{}://{}:{}@{}:{}/{}",
-            self.proto, self.username, self.password, self.host, self.port, self.name
+            self.proto, self.username, self.password.expose_secret(), self.host.expose_secret(), self.port, self.name
         )
     }
 
@@ -55,10 +56,10 @@ impl DatabaseSettings {
         let url = url::Url::parse(&url).expect("Cannot parse database url");
         Self {
             proto: url.scheme().to_string(),
-            host: url.host_str().expect("Cannot parse database host").to_string(),
+            host: Secret::new(url.host_str().expect("Cannot parse database host").to_string()),
             port: url.port().expect("Cannot parse database port"),
             username: url.username().to_string(),
-            password: url.password().expect("Cannot parse database password").to_string(),
+            password: Secret::new(url.password().expect("Cannot parse database password").to_string()),
             name: url.path().trim_start_matches('/').to_string(),
         }
     }
@@ -92,18 +93,23 @@ pub fn make_overridable_with_env_vars(settings: &mut Settings) {
     Settings::override_field_with_env_var(&mut settings.actix.tls.enabled, "ACTIX_TLS_ENABLED").expect("ACTIX_TLS_ENABLED not specified");
     Settings::override_field_with_env_var(&mut settings.actix.tls.certificate, "ACTIX_TLS_CERTIFICATE").expect("ACTIX_TLS_CERTIFICATE not specified");
     Settings::override_field_with_env_var(&mut settings.actix.tls.private_key, "ACTIX_TLS_PRIVATE_KEY").expect("ACTIX_TLS_PRIVATE_KEY not specified");
-    Settings::override_field_with_env_var(&mut settings.application.auth.secret_key, "APPLICATION_SECRET_KEY").expect("APPLICATION_SECRET_KEY not specified");
+    if let Ok(application_secret_key) = env::var("APPLICATION_SECRET_KEY") {
+        settings.application.auth.secret_key = Secret::new(application_secret_key);
+    }
     Settings::override_field_with_env_var(&mut settings.application.auth.access_token_lifetime_seconds, "APPLICATION_ACCESS_TOKEN_LIFETIME_SECONDS").expect("ACCESS_TOKEN_LIFETIME_SECONDS not specified");
     Settings::override_field_with_env_var(&mut settings.application.auth.refresh_token_lifetime_seconds, "APPLICATION_REFRESH_TOKEN_LIFETIME_SECONDS").expect("REFRESH_TOKEN_LIFETIME_SECONDS not specified");
     Settings::override_field_with_env_var(&mut settings.application.database.proto, "APPLICATION_DATABASE_PROTO").expect("DATABASE_PROTO not specified");
-    Settings::override_field_with_env_var(&mut settings.application.database.host, "APPLICATION_DATABASE_HOST").expect("DATABASE_HOST not specified");
+    if let Ok(application_database_host) = env::var("APPLICATION_DATABASE_HOST") {
+        settings.application.database.host = Secret::new(application_database_host);
+    }
     Settings::override_field_with_env_var(&mut settings.application.database.port, "APPLICATION_DATABASE_PORT").expect("DATABASE_PORT not specified");
     Settings::override_field_with_env_var(&mut settings.application.database.username, "APPLICATION_DATABASE_USERNAME").expect("DATABASE_USERNAME not specified");
-    Settings::override_field_with_env_var(&mut settings.application.database.password, "APPLICATION_DATABASE_PASSWORD").expect("DATABASE_PASSWORD not specified");
+    if let Ok(application_database_password) = env::var("APPLICATION_DATABASE_PASSWORD") {
+        settings.application.database.password = Secret::new(application_database_password);
+    }
     Settings::override_field_with_env_var(&mut settings.application.database.name, "APPLICATION_DATABASE_NAME").expect("DATABASE_NAME not specified");
     Settings::override_field_with_env_var(&mut settings.application.frontend.host, "APPLICATION_FRONTEND_HOST").expect("FRONTEND_HOST not specified");
     Settings::override_field_with_env_var(&mut settings.application.frontend.port, "APPLICATION_FRONTEND_PORT").expect("FRONTEND_PORT not specified");
-    // DATABASE_URL takes precedence over individual database settings.
     if let Ok(database_url) = env::var("DATABASE_URL") {
         settings.application.database = DatabaseSettings::from_url(database_url);
     }

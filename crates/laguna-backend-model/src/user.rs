@@ -3,12 +3,13 @@ use crate::behaviour::Behaviour;
 use crate::role::Role;
 use actix_jwt_auth_middleware::FromRequest;
 use chrono::{DateTime, Utc};
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-
+// use secrecy::SerializableSecret;
 /// User DB object.
 /// Not to be confused with [`UserDTO`] used for API.
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, FromRequest, sqlx::FromRow)]
+#[derive(Serialize, Deserialize, Debug, Clone, FromRequest, sqlx::FromRow)]
 pub struct User {
     /// UUID generated using uuid_generate_v4() on DB
     pub id: Uuid,
