@@ -1,9 +1,19 @@
-use std::fmt;
+use std::{
+    fmt,
+    net::{Ipv4Addr, SocketAddr, SocketAddrV4},
+};
 
 use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
+use serde_with::Bytes;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PeerId(pub [u8; 20]);
+#[serde_as]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub struct PeerId(
+    // OLD: See: https://github.com/serde-rs/bytes/pull/28
+    // #[serde(with = "serde_byte_array")]
+    #[serde_as(as = "Bytes")] pub [u8; 20],
+);
 
 /// Peer client identification enum.
 /// Resources:
@@ -350,5 +360,57 @@ impl PeerId {
 
     pub fn version(&self) -> String {
         todo!()
+    }
+}
+
+pub trait Peer {
+    fn id(&self) -> Option<PeerId>;
+    fn addr(&self) -> SocketAddr;
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PeerStream {
+    Dict(PeerDictStream),
+    Bin(PeerBinStream),
+}
+
+pub type PeerDictStream = Vec<PeerDict>;
+pub type PeerBinStream = Vec<PeerBin>;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PeerDict {
+    pub id: PeerId,
+    pub addr: SocketAddr,
+}
+
+/// Peer binary representation.
+/// First 4 bytes are IP address, last 2 bytes are port.
+/// Network byte order (big endian).
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PeerBin(pub [u8; 6]);
+
+impl Peer for PeerDict {
+    fn id(&self) -> Option<PeerId> {
+        Some(self.id)
+    }
+
+    fn addr(&self) -> SocketAddr {
+        self.addr
+    }
+}
+
+impl Peer for PeerBin {
+    fn id(&self) -> Option<PeerId> {
+        None
+    }
+
+    fn addr(&self) -> SocketAddr {
+        SocketAddr::V4(SocketAddrV4::new(
+            Ipv4Addr::from(u32::from_be_bytes([
+                self.0[0], self.0[1], self.0[2], self.0[3],
+            ])),
+            u16::from_be_bytes([self.0[4], self.0[5]]),
+        ))
     }
 }

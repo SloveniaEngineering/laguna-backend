@@ -17,6 +17,7 @@ use jwt_compact::alg::Hs256Key;
 
 use laguna::api::login::login;
 use laguna::api::misc::get_app_info;
+use laguna::api::peer::peer_announce;
 use laguna::api::register::register;
 
 use jwt_compact::TimeOptions;
@@ -158,7 +159,8 @@ async fn main() -> Result<(), sqlx::Error> {
                             .route("/", web::get().to(torrent_get))
                             .route("/", web::put().to(torrent_put))
                             .route("/", web::patch().to(torrent_patch)),
-                    ),
+                    )
+                    .service(web::scope("/peer").route("/announce", web::get().to(peer_announce))),
             )
             .default_service(web::to(|| HttpResponse::NotFound()))
     })
