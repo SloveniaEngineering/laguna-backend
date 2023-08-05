@@ -104,10 +104,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # NOTE: Only use Linux for testing
-        # Server will likely be deployed on linux
-        # GH Actions doesn't support containers on Windows
-        # MacOS doesn't have docker installed by default
         os: [ubuntu-latest]
         rust: [stable]
     env:
