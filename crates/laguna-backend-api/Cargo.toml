@@ -17,7 +17,6 @@ documentation = "https://sloveniaengineering.github.io/laguna-backend"
 laguna-backend-model = { path = "../laguna-backend-model" }
 laguna-backend-middleware = { path = "../laguna-backend-middleware" }
 actix-web = { version = "4", features = ["cookies"] }
-cookie = { version = "0.17", features = ["secure"] }
 sqlx = { version = "0.6.3", features = [
     "runtime-actix-rustls",
     "postgres",
@@ -35,9 +34,9 @@ log = "*"
 chrono = { version = "*", features = ["serde"]}
 uuid = { version = "*", features = ["serde", "v4", "fast-rng"] }
 digest = { version = "0.10.7", default-features = false }
+argon2 = { version = "*", features = ["std"] }
 derive_more = "*"
 env_logger = "*"
-actix-files = "0.6.2"
 actix-multipart = "*"
 serde = { version = "1.0", features = ["derive"]}
 validator = { version = "0.16", features = ["derive"] }
@@ -47,8 +46,6 @@ serde_bencode = "0.2.3"
 laguna-backend-dto = { path = "../laguna-backend-dto" }
 laguna_config = { package = "laguna-backend-config", path = "../laguna-backend-config" }
 secrecy = { version = "*", features = ["serde"] }
-actix-cors = "*"
-actix-settings = "*"
 
 [dev-dependencies]
 actix-http = "3.3.1"

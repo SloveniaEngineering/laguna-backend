@@ -2,15 +2,14 @@ use actix_jwt_auth_middleware::TokenSigner;
 
 use actix_web::{web, HttpResponse};
 use actix_web_validator::Json;
+use argon2::{Algorithm, Argon2, ParamsBuilder, PasswordHash, PasswordVerifier, Version};
 use chrono::Utc;
-use digest::Digest;
 use jwt_compact::alg::Hs256;
 use laguna_backend_dto::login::LoginDTO;
 use laguna_backend_dto::user::UserDTO;
 use laguna_backend_middleware::consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME};
 use laguna_backend_model::user::User;
 
-use sha2::Sha256;
 use sqlx::PgPool;
 
 use crate::error::{user::UserError, APIError};
@@ -69,6 +68,7 @@ pub async fn login(
                first_login, 
                last_login, 
                avatar_url,
+               salt,
                role AS "role: _",
                behaviour AS "behaviour: _",
                is_active,
@@ -83,7 +83,19 @@ pub async fn login(
     .await?;
 
     if let Some(logged_user) = fetched_user {
-        if logged_user.password == format!("{:x}", Sha256::digest(&login_dto.password)) {
+        let argon_context = Argon2::new(
+            Algorithm::Argon2id,
+            Version::V0x13,
+            ParamsBuilder::new()
+                .p_cost(1)
+                .m_cost(12288)
+                .t_cost(3)
+                .build()
+                .unwrap(),
+        );
+        let password_hash = PasswordHash::new(&logged_user.password).unwrap();
+        if let Ok(_) = argon_context.verify_password(login_dto.password.as_bytes(), &password_hash)
+        {
             // Logged user has been updated, we need to return the updated user.
             let user = sqlx::query_as!(
                 User,
@@ -98,6 +110,7 @@ pub async fn login(
                           first_login, 
                           last_login, 
                           avatar_url,
+                          salt,
                           role AS "role: _",
                           behaviour AS "behaviour: _",
                           is_active,
