@@ -15,7 +15,7 @@ documentation = "https://sloveniaengineering.github.io/laguna-backend"
 
 [dependencies]
 actix-web = { version = "4", features = ["cookies"] }
-cookie = { version = "0.17", features = ["secure"] }
+argon2 = { version = "*", features = ["std"] }
 sqlx = { version = "0.6.3", features = [
     "runtime-actix-rustls",
     "postgres",

@@ -45,6 +45,7 @@ use std::env;
 
 use actix_settings::ApplySettings;
 use laguna_config::Settings;
+use secrecy::ExposeSecret;
 use sqlx::postgres::PgPoolOptions;
 
 #[actix_web::main]
@@ -67,7 +68,14 @@ async fn main() -> Result<(), sqlx::Error> {
     sqlx::migrate!("./migrations").run(&pool).await?;
 
     // Server setup
-    let secret_key = Hs256Key::new(settings.application.auth.secret_key.as_str());
+    let secret_key = Hs256Key::new(
+        settings
+            .application
+            .auth
+            .secret_key
+            .expose_secret()
+            .as_str(),
+    );
     let frontend_address = settings.application.frontend.address();
     let pool_clone = pool.clone();
 

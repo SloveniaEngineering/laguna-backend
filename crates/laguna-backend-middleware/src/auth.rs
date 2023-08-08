@@ -9,7 +9,7 @@ use std::fmt;
 
 use futures_util::future::LocalBoxFuture;
 use jwt_compact::alg::{Hs256, Hs256Key};
-use jwt_compact::{AlgorithmExt, UntrustedToken};
+use jwt_compact::{AlgorithmExt, UntrustedToken, ValidationError};
 use laguna_backend_dto::user::UserDTO;
 use laguna_backend_model::role::Role;
 use std::future::ready;
@@ -58,6 +58,8 @@ pub struct AuthorizationMiddleware<S> {
 #[derive(Debug)]
 pub enum AuthorizationError {
     UnauthorizedRole { min_role: Role, actual_role: Role },
+    NoToken,
+    Invalid(ValidationError),
 }
 
 impl fmt::Display for AuthorizationError {
@@ -73,6 +75,12 @@ impl fmt::Display for AuthorizationError {
                     min_role, actual_role
                 )
             }
+            Self::NoToken => {
+                write!(f, "No token")
+            }
+            Self::Invalid(err) => {
+                write!(f, "Invalid token: {}", err)
+            }
         }
     }
 }
@@ -81,12 +89,16 @@ impl ResponseError for AuthorizationError {
     fn status_code(&self) -> StatusCode {
         match self {
             Self::UnauthorizedRole { .. } => StatusCode::UNAUTHORIZED,
+            Self::NoToken => StatusCode::UNAUTHORIZED,
+            Self::Invalid(_) => StatusCode::UNAUTHORIZED,
         }
     }
 
     fn error_response(&self) -> HttpResponse {
         match self {
             Self::UnauthorizedRole { .. } => HttpResponse::Unauthorized().body(format!("{}", self)),
+            Self::NoToken => HttpResponse::Unauthorized().body(format!("{}", self)),
+            Self::Invalid(_) => HttpResponse::Unauthorized().body(format!("{}", self)),
         }
     }
 }
@@ -112,26 +124,33 @@ where
             let access_token = UntrustedToken::new(access_token_header.to_str().unwrap()).unwrap();
             let signed_access_token = Hs256
                 .validate_for_signed_token::<UserDTO>(&access_token, &self.key)
-                .unwrap();
-            // SAFETY: .unwrap() is safe because we checked for error.
-            let min_role = self.min_role;
-            let role = signed_access_token.token.claims().custom.role;
-            if role < min_role {
-                return Box::pin(async move {
-                    Result::<Self::Response, Self::Error>::Err(
-                        AuthorizationError::UnauthorizedRole {
-                            min_role,
-                            actual_role: role,
-                        }
-                        .into(),
-                    )
-                });
-            }
+                .map_err(|err| AuthorizationError::Invalid(err));
+            return match signed_access_token {
+                Ok(signed_access_token) => {
+                    let min_role = self.min_role;
+                    let role = signed_access_token.token.claims().custom.role;
+                    if role < min_role {
+                        return Box::pin(async move {
+                            Result::<Self::Response, Self::Error>::Err(
+                                AuthorizationError::UnauthorizedRole {
+                                    min_role,
+                                    actual_role: role,
+                                }
+                                .into(),
+                            )
+                        });
+                    }
+                    let fut = self.service.call(req);
+                    Box::pin(async move {
+                        let res = fut.await?;
+                        Ok(res)
+                    })
+                }
+                Err(err) => {
+                    Box::pin(async move { Result::<Self::Response, Self::Error>::Err(err.into()) })
+                }
+            };
         }
-        let fut = self.service.call(req);
-        Box::pin(async move {
-            let res = fut.await?;
-            Ok(res)
-        })
+        Box::pin(async move { Err(AuthorizationError::NoToken.into()) })
     }
 }

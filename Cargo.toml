@@ -31,6 +31,7 @@ sqlx = { version = "0.6.3", features = [
 ] }
 env_logger = "0.10.0"
 log = "0.4.19"
+argon2 = { version = "*", features = ["std"] }
 actix-jwt-auth-middleware = "0.3.0"
 jwt-compact = "0.7.0"
 sha2 = "0.10"
@@ -42,6 +43,7 @@ laguna_config = { package = "laguna-backend-config", path = "crates/laguna-backe
 actix-cors = "0.6.4"
 actix-settings = "*"
 const_format = "*"
+secrecy = { version = "*", features = ["serde"] }
 
 [dev-dependencies]
 # fake = { version = "2.6", features=["derive"]}
