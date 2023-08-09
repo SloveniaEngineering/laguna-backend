@@ -1,18 +1,19 @@
 use actix_jwt_auth_middleware::TokenSigner;
-use actix_web::post;
-use actix_web::{web, HttpResponse};
-use chrono::Utc;
-use digest::Digest;
-use jwt_compact::alg::Hs256;
-use laguna_backend_middleware::consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME};
-use laguna_backend_model::login::LoginDTO;
-use laguna_backend_model::user::{User, UserDTO};
 
-use sha2::Sha256;
+use actix_web::{web, HttpResponse};
+use actix_web_validator::Json;
+use argon2::{Algorithm, Argon2, ParamsBuilder, PasswordHash, PasswordVerifier, Version};
+use chrono::Utc;
+use jwt_compact::alg::Hs256;
+use laguna_backend_dto::login::LoginDTO;
+use laguna_backend_dto::user::UserDTO;
+use laguna_backend_middleware::consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME};
+use laguna_backend_model::user::{User, UserSafe};
+
+use secrecy::ExposeSecret;
 use sqlx::PgPool;
 
-use crate::error::{APIError, LoginError};
-use crate::state::UserState;
+use crate::error::{user::UserError, APIError};
 
 /// `POST /api/user/auth/login`
 /// # Example
@@ -36,50 +37,97 @@ use crate::state::UserState;
 /// ```
 /// ```json
 /// {
-///     "LoginSuccess": {
-///         "user": {
-///             "id": "b33b630d-e098-47d0-bc21-94c6a7467f17"
-///             "username": "test",
-///             "email": "test@laguna.io",
-///             "first_login": "2023-07-04T10:18:17.391698Z",
-///             "last_login": "2023-07-04T10:18:17.391698Z",
-///             "avatar_url": null,
-///             "role": "Normie",
-///             "is_active": true,
-///             "has_verified_email": false,
-///             "is_history_private": true,
-///             "is_profile_private": true
-///         }
-///     }
+///   "id": "b33b630d-e098-47d0-bc21-94c6a7467f17"
+///   "username": "test",
+///   "email": "test@laguna.io",
+///   "first_login": "2023-07-04T10:18:17.391698Z",
+///   "last_login": "2023-07-04T10:18:17.391698Z",
+///   "avatar_url": null,
+///   "role": "Normie",
+///   "is_active": true,
+///   "has_verified_email": false,
+///   "is_history_private": true,
+///   "is_profile_private": true
 /// }
 /// ```
-/// ### Response (on invalid password ("test12"))
-/// HTTP/1.1 401 Unauthorized
-/// ```json
-/// "InvalidCredentials"
-/// ```
-#[post("/login")]
+/// ### Response
+/// 1. On successful login: HTTP/1.1 200 OK
+/// 2. On invalid password/email/username: HTTP/1.1 401 Unauthorized
+/// 3. On invalid format (ie. too long, too short, not email, etc.): HTTP/1.1 400 Bad Request
 pub async fn login(
-    login_dto: web::Json<LoginDTO>,
+    login_dto: Json<LoginDTO>,
     pool: web::Data<PgPool>,
     signer: web::Data<TokenSigner<UserDTO, Hs256>>,
 ) -> Result<HttpResponse, APIError> {
-    let fetched_user =
-        sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE username = $1 OR email = $1")
-            .bind(&login_dto.username_or_email)
-            .fetch_optional(pool.get_ref())
-            .await?;
+    let fetched_user = sqlx::query_as!(
+        User,
+        r#"
+        SELECT id, 
+               username, 
+               email, 
+               password, 
+               first_login, 
+               last_login, 
+               avatar_url,
+               salt,
+               role AS "role: _",
+               behaviour AS "behaviour: _",
+               is_active,
+               has_verified_email,
+               is_history_private,
+               is_profile_private
+        FROM "User" WHERE username = $1 OR email = $1
+        "#,
+        &login_dto.username_or_email
+    )
+    .fetch_optional(pool.get_ref())
+    .await?
+    .map(UserSafe::from);
 
     if let Some(logged_user) = fetched_user {
-        if logged_user.password == format!("{:x}", Sha256::digest(&login_dto.password)) {
+        let argon_context = Argon2::new(
+            Algorithm::Argon2id,
+            Version::V0x13,
+            ParamsBuilder::new()
+                .p_cost(1)
+                .m_cost(12288)
+                .t_cost(3)
+                .build()
+                .unwrap(),
+        );
+        let password_hash = PasswordHash::new(logged_user.password.expose_secret()).unwrap();
+        if let Ok(_) = argon_context.verify_password(login_dto.password.as_bytes(), &password_hash)
+        {
             // Logged user has been updated, we need to return the updated user.
-            let user = sqlx::query_as::<_, User>(
-                "UPDATE \"User\" SET last_login = $1 WHERE id = $2 RETURNING *",
+            let user = sqlx::query_as!(
+                User,
+                r#"
+                UPDATE "User"
+                SET last_login = $1
+                WHERE id = $2
+                RETURNING id, 
+                          username, 
+                          email, 
+                          password, 
+                          first_login, 
+                          last_login, 
+                          avatar_url,
+                          salt,
+                          role AS "role: _",
+                          behaviour AS "behaviour: _",
+                          is_active,
+                          has_verified_email,
+                          is_history_private,
+                          is_profile_private
+            "#,
+                Utc::now(),
+                logged_user.id
             )
-            .bind(Utc::now())
-            .bind(logged_user.id)
-            .fetch_one(pool.get_ref())
-            .await?;
+            .fetch_optional(pool.get_ref())
+            .await?
+            .map(UserSafe::from)
+            .map(UserDTO::from)
+            .ok_or_else(|| UserError::DidntUpdate)?;
             return Ok(HttpResponse::Ok()
                 // TODO: get rid of clones
                 .append_header((
@@ -90,10 +138,10 @@ pub async fn login(
                     REFRESH_TOKEN_HEADER_NAME,
                     signer.create_refresh_header_value(&user.clone().into())?,
                 ))
-                .json(UserState::LoginSuccess { user: user.into() }));
+                .json(user));
         }
     }
 
     // SECURITY: Don't report "Password" or "Username" invalid to avoid brute-force attacks.
-    Ok(HttpResponse::Unauthorized().json(LoginError::InvalidCredentials))
+    Ok(HttpResponse::Unauthorized().finish())
 }

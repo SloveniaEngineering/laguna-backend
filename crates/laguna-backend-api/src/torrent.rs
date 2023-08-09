@@ -1,20 +1,20 @@
-use std::fs::{self, File};
+use actix_multipart::Multipart;
+use actix_web::{web, HttpResponse};
+use actix_web_validator::Json;
 
-use actix_web::{get, patch, put, web, HttpResponse};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
+use laguna_backend_dto::torrent::{TorrentDTO, TorrentPatchDTO, TorrentPutDTO};
+use laguna_backend_dto::user::UserDTO;
+use laguna_backend_model::torrent::Torrent;
+
 use digest::Digest;
-use laguna_backend_middleware::filters::torrent::{TorrentFilter, DEFAULT_TORRENT_FILTER_LIMIT};
-use laguna_backend_model::torrent::{Torrent, TorrentDTO, TorrentPatchDTO, TorrentPutDTO};
+use futures::{StreamExt, TryStreamExt};
 use sha2::Sha256;
 use sqlx::PgPool;
-use std::io::Read;
-use std::io::Write;
+
 use uuid::Uuid;
 
-use crate::{
-    error::{APIError, TorrentError},
-    state::TorrentState,
-};
+use crate::error::{torrent::TorrentError, APIError};
 
 /// `GET /api/torrent/{id}`
 /// # Example
@@ -26,160 +26,58 @@ use crate::{
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
 /// ```
 /// ## Response
-/// HTTP/1.1 200 OK
+/// * HTTP/1.1 200 OK
 /// ```json
 /// {
-///    "title": "test",
-///    "file_name": "test_upload",
-///    "nfo": null,
-///    "info_hash": "aae8b4b6a0b9b6b5b4b6b5b4b6b5b4b6b5b4b6b5",
-///    "uploaded_at": "2023-07-10T12:42:32.396647Z",
-///    "uploaded_by": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
-///    "modded_by": null,
-///    "payload": ""
-/// }
-/// ```
-/// This only gets you torrent metadata (stored in DB).
-#[get("/{id}")]
-pub async fn get_torrent(
-    id: web::Path<Uuid>,
-    pool: web::Data<PgPool>,
-) -> Result<HttpResponse, APIError> {
-    let torrent = sqlx::query_as::<_, Torrent>("SELECT * FROM \"Torrent\" WHERE id = $1")
-        .bind(id.into_inner())
-        .fetch_optional(pool.get_ref())
-        .await?
-        .ok_or_else(|| TorrentError::DoesNotExist)?;
-    Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent)))
-}
-
-/// `GET /api/torrent/{info_hash}`
-/// # Example
-/// ## Request
-/// ```sh
-/// curl -X GET \
-///      -i 'http://127.0.0.1:6969/api/torrent/aae8b4b6a0b9b6b5b4b6b5b4b6b5b4b6b5b4b6b5' \
-///      -H 'X-Access-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg5OTMwNTksImlhdCI6MTY4ODk5Mjk5OSwiaWQiOiIwMGYwNDVhYy0xZjRkLTQ2MDEtYjJlMy04NzQ3NmRjNDYyZTYiLCJ1c2VybmFtZSI6InRlc3QiLCJmaXJzdF9sb2dpbiI6IjIwMjMtMDctMTBUMTI6NDI6MzIuMzk2NjQ3WiIsImxhc3RfbG9naW4iOiIyMDIzLTA3LTEwVDEyOjQzOjE5LjIxNjA0N1oiLCJhdmF0YXJfdXJsIjpudWxsLCJyb2xlIjoiTm9ybWllIiwiYmVoYXZpb3VyIjoiTHVya2VyIiwiaXNfYWN0aXZlIjp0cnVlLCJoYXNfdmVyaWZpZWRfZW1haWwiOmZhbHNlLCJpc19oaXN0b3J5X3ByaXZhdGUiOnRydWUsImlzX3Byb2ZpbGVfcHJpdmF0ZSI6dHJ1ZX0.izClLn6kANl2kpIv2QqzmKJy7tmpNZqKKvcd4RoGW_c' \
-///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
-/// ```
-/// ## Response
-/// HTTP/1.1 200 OK
-///
-/// ```json
-/// {
-///   "title": "test",
-///   "file_name": "test_upload",
+///   "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
+///   "announce_url": "http://127.0.0.1:6969/api/torrent/announce",
+///   "length": 100,
+///   "title": "TEST (2020)",
+///   "file_name": "test2020.txt",
 ///   "nfo": null,
+///   "leech_count": 0,
+///   "seed_count": 0,
+///   "completed_count": 0,
+///   "speedlevel": "Lowspeed",
 ///   "info_hash": "aae8b4b6a0b9b6b5b4b6b5b4b6b5b4b6b5b4b6b5",
 ///   "uploaded_at": "2023-07-10T12:42:32.396647Z",
 ///   "uploaded_by": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
-///   "modded_by": null,
-///   "payload": ""
+///   "modded_at": null,
+///   "modded_by": null
 /// }
-/// This only gets you torrent metadata (stored in DB).
-#[get("/{info_hash}")]
-pub async fn get_torrent_with_info_hash(
-    info_hash: web::Path<String>,
+/// ```
+/// * If DB operation fails: HTTP/1.1 500 Internal Server Error
+/// For scheme see [`TorrentDTO`].
+pub async fn torrent_get(
+    id: web::Path<Uuid>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-    let torrent = sqlx::query_as::<_, Torrent>("SELECT * FROM \"Torrent\" WHERE info_hash = $1")
-        .bind(info_hash.into_inner())
-        .fetch_optional(pool.get_ref())
-        .await?
-        .ok_or_else(|| TorrentError::DoesNotExist)?;
-    Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent)))
-}
-
-/// `GET /api/torrent/`
-/// # Example
-/// ## Request
-/// ```sh
-/// curl -X GET \
-///      -i 'http://127.0.0.1:6969/api/torrent/' \
-///      -H 'Content-Type: application/json' \
-///      -H 'X-Access-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg5OTMwNTksImlhdCI6MTY4ODk5Mjk5OSwiaWQiOiIwMGYwNDVhYy0xZjRkLTQ2MDEtYjJlMy04NzQ3NmRjNDYyZTYiLCJ1c2VybmFtZSI6InRlc3QiLCJmaXJzdF9sb2dpbiI6IjIwMjMtMDctMTBUMTI6NDI6MzIuMzk2NjQ3WiIsImxhc3RfbG9naW4iOiIyMDIzLTA3LTEwVDEyOjQzOjE5LjIxNjA0N1oiLCJhdmF0YXJfdXJsIjpudWxsLCJyb2xlIjoiTm9ybWllIiwiYmVoYXZpb3VyIjoiTHVya2VyIiwiaXNfYWN0aXZlIjp0cnVlLCJoYXNfdmVyaWZpZWRfZW1haWwiOmZhbHNlLCJpc19oaXN0b3J5X3ByaXZhdGUiOnRydWUsImlzX3Byb2ZpbGVfcHJpdmF0ZSI6dHJ1ZX0.izClLn6kANl2kpIv2QqzmKJy7tmpNZqKKvcd4RoGW_c' \
-///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
-///      --data '{
-///         "uploaded_at_min": "2023-07-10T12:42:32.396647Z",
-///         "uploaded_at_max": null,
-///         "uploaded_by": null,
-///         "order_by": {
-///            "TorrentOrderBy": {
-///                "field": "UploadedAt",
-///                "order": "Desc",
-///            }
-///         }
-///      }'
-/// ```
-/// ## Response
-/// HTTP/1.1 200 OK
-/// ```json
-/// [
-///   {
-///     "title": "test",
-///     "file_name": "test_upload",
-///     "nfo": null,
-///     "info_hash": "aae8b4b6a0b9b6b5b4b6b5b4b6b5b4b6b5b4b6b5",
-///     "uploaded_at": "2023-07-10T12:42:32.396647Z",
-///     "uploaded_by": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
-///     "modded_by": null,
-///     "payload": ""
-///   },
-///   {
-///     "title": "test2",
-///     "file_name": "test_upload2",
-///     "nfo": null,
-///     "info_hash": "aae8b4b6a0b9b6b5b4b6b5b4b6b5b4b6b5b4b6b5",
-///     "uploaded_at": "2023-07-10T12:42:31.396647Z",
-///     "uploaded_by": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
-///     "modded_by": null,
-///     "payload": ""
-///   }
-/// ]
-/// ```
-#[get("/")]
-pub async fn get_torrents_with_filter(
-    filter: web::Json<TorrentFilter>,
-    pool: web::Data<PgPool>,
-) -> Result<HttpResponse, APIError> {
-    // Dynamic query generation is still being worked on: https://github.com/launchbadge/sqlx/issues/291
-    // See: https://github.com/launchbadge/sqlx/issues/364
-    let torrents = sqlx::query_as::<_, Torrent>(&format!(
+    let torrent = sqlx::query_as!(
+        Torrent,
         r#"
-        SELECT * 
-        FROM "Torrent" 
-        INNER JOIN "User" USING (id)
-        WHERE 
-        (uploaded_at >= $1 AND uploaded_at <= $2) AND
-        (($3 IS NULL and username IS NULL) OR username = $3)
-        {order_by}
-        LIMIT $4
-        "#,
-        order_by = match filter.order_by {
-            None => String::from(""),
-            Some(ref order_by) => order_by.to_string(),
-        }
-    ))
-    .bind(
-        filter
-            .uploaded_at_min
-            .unwrap_or_else(|| DateTime::<Utc>::MIN_UTC),
+            SELECT id,
+                   announce_url,
+                   length,
+                   title,
+                   file_name,
+                   nfo,
+                   leech_count,
+                   seed_count,
+                   completed_count,
+                   speedlevel AS "speedlevel: _",
+                   info_hash,
+                   uploaded_at,
+                   uploaded_by,
+                   modded_at,
+                   modded_by
+            FROM "Torrent" 
+            WHERE id = $1"#,
+        id.into_inner()
     )
-    .bind(
-        filter
-            .uploaded_at_max
-            .unwrap_or_else(|| DateTime::<Utc>::MAX_UTC),
-    )
-    .bind(&filter.uploaded_by)
-    .bind(filter.limit.unwrap_or_else(|| DEFAULT_TORRENT_FILTER_LIMIT))
-    .fetch_all(pool.get_ref())
-    .await?;
-    Ok(HttpResponse::Ok().json(
-        torrents
-            .into_iter()
-            .map(|torrent| TorrentDTO::from(torrent))
-            .collect::<Vec<TorrentDTO>>(),
-    ))
+    .fetch_optional(pool.get_ref())
+    .await?
+    .ok_or_else(|| TorrentError::DoesNotExist)?;
+    Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent)))
 }
 
 /// `PATCH /api/torrent/`
@@ -192,154 +90,170 @@ pub async fn get_torrents_with_filter(
 ///      -H 'X-Access-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg5OTMwNTksImlhdCI6MTY4ODk5Mjk5OSwiaWQiOiIwMGYwNDVhYy0xZjRkLTQ2MDEtYjJlMy04NzQ3NmRjNDYyZTYiLCJ1c2VybmFtZSI6InRlc3QiLCJmaXJzdF9sb2dpbiI6IjIwMjMtMDctMTBUMTI6NDI6MzIuMzk2NjQ3WiIsImxhc3RfbG9naW4iOiIyMDIzLTA3LTEwVDEyOjQzOjE5LjIxNjA0N1oiLCJhdmF0YXJfdXJsIjpudWxsLCJyb2xlIjoiTm9ybWllIiwiYmVoYXZpb3VyIjoiTHVya2VyIiwiaXNfYWN0aXZlIjp0cnVlLCJoYXNfdmVyaWZpZWRfZW1haWwiOmZhbHNlLCJpc19oaXN0b3J5X3ByaXZhdGUiOnRydWUsImlzX3Byb2ZpbGVfcHJpdmF0ZSI6dHJ1ZX0.izClLn6kANl2kpIv2QqzmKJy7tmpNZqKKvcd4RoGW_c' \
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4' \
 ///      --data '{
+///         "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
 ///         "title": "TEST (2020)",
 ///         "file_name": "test_upload",
 ///         "nfo": null,
 ///         "modded_by": null
 ///      }'
-/// Updates torrent metadata (not file).
-/// Certain fields are not allowed to be updated.
-/// Returns updated [`TorrentDTO`].
-#[patch("/")]
-pub async fn patch_torrent(
-    torrent_dto: web::Json<TorrentPatchDTO>,
-    pool: web::Data<PgPool>,
-) -> Result<HttpResponse, APIError> {
-    Ok(HttpResponse::Ok().json(TorrentDTO::from(
-        sqlx::query_as::<_, Torrent>(
-            r#"
-    UPDATE "Torrent" 
-    SET file_name = $1, nfo = $2, modded_by = $3
-    WHERE title = $4
-    RETURNING *
-    "#,
-        )
-        .bind(&torrent_dto.file_name)
-        .bind(&torrent_dto.nfo)
-        .bind(&torrent_dto.modded_by)
-        .bind(&torrent_dto.title)
-        .fetch_one(pool.get_ref())
-        .await?,
-    )))
-}
-
-/// `GET /api/torrent/download/{id}`
-/// # Example
-/// ## Request
-/// ```sh
-/// curl -X GET \
-///      -i 'http://127.0.0.1:6969/api/torrent/download/00f045ac-1f4d-4601-b2e3-87476dc462e6'
-///      -H 'X-Access-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg5OTMwNTksImlhdCI6MTY4ODk5Mjk5OSwiaWQiOiIwMGYwNDVhYy0xZjRkLTQ2MDEtYjJlMy04NzQ3NmRjNDYyZTYiLCJ1c2VybmFtZSI6InRlc3QiLCJmaXJzdF9sb2dpbiI6IjIwMjMtMDctMTBUMTI6NDI6MzIuMzk2NjQ3WiIsImxhc3RfbG9naW4iOiIyMDIzLTA3LTEwVDEyOjQzOjE5LjIxNjA0N1oiLCJhdmF0YXJfdXJsIjpudWxsLCJyb2xlIjoiTm9ybWllIiwiYmVoYXZpb3VyIjoiTHVya2VyIiwiaXNfYWN0aXZlIjp0cnVlLCJoYXNfdmVyaWZpZWRfZW1haWwiOmZhbHNlLCJpc19oaXN0b3J5X3ByaXZhdGUiOnRydWUsImlzX3Byb2ZpbGVfcHJpdmF0ZSI6dHJ1ZX0.izClLn6kANl2kpIv2QqzmKJy7tmpNZqKKvcd4RoGW_c' \
-///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
 /// ```
 /// ## Response
-/// HTTP/1.1 200 OK
+/// * HTTP/1.1 200 OK
 /// ```json
 /// {
-///     "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
-///     "title": "test",
-///     "file_name": "test_upload",
-///     "nfo": null,
-///     "info_hash": "e6c4b2e3b1f4d4601b2e3b1f4d4601b2e3b1f4d4601b2e3b1f4d4601b2e3b1f4",
-///     "uploaded_at": "2021-07-04T10:18:17.391698Z",
-///     "uploaded_by": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
-///     "modded_by": null,
-///     "payload": ""
+///   "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
+///   "announce_url": "http://127.0.0.1:6969/api/torrent/announce",
+///   "length": 100,
+///   "title": "Test, the movie (2020)",
+///   "file_name": "test_upload.mp4",
+///   "nfo": null,
+///   "leech_count": 0,
+///   "seed_count": 0,
+///   "completed_count": 0,
+///   "speedlevel": "Lowspeed",
+///   "info_hash": "aae8b4b6a0b9b6b5b4b6b5b4b6b5b4b6b5b4b6b5",
+///   "uploaded_at": "2023-07-10T12:42:32.396647Z",
+///   "uploaded_by": "ffff45ac-1f4d-46f1-b2e3-87476dc462e6",
+///   "modded_at": null,
+///   "modded_by": null,
 /// }
 /// ```
-/// Actually downloads .torrent with file name {id}.torrent.
-/// But when downloading renames it to {file_name}.torrent.
-/// We store files in `torrents/` folder on localfs in {id}.torrent format to ensure uniqueness.
-/// TODO: Use magnet links.
-#[get("/{id}")]
-pub async fn get_torrent_download(
-    id: web::Path<Uuid>,
+/// * If DB operation fails: HTTP/1.1 500 Internal Server Error
+/// Returns updated [`TorrentDTO`].
+pub async fn torrent_patch(
+    torrent_dto: Json<TorrentPatchDTO>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-    let torrent = sqlx::query_as::<_, Torrent>("SELECT * FROM \"Torrent\" WHERE id = $1")
-        .bind(id.into_inner())
-        .fetch_optional(pool.get_ref())
-        .await?
-        .ok_or_else(|| TorrentError::DoesNotExist)?;
-    let mut file = File::open(format!("torrents/{}.torrent", torrent.id))?;
-    let mut bytes = Vec::new();
-    file.read_to_end(&mut bytes)?;
-    let mut torrent_dto = TorrentDTO::from(torrent);
-    torrent_dto.payload = bytes;
-    Ok(HttpResponse::Ok().json(torrent_dto))
+    let torrent = sqlx::query_as!(
+        Torrent,
+        r#"
+            UPDATE "Torrent" 
+            SET title = $1, file_name = $2, nfo = $3
+            WHERE id = $4
+            RETURNING id,
+                      announce_url,
+                      length,
+                      title,
+                      file_name,
+                      nfo,
+                      leech_count,
+                      seed_count,
+                      completed_count,
+                      speedlevel AS "speedlevel: _",
+                      info_hash,
+                      uploaded_at,
+                      uploaded_by,
+                      modded_at,
+                      modded_by
+        "#,
+        torrent_dto.title,
+        torrent_dto.file_name,
+        torrent_dto.nfo,
+        torrent_dto.id
+    )
+    .fetch_one(pool.get_ref())
+    .await?;
+    Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent)))
 }
 
-/// `PUT /api/torrent/upload`
+/// `PUT /api/torrent/`
 /// # Example
 /// ## Request
 /// ```sh
 /// curl -X PUT \
-///      -i 'http://127.0.0.1:6969/api/torrent/upload' \
-///      -H 'X-Access-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg5OTMwNTksImlhdCI6MTY4ODk5Mjk5OSwiaWQiOiIwMGYwNDVhYy0xZjRkLTQ2MDEtYjJlMy04NzQ3NmRjNDYyZTYiLCJ1c2VybmFtZSI6InRlc3QiLCJmaXJzdF9sb2dpbiI6IjIwMjMtMDctMTBUMTI6NDI6MzIuMzk2NjQ3WiIsImxhc3RfbG9naW4iOiIyMDIzLTA3LTEwVDEyOjQzOjE5LjIxNjA0N1oiLCJhdmF0YXJfdXJsIjpudWxsLCJyb2xlIjoiTm9ybWllIiwiYmVoYXZpb3VyIjoiTHVya2VyIiwiaXNfYWN0aXZlIjp0cnVlLCJoYXNfdmVyaWZpZWRfZW1haWwiOmZhbHNlLCJpc19oaXN0b3J5X3ByaXZhdGUiOnRydWUsImlzX3Byb2ZpbGVfcHJpdmF0ZSI6dHJ1ZX0.izClLn6kANl2kpIv2QqzmKJy7tmpNZqKKvcd4RoGW_c' \
+///      -i 'http://127.0.0.1:6969/api/torrent/' \
+///      -H 'X-Access-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODk3NjY1NjksImlhdCI6MTY4OTc2NjUwOSwiaWQiOiI5NGU3MWE3My1mNDkyLTQwZTYtOTM1YS1mN2RiNjFlMjI1MTciLCJ1c2VybmFtZSI6InRlc3R4eHgiLCJmaXJzdF9sb2dpbiI6IjIwMjMtMDctMTlUMTE6MzQ6MzYuMDMyMjc5WiIsImxhc3RfbG9naW4iOiIyMDIzLTA3LTE5VDExOjM1OjA5LjIzOTcyN1oiLCJhdmF0YXJfdXJsIjpudWxsLCJyb2xlIjoiTm9ybWllIiwiYmVoYXZpb3VyIjoiTHVya2VyIiwiaXNfYWN0aXZlIjp0cnVlLCJoYXNfdmVyaWZpZWRfZW1haWwiOmZhbHNlLCJpc19oaXN0b3J5X3ByaXZhdGUiOnRydWUsImlzX3Byb2ZpbGVfcHJpdmF0ZSI6dHJ1ZX0.4PsBEXr3Zvnop2ztqt1rdnG1CXxIPnB-RYeGU74hrhw' \
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4' \
-///      -H 'Content-Type: application/json' \
-///     --data '{
-///        "title": "test",
-///        "file_name": "test_upload",
-///        "nfo": null,
-///        "uploaded_by": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
-///        "modded_by": null,
-///        "payload": ""
-///     }'
+///      -H 'Content-Type: multipart/form-data'  \
+///      -H 'Content-Disposition: form-data; filename=alice.torrent' \
+///      -F 'upload=@crates/laguna-backend-api/fixtures/webtorrent-fixtures/fixtures/alice.torrent'
 /// ```
 /// ## Response
-/// HTTP/1.1 200 OK
-///
-/// ```json
-/// "UploadSuccess"
-/// ```
-/// TODO: Right now, we send it via Json body, but we should use multipart/form-data.
-#[put("/")]
-pub async fn put_torrent(
-    torrent_dto: web::Json<TorrentPutDTO>,
+/// 1. On upload success: HTTP/1.1 200 OK
+/// 2. If torrent already exists: HTTP/1.1 208 Already Reported
+/// 3. On invalid torrent format or no content-type: HTTP/1.1 400 Bad Request
+/// 4. On non-multipart (or corrupt multipart form-data): HTTP/1.1 422 Unprocessable Entity
+/// 5. If any DB operation fails: HTTP/1.1 500 Internal Server Error
+pub async fn torrent_put(
+    mut payload: Multipart,
     pool: web::Data<PgPool>,
+    host: web::Data<String>,
+    port: web::Data<u16>,
+    user: UserDTO,
 ) -> Result<HttpResponse, APIError> {
-    let torrent = sqlx::query_as::<_, Torrent>("SELECT * FROM \"Torrent\" WHERE title = $1")
-        .bind(&torrent_dto.title)
+    if let Some(mut field) = payload.try_next().await? {
+        let content_type = field.content_type();
+        if let None = content_type {
+            return Ok(HttpResponse::BadRequest().finish());
+        }
+        let mut torrent_buf = Vec::new();
+        while let Some(chunk) = field.next().await {
+            torrent_buf.extend_from_slice(&chunk?);
+        }
+        let torrent_put_dto = serde_bencode::from_bytes::<TorrentPutDTO>(&torrent_buf)?;
+        let info_hash = Sha256::digest(serde_bencode::to_bytes(&torrent_put_dto.info)?);
+        let maybe_torrent = sqlx::query_as!(
+            Torrent,
+            r#"
+                SELECT id,
+                      announce_url,
+                      length,
+                      title,
+                      file_name,
+                      nfo,
+                      leech_count,
+                      seed_count,
+                      completed_count,
+                      speedlevel AS "speedlevel: _",
+                      info_hash,
+                      uploaded_at,
+                      uploaded_by,
+                      modded_at,
+                      modded_by
+                FROM "Torrent" WHERE info_hash = $1"#,
+            format!("{:x}", info_hash)
+        )
         .fetch_optional(pool.get_ref())
         .await?;
-
-    match torrent {
-        Some(_) => Ok(HttpResponse::AlreadyReported().json(TorrentState::AlreadyExists)),
-        None => {
-            let mut transaction = pool.begin().await?;
-            let torrent = sqlx::query_as::<_, Torrent>(
-                r#"
-            INSERT INTO "Torrent" (title, file_name, nfo, info_hash, uploaded_at, uploaded_by) 
-                VALUES ($1, $2, $3, $4, $5, $6)
-                RETURNING *
-                "#,
-            )
-            .bind(&torrent_dto.title)
-            .bind(&torrent_dto.file_name)
-            .bind(&torrent_dto.nfo)
-            .bind(format!("{:x}", Sha256::digest(&torrent_dto.payload))) // TODO: Hash only info section of Torrent. This is fine for now, but redundant.
-            .bind(Utc::now())
-            .bind(&torrent_dto.uploaded_by)
-            .fetch_one(&mut transaction)
-            .await?;
-
-            // Transaction is rolled back if file creation fails.
-            fs::create_dir_all("/torrents")?;
-            let mut file = File::create(format!("/torrents/{}.torrent", torrent.id))?;
-            file.write_all(&torrent_dto.payload)?;
-
-            // Transaction is rolled back if file create time cannot be fetched.
-            let file_create_time = file.metadata().map(|metadata| metadata.created())??;
-
-            sqlx::query("UPDATE \"Torrent\" SET uploaded_at = $1 WHERE id = $2")
-                .bind(DateTime::<Utc>::from(file_create_time))
-                .bind(torrent.id)
-                .execute(&mut transaction)
-                .await?;
-
-            transaction.commit().await?;
-            Ok(HttpResponse::Ok().json(TorrentState::UploadSuccess))
+        if let Some(_) = maybe_torrent {
+            return Ok(HttpResponse::AlreadyReported().finish());
         }
+        sqlx::query_as!(
+            Torrent,
+            r#"
+            INSERT INTO "Torrent" (announce_url, title, length, file_name, nfo, info_hash, uploaded_at, uploaded_by, speedlevel)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id,
+                      announce_url,
+                      length,
+                      title,
+                      file_name,
+                      nfo,
+                      leech_count,
+                      seed_count,
+                      completed_count,
+                      speedlevel AS "speedlevel: _",
+                      info_hash,
+                      uploaded_at,
+                      uploaded_by,
+                      modded_at,
+                      modded_by
+            "#,
+            torrent_put_dto.announce_url.unwrap_or_else(|| format!("{}:{}/api/torrent/announce", host.into_inner(), port.into_inner())),
+            torrent_put_dto.title,
+            torrent_put_dto.info.length,
+            torrent_put_dto.info.name,
+            torrent_put_dto.nfo,
+            format!("{:x}", info_hash),
+            Utc::now(),
+            user.id,
+            torrent_put_dto.speedlevel as _
+        )
+        .fetch_optional(pool.get_ref())
+        .await?
+        .ok_or_else(|| TorrentError::DidntCreate)?;
+
+        return Ok(HttpResponse::Ok().finish());
     }
+    Ok(HttpResponse::UnprocessableEntity().finish())
 }

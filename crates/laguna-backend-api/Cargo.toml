@@ -2,12 +2,21 @@
 name = "laguna-backend-api"
 version = "0.1.0"
 edition = "2021"
+license = "Apache-2.0"
+readme = "README.md"
+authors = [
+    "kenpaicat <133065911+kenpaicat@users.noreply.github.com>",
+    "kozabrada123 <59031733+kozabrada123@users.noreply.github.com>",
+    "LinuxHeki <linuxheki@gmail.com>",
+]
+description = "Laguna backend source tree"
+repository = "https://github.com/SloveniaEngineering/laguna-backend"
+documentation = "https://sloveniaengineering.github.io/laguna-backend"
 
 [dependencies]
 laguna-backend-model = { path = "../laguna-backend-model" }
 laguna-backend-middleware = { path = "../laguna-backend-middleware" }
 actix-web = { version = "4", features = ["cookies"] }
-cookie = { version = "0.17", features = ["secure"] }
 sqlx = { version = "0.6.3", features = [
     "runtime-actix-rustls",
     "postgres",
@@ -15,6 +24,7 @@ sqlx = { version = "0.6.3", features = [
     "migrate",
     "macros",
     "time",
+    "offline",
     "json",
 ] }
 actix-jwt-auth-middleware = "0.3.0"
@@ -24,12 +34,33 @@ log = "*"
 chrono = { version = "*", features = ["serde"]}
 uuid = { version = "*", features = ["serde", "v4", "fast-rng"] }
 digest = { version = "0.10.7", default-features = false }
+argon2 = { version = "*", features = ["std"] }
 derive_more = "*"
 env_logger = "*"
-actix-files = "0.6.2"
 actix-multipart = "*"
 serde = { version = "1.0", features = ["derive"]}
+validator = { version = "0.16", features = ["derive"] }
+actix-web-validator = "5.0.1"
+futures = "*"
+serde_bencode = "0.2.3"
+laguna-backend-dto = { path = "../laguna-backend-dto" }
+laguna_config = { package = "laguna-backend-config", path = "../laguna-backend-config" }
+secrecy = { version = "*", features = ["serde"] }
 
 [dev-dependencies]
 actix-http = "3.3.1"
 serde_json = "1"
+rustversion = "1.0"
+fake = { version = "2.6.1" }
+# Explanation of "testx" workaround: 
+# See: https://github.com/cksac/fake-rs/issues/53
+laguna-backend-model = { path = "../laguna-backend-model", features = ["testx"] }
+laguna-backend-dto = { path = "../laguna-backend-dto", features = ["testx"] }
+
+# CLI for sqlx.
+# More: https://github.com/launchbadge/sqlx/blob/main/sqlx-cli/README.md
+# sqlx-cli = { version = "0.7.0", default-features = false, features = [
+#    "rustls",
+#    "postgres",
+# ] }
+

@@ -2,238 +2,430 @@
 // #[path = "common/mod.rs"]
 mod common;
 
-use actix_web::{
-    http::StatusCode,
-    test::{read_body_json, TestRequest},
-};
+use std::thread;
 
-use laguna_backend_api::{error::LoginError, state::UserState};
-use laguna_backend_model::{
-    login::LoginDTO,
-    register::RegisterDTO,
-    user::{User, UserDTO},
-};
+use actix_web::http::StatusCode;
 
-#[actix_web::test]
-async fn test_register() {
-    let (pool, app) = common::setup().await;
-    let res = common::register_new_user(
-        RegisterDTO {
-            username: String::from("test_register"),
-            email: String::from("test_register@laguna.io"),
-            password: String::from("test123"),
-        },
-        &app,
-    )
-    .await
-    .unwrap();
-    assert_eq!(res.status(), StatusCode::OK);
-    assert_eq!(
-        read_body_json::<UserState, _>(res).await,
-        UserState::RegisterSuccess
-    );
-    common::teardown(pool).await;
+use common::get_dev_settings;
+
+use fake::Fake;
+use fake::Faker;
+
+use laguna_backend_model::user::User;
+use laguna_config::Settings;
+use sqlx::PgPool;
+use std::time::Duration as StdDuration;
+
+use laguna_backend_dto::{login::LoginDTO, register::RegisterDTO};
+use laguna_backend_model::consts::EMAIL_MAX_LEN;
+use laguna_backend_model::consts::EMAIL_MIN_LEN;
+use laguna_backend_model::consts::PASSWORD_MAX_LEN;
+use laguna_backend_model::consts::PASSWORD_MIN_LEN;
+use laguna_backend_model::consts::USERNAME_MAX_LEN;
+use laguna_backend_model::consts::USERNAME_MIN_LEN;
+
+use crate::common::different_string;
+use crate::common::setup_with_settings;
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_register(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    common::register_user_safe(Faker.fake::<RegisterDTO>(), &app).await;
+    Ok(())
 }
 
-#[actix_web::test]
-async fn test_register_twice() {
-    let (pool, app) = common::setup().await;
-    let res = common::register_new_user(
-        RegisterDTO {
-            username: String::from("test_register_twice"),
-            email: String::from("test_register_twice@laguna.io"),
-            password: String::from("test123"),
-        },
-        &app,
-    )
-    .await
-    .unwrap();
-    assert_eq!(res.status(), StatusCode::OK);
-    assert_eq!(
-        read_body_json::<UserState, _>(res).await,
-        UserState::RegisterSuccess
-    );
-
-    let res = common::register_new_user(
-        RegisterDTO {
-            username: String::from("test_register_twice"),
-            email: String::from("test_register_twice@laguna.io"),
-            password: String::from("test123"),
-        },
-        &app,
-    )
-    .await
-    .unwrap();
-    assert_eq!(res.status(), StatusCode::ALREADY_REPORTED);
-    assert_eq!(
-        read_body_json::<UserState, _>(res).await,
-        UserState::AlreadyRegistered
-    );
-    common::teardown(pool).await;
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_register_twice(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let register_res = common::register_user(register_dto, &app).await;
+    assert_eq!(register_res.status(), StatusCode::ALREADY_REPORTED);
+    Ok(())
 }
 
-#[actix_web::test]
-async fn test_login() {
-    let (pool, app) = common::setup().await;
-    let res = common::register_and_login_new_user(
-        RegisterDTO {
-            username: String::from("test_login"),
-            email: String::from("test_login@laguna.io"),
-            password: String::from("test123"),
-        },
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_register_with_existing_username(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let register_res = common::register_user(register_dto, &app).await;
+    assert_eq!(register_res.status(), StatusCode::ALREADY_REPORTED);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_register_with_existing_email(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let register_res = common::register_user(register_dto, &app).await;
+    assert_eq!(register_res.status(), StatusCode::ALREADY_REPORTED);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_login(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let (_, _, _, _) = common::new_user(&app).await;
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_login_with_password_control_char(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let login_res = common::login_user(
         LoginDTO {
-            username_or_email: String::from("test_login"),
-            password: String::from("test123"),
+            username_or_email: register_dto.username,
+            password: String::from("a\nb\r\t"),
         },
         &app,
     )
     .await;
-
-    let user = sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE username = $1")
-        .bind("test_login")
-        .fetch_one(&pool)
-        .await
-        .unwrap();
-
-    assert_eq!(res.status(), StatusCode::OK);
-    assert_eq!(
-        read_body_json::<UserState, _>(res).await,
-        UserState::LoginSuccess { user: user.into() }
-    );
-
-    common::teardown(pool).await;
+    assert_eq!(login_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
 }
 
-#[actix_web::test]
-async fn test_login_with_wrong_username_or_email() {
-    let (pool, app) = common::setup().await;
-    let res = common::register_and_login_new_user(
-        RegisterDTO {
-            username: String::from("test_login_wrong"),
-            email: String::from("test_login_wrong@laguna.io"),
-            password: String::from("test123"),
-        },
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_login_with_username_or_email_control_char(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let login_res = common::login_user(
         LoginDTO {
-            username_or_email: String::from("test_login_wrong"),
-            password: String::from("test123"),
+            username_or_email: String::from("a\nb\r\t@x.y"),
+            password: register_dto.password,
         },
         &app,
     )
     .await;
-    assert_eq!(res.status(), StatusCode::OK);
-
-    let user = sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE username = $1")
-        .bind("test_login_wrong")
-        .fetch_one(&pool)
-        .await
-        .unwrap();
-
-    assert_eq!(
-        read_body_json::<UserState, _>(res).await,
-        UserState::LoginSuccess { user: user.into() }
-    );
-
-    // Wrong username
-    let res = common::login_new_user(
-        LoginDTO {
-            username_or_email: String::from("test_login_2938"),
-            password: String::from("test123"),
-        },
-        &app,
-    )
-    .await
-    .unwrap();
-
-    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
-    assert_eq!(
-        read_body_json::<LoginError, _>(res).await,
-        LoginError::InvalidCredentials
-    );
-
-    // Wrong email
-    let res = common::login_new_user(
-        LoginDTO {
-            username_or_email: String::from("tnwiefn@laguna.com"),
-            password: String::from("test123"),
-        },
-        &app,
-    )
-    .await
-    .unwrap();
-
-    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
-    assert_eq!(
-        read_body_json::<LoginError, _>(res).await,
-        LoginError::InvalidCredentials
-    );
-    common::teardown(pool).await;
+    assert_eq!(login_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
 }
 
-#[actix_web::test]
-async fn test_login_with_wrong_password() {
-    let (pool, app) = common::setup().await;
-    let login_res = common::register_and_login_new_user(
-        RegisterDTO {
-            username: String::from("test_login_wrong_pwd"),
-            email: String::from("test_login_wrong_pwd@laguna.io"),
-            password: String::from("test123"),
-        },
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_login_with_username_or_email_too_long(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let login_res = common::login_user(
         LoginDTO {
-            username_or_email: String::from("test_login_wrong_pwd"),
-            password: String::from("lololool"),
+            username_or_email: String::from("a".repeat(USERNAME_MAX_LEN + 1)),
+            password: register_dto.password,
         },
         &app,
     )
     .await;
+    assert_eq!(login_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
+}
 
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_login_with_password_too_long(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let login_res = common::login_user(
+        LoginDTO {
+            username_or_email: register_dto.username,
+            password: String::from("a".repeat(PASSWORD_MAX_LEN + 1)),
+        },
+        &app,
+    )
+    .await;
+    assert_eq!(login_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_login_with_password_too_short(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let login_res = common::login_user(
+        LoginDTO {
+            username_or_email: register_dto.username,
+            password: String::from("a".repeat(PASSWORD_MIN_LEN - 1)),
+        },
+        &app,
+    )
+    .await;
+    assert_eq!(login_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_login_with_username_or_email_too_short(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let login_res = common::login_user(
+        LoginDTO {
+            username_or_email: String::from("a".repeat(USERNAME_MIN_LEN - 1)),
+            password: register_dto.password,
+        },
+        &app,
+    )
+    .await;
+    assert_eq!(login_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_login_with_wrong_username(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let login_res = common::login_user(
+        LoginDTO {
+            username_or_email: different_string(register_dto.username),
+            password: register_dto.password,
+        },
+        &app,
+    )
+    .await;
     assert_eq!(login_res.status(), StatusCode::UNAUTHORIZED);
-    assert_eq!(
-        read_body_json::<LoginError, _>(login_res).await,
-        LoginError::InvalidCredentials
-    );
-    common::teardown(pool).await;
+    Ok(())
 }
 
-#[actix_web::test]
-async fn test_access_token() {
-    let (pool, app) = common::setup().await;
-
-    let login_res = common::register_and_login_new_user(
-        RegisterDTO {
-            username: String::from("test_access_token"),
-            email: String::from("test_access_token@laguna.io"),
-            password: String::from("test123"),
-        },
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_login_with_wrong_email(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let (register_dto, _, _, _) = common::new_user(&app).await;
+    let login_res = common::login_user(
         LoginDTO {
-            username_or_email: String::from("test_access_token"),
-            password: String::from("test123"),
+            username_or_email: different_string(register_dto.email),
+            password: register_dto.password,
         },
         &app,
     )
     .await;
-    assert_eq!(login_res.status(), StatusCode::OK);
-
-    let user = sqlx::query_as::<_, User>("SELECT * FROM \"User\" WHERE username = $1")
-        .bind("test_access_token")
-        .fetch_one(&pool)
-        .await
-        .unwrap();
-
-    let res =
-        common::request_with_jwt(&login_res, TestRequest::get().uri("/api/user/me"), &app).await;
-
-    assert_eq!(
-        read_body_json::<UserState, _>(login_res).await,
-        UserState::LoginSuccess {
-            user: user.clone().into()
-        }
-    );
-    assert_eq!(res.status(), StatusCode::OK);
-    assert_eq!(read_body_json::<UserDTO, _>(res).await, user.into());
-
-    common::teardown(pool).await;
+    assert_eq!(login_res.status(), StatusCode::UNAUTHORIZED);
+    Ok(())
 }
 
-#[actix_web::test]
-#[ignore = "Not implemented"]
-async fn test_refresh_token() {}
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_login_with_wrong_password(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let (register_dto, user_dto, _, _) = common::new_user(&app).await;
+    let login_res = common::login_user(
+        LoginDTO {
+            username_or_email: user_dto.username,
+            password: different_string(register_dto.password),
+        },
+        &app,
+    )
+    .await;
+    assert_eq!(login_res.status(), StatusCode::UNAUTHORIZED);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_register_password_too_long(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let mut register_dto = Faker.fake::<RegisterDTO>();
+    register_dto.password = String::from("a".repeat(PASSWORD_MAX_LEN + 1));
+    let register_res = common::register_user(register_dto, &app).await;
+    assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_register_password_too_short(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let mut register_dto = Faker.fake::<RegisterDTO>();
+    register_dto.password = String::from("a".repeat(PASSWORD_MIN_LEN - 1));
+    let register_res = common::register_user(register_dto, &app).await;
+    assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_register_username_too_long(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let mut register_dto = Faker.fake::<RegisterDTO>();
+    register_dto.username = String::from("a".repeat(USERNAME_MAX_LEN + 1));
+    let register_res = common::register_user(register_dto, &app).await;
+    assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_register_username_too_short(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let mut register_dto = Faker.fake::<RegisterDTO>();
+    register_dto.username = String::from("a".repeat(USERNAME_MIN_LEN - 1));
+    let register_res = common::register_user(register_dto, &app).await;
+    assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_register_email_too_long(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let mut register_dto = Faker.fake::<RegisterDTO>();
+    register_dto.email = register_dto.email + &"a".repeat(EMAIL_MAX_LEN + 1);
+    let register_res = common::register_user(register_dto, &app).await;
+    assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_register_email_too_short(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let mut register_dto = Faker.fake::<RegisterDTO>();
+    register_dto.email = String::from("a".repeat(EMAIL_MIN_LEN - 1));
+    let register_res = common::register_user(register_dto, &app).await;
+    assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_register_email_invalid(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let mut register_dto = Faker.fake::<RegisterDTO>();
+    register_dto.email = String::from("invalid.email");
+    let register_res = common::register_user(register_dto, &app).await;
+    assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_register_username_with_control_characters(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let mut register_dto = Faker.fake::<RegisterDTO>();
+    register_dto.username = String::from("a\nb");
+    let register_res = common::register_user(register_dto, &app).await;
+    assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_register_email_with_control_characters(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let mut register_dto = Faker.fake::<RegisterDTO>();
+    register_dto.email = String::from("a\nb\t\r@x.y");
+    let register_res = common::register_user(register_dto, &app).await;
+    assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_register_password_with_control_characters(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let mut register_dto = Faker.fake::<RegisterDTO>();
+    register_dto.password = String::from("a\nb\r\t");
+    let register_res = common::register_user(register_dto, &app).await;
+    assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_out_of_date_access_token(pool: PgPool) -> sqlx::Result<()> {
+    let mut settings = get_dev_settings();
+    Settings::override_field(
+        &mut settings.application.auth.access_token_lifetime_seconds,
+        "0",
+    )
+    .expect("Failed to override field");
+
+    let app = setup_with_settings(settings, &pool).await;
+
+    let (register_dto, _, access_token_old, _) = common::new_user(&app).await;
+
+    thread::sleep(StdDuration::from_secs(3));
+
+    let (_, access_token, _) = common::login_user_safe(register_dto.into(), &app).await;
+
+    // Old and new access tokens should be different.
+    assert_ne!(access_token_old, access_token);
+
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_out_of_date_refresh_token(pool: PgPool) -> sqlx::Result<()> {
+    let mut settings = get_dev_settings();
+    Settings::override_field(
+        &mut settings.application.auth.access_token_lifetime_seconds,
+        "0",
+    )
+    .expect("Failed to override field");
+    Settings::override_field(
+        &mut settings.application.auth.refresh_token_lifetime_seconds,
+        "0",
+    )
+    .expect("Failed to override field");
+
+    let app = setup_with_settings(settings, &pool).await;
+
+    let (register_dto, _, _, refresh_token_old) = common::new_user(&app).await;
+
+    // Just to be sure that refresh token is out of date.
+    thread::sleep(StdDuration::from_secs(3));
+
+    let (_, _, refresh_token) = common::login_user_safe(register_dto.into(), &app).await;
+
+    // Old and new refresh tokens should be different.
+    assert_ne!(refresh_token_old, refresh_token);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_sql_username_injection_attempt_on_register(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let mut register_dto = Faker.fake::<RegisterDTO>();
+    register_dto.username = String::from("aaaaaaa'; DROP TABLE \"User\"; --");
+    let register_res = common::register_user(register_dto.clone(), &app).await;
+    assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
+    let users = sqlx::query_as::<_, User>(
+        r#"
+        SELECT id,
+               username,
+               email,
+               password,
+               first_login,
+               last_login,
+               avatar_url,
+               role,
+               behaviour,
+               is_active,
+               has_verified_email,
+               is_history_private,
+               is_profile_private
+        FROM "User"
+        "#,
+    )
+    .fetch_all(&pool)
+    .await?;
+    assert_eq!(users.len(), 0);
+    Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_sql_username_injection_attempt_on_login(pool: PgPool) -> sqlx::Result<()> {
+    let app = common::setup(&pool).await;
+    let login_res = common::login_user(
+        LoginDTO {
+            username_or_email: "'a'; DROP DATABASE \"User\" --".to_string(),
+            password: "some_password_string".to_string(),
+        },
+        &app,
+    )
+    .await;
+    assert_eq!(login_res.status(), StatusCode::UNAUTHORIZED);
+    let users = sqlx::query_as::<_, User>(
+        r#"
+        SELECT id,
+               username,
+               email,
+               password,
+               first_login,
+               last_login,
+               avatar_url,
+               role,
+               behaviour,
+               is_active,
+               has_verified_email,
+               is_history_private,
+               is_profile_private
+        FROM "User"
+        "#,
+    )
+    .fetch_all(&pool)
+    .await?;
+    assert_eq!(users.len(), 0);
+    Ok(())
+}

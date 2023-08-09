@@ -4,7 +4,7 @@ on:
   push:
     branches: [master]
   pull_request:
-    branches: [master]
+    branches: [master, dev]
 
 env:
   CARGO_TERM_COLOR: always
@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        rust: [stable, beta, nightly]
+        rust: [stable]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -32,7 +32,7 @@ jobs:
             ~/.cargo/git/db
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Build
+      - name: Run build
         run: cargo build
 
   test:
@@ -42,6 +42,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: laguna_dev_db
         ports:
           - 5432:5432
         options: >-
@@ -58,10 +59,14 @@ jobs:
       # MacOS doesn't have docker installed by default
       matrix:
         os: [ubuntu-latest]
-        rust: [stable, beta, nightly]
+        rust: [stable]
     runs-on: ${{ matrix.os }}
+    env:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/laguna_dev_db
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.rust }}
@@ -75,10 +80,8 @@ jobs:
             ~/.cargo/git/db
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install sqlx cli
-        run: cargo install sqlx-cli --no-default-features --features postgres,rustls
-      - name: Setup database and test
-        run: scripts/test.sh
+      - name: Run tests
+        run: cargo test --all --features testx -- --nocapture
 
   coverage:
     services:
@@ -87,6 +90,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: laguna_dev_db
         ports:
           - 5432:5432
         options: >-
@@ -95,23 +99,23 @@ jobs:
           --health-timeout 5s 
           --health-retries 5
     needs: test
+    # Don't coverage dependabot
+    if: github.actor != 'dependabot[bot]'
     strategy:
       fail-fast: false
       matrix:
-        # NOTE: Only use Linux for testing
-        # Server will likely be deployed on linux
-        # GH Actions doesn't support containers on Windows
-        # MacOS doesn't have docker installed by default
         os: [ubuntu-latest]
-        rust: [stable, beta, nightly]
+        rust: [stable]
+    env:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/laguna_dev_db
     runs-on: ${{ matrix.os }}
     container:
       image: xd009642/tarpaulin
       options: --security-opt seccomp=unconfined
-    env:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/laguna_db_coverage
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.rust }}
@@ -125,12 +129,9 @@ jobs:
             ~/.cargo/git/db
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install sqlx cli
-        run: cargo install sqlx-cli --no-default-features --features postgres,rustls
-      - name: Setup database and coverage
+      - name: Generate coverage data
         run: |
-          sqlx database create
-          cargo tarpaulin --all-features --workspace --timeout 120 --out Xml
+          cargo tarpaulin --workspace --timeout 120 --out Xml --features testx
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v3 # Make sure to use v3 because it allows tokenless upload
         with:
@@ -145,9 +146,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build Docs
-        run: cargo doc --no-deps --document-private-items --workspace
+        run: cargo doc --no-deps --workspace --features dox
       - name: Doc Index Page Redirection
-        run: echo '<meta http-equiv="refresh" content="1; url=laguna_backend/index.html">' > target/doc/index.html
+        run: echo '<meta http-equiv="refresh" content="0; url=laguna_backend/index.html">' > target/doc/index.html
       - name: Deploy Docs
         uses: peaceiris/actions-gh-pages@v3
         with:
