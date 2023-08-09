@@ -80,11 +80,6 @@ jobs:
             ~/.cargo/git/db
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      # - name: Install sqlx cli for tests
-      #  uses: baptiste0928/cargo-install@v2
-      #  with:
-      #    crate: sqlx-cli
-      #    args: --no-default-features --features postgres,rustls
       - name: Run tests
         run: cargo test --all --features testx -- --nocapture
 
@@ -138,11 +133,6 @@ jobs:
             ~/.cargo/git/db
             target/
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      # - name: Install sqlx cli for tests
-      #  uses: baptiste0928/cargo-install@v2
-      #  with:
-      #    crate: sqlx-cli
-      #    args: --no-default-features --features postgres,rustls
       - name: Generate coverage data
         run: |
           cargo tarpaulin --workspace --timeout 120 --out Xml --features testx
