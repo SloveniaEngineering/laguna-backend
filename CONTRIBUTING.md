@@ -165,3 +165,34 @@ Message someone from the organization to add you to the organization or create a
 There are many types of labels, the general syntax for them is `<TYPE>-<SUBTYPE>`.
 
 Descriptions can be found at: https://github.com/SloveniaEngineering/laguna-backend/labels.
+
+Basic types are:
+
+1. `A` - Area
+2. `C` - Challenge
+3. `D` - Difficulty
+4. `M` - Special type for unsorted
+5. `T` - Type of issue/PR
+
+### Versioning
+
+This project uses [Semantic Versioning](https://semver.org/) for releases. 
+Releases occur when `dev` is merged into `master` (aka. Git Flow).
+
+* Patch version is incremented on merge of `patch-*` into `dev`.
+* Minor version is incremented on merge of `impl-*` into `dev`.
+* Major version is set manually.
+
+This way `dev` serves as a buffer for review and testing.
+
+* Version applies when `dev` is merged into `master` and Release is created with appropriate tag.
+
+### Branching
+
+* Always branch of off `dev` branch.
+* Always rebase your branch to lastest `dev`.
+
+#### Naming rules
+
+* If you are fixing/refactoring anything name your branch `patch-<something that is being fixed>`.
+* If you are implementing anything name your branch `impl-<something that is being implemented>`.
