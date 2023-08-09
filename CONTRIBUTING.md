@@ -19,11 +19,16 @@
     1. [Label guide](#label-guide)
     2. [Versioning](#versioning)
     3. [Branching](#branching)
+    1. [Label guide](#label-guide)
+    2. [Versioning](#versioning)
+    3. [Branching](#branching)
+        1. [Naming rules](#naming-rules)
 
 ## Requirements
 
 1. Rust (https://www.rust-lang.org/tools/install)
 2. Postgres (https://www.postgresql.org/download/)
+3. Git (https://git-scm.com/downloads)
 
 It is recommended to run Linux (either WSL or VM if you are not on Linux) for development.
 This is because backend will be deployed on linux.
@@ -34,25 +39,19 @@ This is because backend will be deployed on linux.
 > This guide uses Linux `scripts/*.sh`, but scrips for Windows are also available via `scripts/*-win.ps1`.
 
 1. Clone this repo `git clone --recurse-submodules https://github.com/SloveniaEngineering/laguna-backend` and `cd` into it.
-2. Run `cargo install sqlx-cli --no-default-features --features rustls,postgres`.
-3. Run `cargo install cargo-watch`.
-4. Make sure Postgres daemon is running, then do `scripts/dbsetup.sh laguna_db` to create `laguna_db` local DB with tables.
-5. Run **and watch for changes** with `scripts/dev.sh` or just run with `cargo run`.
+2. Run `scripts/tools.sh` to install project tools that simplify development. 
+   This can be quite expensive so if you don't need all the tools you can install them manually (see `scripts/tools.sh`).
+3. Make sure Postgres daemon is running, then do `sqlx database setup --database-url=postgres://postgres:postgres@127.0.0.1/laguna_dev_db` to create `laguna_dev_db` local DB with tables.
+4. Run with `scripts/dev.sh` or with `cargo run`.
 
 > **Note** 
 > `scripts/dev.sh` watches for changes in source code and if change is detected automatically recompiles and restarts the server.
 
 ## Testing
 
-1. Run `scripts/test.sh` to run all tests in `laguna_dev_db` using `_sqlx_test` schema rather than `public` used for local development.
+1. Run `scripts/test.sh` to run all tests.
 
-To delete zombie test databases if tests failed use `scripts/dbdroptest.sh _sqlx_test`.
-
-> **Note**
-> To delete deprecated old-format zombie test databases `scripts/dbdroptest.sh laguna_test_db`.
-
-> **Note**
-> We don't delete test databases, because they are useful for debugging.
+To delete test zombie databases if tests failed use `scripts/dbdroptest.sh`.
 
 ## Configuration
 
@@ -70,7 +69,7 @@ For more info and to extend config with custom fields see `crates/laguna-backend
 Documentation is auto-generated on push to `master`.
 It can be accessed via GitHub Pages at https://sloveniaengineering.github.io/laguna-backend.
 
-To generate and open identical local documentation run `scripts/doc.sh`.
+To generate and open a preview of identical local documentation run `scripts/doc.sh`.
 
 ## Generating Coverage
 
@@ -146,30 +145,13 @@ See `.cargo/config.toml` for more info.
 > **Warning** 
 > **Don't fork** and contribute, just clone and contribute.
 > This is because some token CI permissions are acting weird with forks.
+> This will be fixed.
 
 Because of that, if you want to contribute you have to be in the `SloveniaEngineering` GitHub organization.
 Message someone from the organization to add you to the organization or create an issue.
 
 ### Label guide
 
-There are many types of labels, the general syntax for them is `<TYPE>-<SUBTYPE>`
+There are many types of labels, the general syntax for them is `<TYPE>-<SUBTYPE>`.
 
 Descriptions can be found at: https://github.com/SloveniaEngineering/laguna-backend/labels.
-
-Basic types are:
-
-1. `A` - Area
-2. `C` - Challenge
-3. `D` - Difficulty
-4. `M` - Special type for unsorted
-5. `T` - Type of issue/PR
-
-### Versioning
-
-This project uses [Semantic Versioning](https://semver.org/) for releases. Releases occur when `dev` is merged into `master` (aka. Git Flow).
-
-### Branching
-
-Implementing a feature or fixing a bug should be done in a separate branch with `dev` as base. Don't PR to master directly.
-
-Always rebase your branch to lastest `dev`.

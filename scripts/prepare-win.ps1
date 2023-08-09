@@ -1,1 +1,1 @@
-cargo sqlx prepare --merged --database-url=postgres://postgres:postgres@127.0.0.1:5432/laguna_dev_db -- --workspace 
+cargo sqlx prepare --database-url=postgres://postgres:postgres@127.0.0.1:5432/laguna_dev_db -- --workspace --merged
