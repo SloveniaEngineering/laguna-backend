@@ -5,6 +5,7 @@ use laguna_backend_model::behaviour::Behaviour;
 use laguna_backend_model::consts::{USERNAME_MAX_LEN, USERNAME_MIN_LEN};
 use laguna_backend_model::role::Role;
 use laguna_backend_model::user::User;
+use laguna_backend_model::user::UserSafe;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
@@ -49,6 +50,24 @@ impl From<User> for UserDTO {
             has_verified_email: user.has_verified_email,
             is_history_private: user.is_history_private,
             is_profile_private: user.is_profile_private,
+        }
+    }
+}
+
+impl From<UserSafe> for UserDTO {
+    fn from(user_safe: UserSafe) -> Self {
+        Self {
+            id: user_safe.id,
+            username: user_safe.username,
+            first_login: user_safe.first_login,
+            last_login: Some(user_safe.last_login),
+            avatar_url: user_safe.avatar_url,
+            role: user_safe.role,
+            behaviour: user_safe.behaviour,
+            is_active: Some(user_safe.is_active),
+            has_verified_email: user_safe.has_verified_email,
+            is_history_private: user_safe.is_history_private,
+            is_profile_private: user_safe.is_profile_private,
         }
     }
 }

@@ -8,8 +8,9 @@ use jwt_compact::alg::Hs256;
 use laguna_backend_dto::login::LoginDTO;
 use laguna_backend_dto::user::UserDTO;
 use laguna_backend_middleware::consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME};
-use laguna_backend_model::user::User;
+use laguna_backend_model::user::{User, UserSafe};
 
+use secrecy::ExposeSecret;
 use sqlx::PgPool;
 
 use crate::error::{user::UserError, APIError};
@@ -80,7 +81,8 @@ pub async fn login(
         &login_dto.username_or_email
     )
     .fetch_optional(pool.get_ref())
-    .await?;
+    .await?
+    .map(UserSafe::from);
 
     if let Some(logged_user) = fetched_user {
         let argon_context = Argon2::new(
@@ -93,7 +95,7 @@ pub async fn login(
                 .build()
                 .unwrap(),
         );
-        let password_hash = PasswordHash::new(&logged_user.password).unwrap();
+        let password_hash = PasswordHash::new(logged_user.password.expose_secret()).unwrap();
         if let Ok(_) = argon_context.verify_password(login_dto.password.as_bytes(), &password_hash)
         {
             // Logged user has been updated, we need to return the updated user.
@@ -123,6 +125,8 @@ pub async fn login(
             )
             .fetch_optional(pool.get_ref())
             .await?
+            .map(UserSafe::from)
+            .map(UserDTO::from)
             .ok_or_else(|| UserError::DidntUpdate)?;
             return Ok(HttpResponse::Ok()
                 // TODO: get rid of clones
@@ -134,7 +138,7 @@ pub async fn login(
                     REFRESH_TOKEN_HEADER_NAME,
                     signer.create_refresh_header_value(&user.clone().into())?,
                 ))
-                .json(UserDTO::from(user)));
+                .json(user));
         }
     }
 

@@ -1,5 +1,6 @@
 use actix_web::{web, HttpResponse};
 
+use laguna_backend_model::user::UserSafe;
 use laguna_backend_model::{peer::Peer, user::User};
 
 use laguna_backend_dto::user::UserDTO;
@@ -95,8 +96,10 @@ pub async fn user_get(
     )
     .fetch_optional(pool.get_ref())
     .await?
+    .map(UserSafe::from)
+    .map(UserDTO::from)
     .ok_or_else(|| UserError::DoesNotExist)?;
-    Ok(HttpResponse::Ok().json(UserDTO::from(user)))
+    Ok(HttpResponse::Ok().json(user))
 }
 
 /// `DELETE /api/user/me`
@@ -162,6 +165,7 @@ pub async fn user_delete(
     )
     .fetch_optional(pool.get_ref())
     .await?
+    .map(drop) // Don't keep user in stack
     .ok_or_else(|| UserError::DoesNotExist)?;
     Ok(HttpResponse::Ok().finish())
 }
@@ -240,8 +244,10 @@ pub async fn user_patch(
     )
     .fetch_optional(pool.get_ref())
     .await?
+    .map(UserSafe::from)
+    .map(UserDTO::from)
     .ok_or_else(|| UserError::DoesNotExist)?;
-    Ok(HttpResponse::Ok().json(UserDTO::from(user)))
+    Ok(HttpResponse::Ok().json(user))
 }
 
 /// `GET /api/user/{id}/peers`
