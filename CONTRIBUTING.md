@@ -19,9 +19,6 @@
     1. [Label guide](#label-guide)
     2. [Versioning](#versioning)
     3. [Branching](#branching)
-    1. [Label guide](#label-guide)
-    2. [Versioning](#versioning)
-    3. [Branching](#branching)
         1. [Naming rules](#naming-rules)
 
 ## Requirements
