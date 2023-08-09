@@ -136,7 +136,14 @@ pub(crate) fn setup_authority(
     settings: &Settings,
 ) -> Authority<UserDTO, Hs256, impl Fn() -> impl Future<Output = Result<(), actix_web::Error>>, ()>
 {
-    let secret_key = Hs256Key::new(settings.application.auth.secret_key.expose_secret().as_str());
+    let secret_key = Hs256Key::new(
+        settings
+            .application
+            .auth
+            .secret_key
+            .expose_secret()
+            .as_str(),
+    );
 
     let authority = Authority::<UserDTO, Hs256, _, _>::new()
         .refresh_authorizer(|| async move { Ok(()) })

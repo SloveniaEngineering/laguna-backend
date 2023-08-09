@@ -23,6 +23,7 @@ pub struct User {
     pub last_login: DateTime<Utc>,
     /// DEFAULT NULL
     pub avatar_url: Option<String>,
+    pub salt: String,
     pub role: Role,
     pub behaviour: Behaviour,
     pub is_active: bool,

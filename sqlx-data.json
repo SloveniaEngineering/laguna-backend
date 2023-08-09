@@ -1,6 +1,6 @@
 {
   "db": "PostgreSQL",
-  "1a03318796cb60ca5080dfb633a5b5be9acf681b24cfb443641d2c74f6eb3ce2": {
+  "5a014b50b0a2f0bb8559fd724900ff174bd03c2e4f085738bb75eb5db81ca481": {
     "describe": {
       "columns": [
         {
@@ -39,127 +39,13 @@
           "type_info": "Text"
         },
         {
-          "name": "role: _",
+          "name": "salt",
           "ordinal": 7,
-          "type_info": {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "Normie",
-                  "Verified",
-                  "Mod",
-                  "Admin"
-                ]
-              },
-              "name": "role"
-            }
-          }
-        },
-        {
-          "name": "behaviour: _",
-          "ordinal": 8,
-          "type_info": {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "Lurker",
-                  "Downloader",
-                  "Freeleecher",
-                  "Leech",
-                  "Seed",
-                  "Choked",
-                  "Uploader"
-                ]
-              },
-              "name": "behaviour"
-            }
-          }
-        },
-        {
-          "name": "is_active",
-          "ordinal": 9,
-          "type_info": "Bool"
-        },
-        {
-          "name": "has_verified_email",
-          "ordinal": 10,
-          "type_info": "Bool"
-        },
-        {
-          "name": "is_history_private",
-          "ordinal": 11,
-          "type_info": "Bool"
-        },
-        {
-          "name": "is_profile_private",
-          "ordinal": 12,
-          "type_info": "Bool"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        true,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Uuid"
-        ]
-      }
-    },
-    "query": "SELECT id,\n                     username,\n                     email,\n                     password,\n                     first_login,\n                     last_login,\n                     avatar_url,\n                     role AS \"role: _\",\n                     behaviour AS \"behaviour: _\",\n                     is_active,\n                     has_verified_email,\n                     is_history_private,\n                     is_profile_private\n            FROM \"User\" WHERE id = $1"
-  },
-  "59e478158ba4feb0cfd395b3481f2f9787aa2bd7e2d5956b10a3abe5133ae8ce": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Uuid"
-        },
-        {
-          "name": "username",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "email",
-          "ordinal": 2,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "password",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "first_login",
-          "ordinal": 4,
-          "type_info": "Timestamptz"
-        },
-        {
-          "name": "last_login",
-          "ordinal": 5,
-          "type_info": "Timestamptz"
-        },
-        {
-          "name": "avatar_url",
-          "ordinal": 6,
           "type_info": "Text"
         },
         {
           "name": "role: _",
-          "ordinal": 7,
+          "ordinal": 8,
           "type_info": {
             "Custom": {
               "kind": {
@@ -176,7 +62,7 @@
         },
         {
           "name": "behaviour: _",
-          "ordinal": 8,
+          "ordinal": 9,
           "type_info": {
             "Custom": {
               "kind": {
@@ -196,22 +82,22 @@
         },
         {
           "name": "is_active",
-          "ordinal": 9,
-          "type_info": "Bool"
-        },
-        {
-          "name": "has_verified_email",
           "ordinal": 10,
           "type_info": "Bool"
         },
         {
-          "name": "is_history_private",
+          "name": "has_verified_email",
           "ordinal": 11,
           "type_info": "Bool"
         },
         {
-          "name": "is_profile_private",
+          "name": "is_history_private",
           "ordinal": 12,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_profile_private",
+          "ordinal": 13,
           "type_info": "Bool"
         }
       ],
@@ -228,135 +114,17 @@
         false,
         false,
         false,
+        false,
         false
       ],
       "parameters": {
         "Left": [
+          "Text",
           "Text"
         ]
       }
     },
-    "query": "\n        SELECT id, \n               username, \n               email, \n               password, \n               first_login, \n               last_login, \n               avatar_url,\n               role AS \"role: _\",\n               behaviour AS \"behaviour: _\",\n               is_active,\n               has_verified_email,\n               is_history_private,\n               is_profile_private\n        FROM \"User\" WHERE username = $1 OR email = $1\n        "
-  },
-  "6d33b5d60d43de237da67e04baa2bc770cbc8206a97a2a2f78c1f80a51f57373": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Uuid"
-        },
-        {
-          "name": "username",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "email",
-          "ordinal": 2,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "password",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "first_login",
-          "ordinal": 4,
-          "type_info": "Timestamptz"
-        },
-        {
-          "name": "last_login",
-          "ordinal": 5,
-          "type_info": "Timestamptz"
-        },
-        {
-          "name": "avatar_url",
-          "ordinal": 6,
-          "type_info": "Text"
-        },
-        {
-          "name": "role: _",
-          "ordinal": 7,
-          "type_info": {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "Normie",
-                  "Verified",
-                  "Mod",
-                  "Admin"
-                ]
-              },
-              "name": "role"
-            }
-          }
-        },
-        {
-          "name": "behaviour: _",
-          "ordinal": 8,
-          "type_info": {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "Lurker",
-                  "Downloader",
-                  "Freeleecher",
-                  "Leech",
-                  "Seed",
-                  "Choked",
-                  "Uploader"
-                ]
-              },
-              "name": "behaviour"
-            }
-          }
-        },
-        {
-          "name": "is_active",
-          "ordinal": 9,
-          "type_info": "Bool"
-        },
-        {
-          "name": "has_verified_email",
-          "ordinal": 10,
-          "type_info": "Bool"
-        },
-        {
-          "name": "is_history_private",
-          "ordinal": 11,
-          "type_info": "Bool"
-        },
-        {
-          "name": "is_profile_private",
-          "ordinal": 12,
-          "type_info": "Bool"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        true,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Timestamptz",
-          "Uuid"
-        ]
-      }
-    },
-    "query": "\n                UPDATE \"User\"\n                SET last_login = $1\n                WHERE id = $2\n                RETURNING id, \n                          username, \n                          email, \n                          password, \n                          first_login, \n                          last_login, \n                          avatar_url,\n                          role AS \"role: _\",\n                          behaviour AS \"behaviour: _\",\n                          is_active,\n                          has_verified_email,\n                          is_history_private,\n                          is_profile_private\n            "
+    "query": "\n            SELECT id,\n                   username,\n                   email,\n                   password,\n                   first_login,\n                   last_login,\n                   avatar_url,\n                   salt,\n                   role AS \"role: _\",\n                   behaviour AS \"behaviour: _\",\n                   is_active,\n                   has_verified_email,\n                   is_history_private,\n                   is_profile_private\n            FROM \"User\" \n            WHERE username = $1 OR email = $2"
   },
   "6fdbcac0997f2ae4d93fba8095c8751af38930a585456400c4eb845914d47f3f": {
     "describe": {
@@ -485,7 +253,7 @@
     },
     "query": "DELETE FROM \"User\" WHERE id = $1"
   },
-  "79c5b39be770b0e5d2833e66ab2ac14c44c7d24560f1cc91b490d7f6f3c59106": {
+  "848ca53918ea7123bdb3e8c9d830153aa339f9a141b155d4389796e5ad626ff3": {
     "describe": {
       "columns": [
         {
@@ -524,8 +292,13 @@
           "type_info": "Text"
         },
         {
-          "name": "role: _",
+          "name": "salt",
           "ordinal": 7,
+          "type_info": "Text"
+        },
+        {
+          "name": "role: _",
+          "ordinal": 8,
           "type_info": {
             "Custom": {
               "kind": {
@@ -542,7 +315,7 @@
         },
         {
           "name": "behaviour: _",
-          "ordinal": 8,
+          "ordinal": 9,
           "type_info": {
             "Custom": {
               "kind": {
@@ -562,22 +335,22 @@
         },
         {
           "name": "is_active",
-          "ordinal": 9,
-          "type_info": "Bool"
-        },
-        {
-          "name": "has_verified_email",
           "ordinal": 10,
           "type_info": "Bool"
         },
         {
-          "name": "is_history_private",
+          "name": "has_verified_email",
           "ordinal": 11,
           "type_info": "Bool"
         },
         {
-          "name": "is_profile_private",
+          "name": "is_history_private",
           "ordinal": 12,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_profile_private",
+          "ordinal": 13,
           "type_info": "Bool"
         }
       ],
@@ -594,6 +367,7 @@
         false,
         false,
         false,
+        false,
         false
       ],
       "parameters": {
@@ -602,7 +376,7 @@
         ]
       }
     },
-    "query": "\n        DELETE FROM \"User\" \n        WHERE id = $1 \n        RETURNING id,\n                  username,\n                  email,\n                  password,\n                  first_login,\n                  last_login,\n                  avatar_url,\n                  role AS \"role: _\",\n                  behaviour AS \"behaviour: _\",\n                  is_active,\n                  has_verified_email,\n                  is_history_private,\n                  is_profile_private\n        "
+    "query": "SELECT id,\n                     username,\n                     email,\n                     password,\n                     first_login,\n                     last_login,\n                     avatar_url,\n                     salt,\n                     role AS \"role: _\",\n                     behaviour AS \"behaviour: _\",\n                     is_active,\n                     has_verified_email,\n                     is_history_private,\n                     is_profile_private\n            FROM \"User\" WHERE id = $1"
   },
   "966d3384984478c69bdf9f10cc0c1e31e6e337d5cd82fed01a46eb08a7533b7c": {
     "describe": {
@@ -737,6 +511,131 @@
       }
     },
     "query": "\n            INSERT INTO \"Torrent\" (announce_url, title, length, file_name, nfo, info_hash, uploaded_at, uploaded_by, speedlevel)\n            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n            RETURNING id,\n                      announce_url,\n                      length,\n                      title,\n                      file_name,\n                      nfo,\n                      leech_count,\n                      seed_count,\n                      completed_count,\n                      speedlevel AS \"speedlevel: _\",\n                      info_hash,\n                      uploaded_at,\n                      uploaded_by,\n                      modded_at,\n                      modded_by\n            "
+  },
+  "9dfc6351c67f5cf88f6e6a5ecd2781c9ea01db2558e2e5e6474e14ef18aef3a1": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "email",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "password",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "first_login",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "last_login",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "avatar_url",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "salt",
+          "ordinal": 7,
+          "type_info": "Text"
+        },
+        {
+          "name": "role: _",
+          "ordinal": 8,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Normie",
+                  "Verified",
+                  "Mod",
+                  "Admin"
+                ]
+              },
+              "name": "role"
+            }
+          }
+        },
+        {
+          "name": "behaviour: _",
+          "ordinal": 9,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Lurker",
+                  "Downloader",
+                  "Freeleecher",
+                  "Leech",
+                  "Seed",
+                  "Choked",
+                  "Uploader"
+                ]
+              },
+              "name": "behaviour"
+            }
+          }
+        },
+        {
+          "name": "is_active",
+          "ordinal": 10,
+          "type_info": "Bool"
+        },
+        {
+          "name": "has_verified_email",
+          "ordinal": 11,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_history_private",
+          "ordinal": 12,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_profile_private",
+          "ordinal": 13,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT id, \n               username, \n               email, \n               password, \n               first_login, \n               last_login, \n               avatar_url,\n               salt,\n               role AS \"role: _\",\n               behaviour AS \"behaviour: _\",\n               is_active,\n               has_verified_email,\n               is_history_private,\n               is_profile_private\n        FROM \"User\" WHERE username = $1 OR email = $1\n        "
   },
   "9f03a4d71c58e6cc1b54f9589dda681e40b8915ed75ac8b4074b0d4b10013b33": {
     "describe": {
@@ -971,127 +870,6 @@
     },
     "query": "\n                SELECT id,\n                      announce_url,\n                      length,\n                      title,\n                      file_name,\n                      nfo,\n                      leech_count,\n                      seed_count,\n                      completed_count,\n                      speedlevel AS \"speedlevel: _\",\n                      info_hash,\n                      uploaded_at,\n                      uploaded_by,\n                      modded_at,\n                      modded_by\n                FROM \"Torrent\" WHERE info_hash = $1"
   },
-  "ac1817b756692dd72b215e030cb77f8768bf2dac9306f63b07d0d0c19e843917": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Uuid"
-        },
-        {
-          "name": "username",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "email",
-          "ordinal": 2,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "password",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "first_login",
-          "ordinal": 4,
-          "type_info": "Timestamptz"
-        },
-        {
-          "name": "last_login",
-          "ordinal": 5,
-          "type_info": "Timestamptz"
-        },
-        {
-          "name": "avatar_url",
-          "ordinal": 6,
-          "type_info": "Text"
-        },
-        {
-          "name": "role: _",
-          "ordinal": 7,
-          "type_info": {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "Normie",
-                  "Verified",
-                  "Mod",
-                  "Admin"
-                ]
-              },
-              "name": "role"
-            }
-          }
-        },
-        {
-          "name": "behaviour: _",
-          "ordinal": 8,
-          "type_info": {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "Lurker",
-                  "Downloader",
-                  "Freeleecher",
-                  "Leech",
-                  "Seed",
-                  "Choked",
-                  "Uploader"
-                ]
-              },
-              "name": "behaviour"
-            }
-          }
-        },
-        {
-          "name": "is_active",
-          "ordinal": 9,
-          "type_info": "Bool"
-        },
-        {
-          "name": "has_verified_email",
-          "ordinal": 10,
-          "type_info": "Bool"
-        },
-        {
-          "name": "is_history_private",
-          "ordinal": 11,
-          "type_info": "Bool"
-        },
-        {
-          "name": "is_profile_private",
-          "ordinal": 12,
-          "type_info": "Bool"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        true,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Varchar",
-          "Varchar",
-          "Varchar"
-        ]
-      }
-    },
-    "query": "\n        INSERT INTO \"User\" (username, email, password)\n        VALUES ($1, $2, $3)\n        RETURNING id,\n                  username,\n                  email,\n                  password,\n                  first_login,\n                  last_login,\n                  avatar_url,\n                  role AS \"role: _\",\n                  behaviour AS \"behaviour: _\",\n                  is_active,\n                  has_verified_email,\n                  is_history_private,\n                  is_profile_private;\n    "
-  },
   "d077606191420954aef925f4a813b68ed405ed99ca94143b00028ffdf18de0c7": {
     "describe": {
       "columns": [
@@ -1205,7 +983,7 @@
     },
     "query": "\n            SELECT id,\n                   md5_hash,\n                   info_hash,\n                   ip,\n                   port,\n                   agent,\n                   uploaded_bytes,\n                   downloaded_bytes,\n                   left_bytes,\n                   behaviour AS \"behaviour: _\",\n                   created_at,\n                   updated_at,\n                   user_id,\n                   torrent_id\n            FROM \"Peer\" \n            WHERE user_id = $1\n            "
   },
-  "f05de5e8917cf349a8517d4dff0b5a27397028500c415cc28eaefd67bd1aea8a": {
+  "d559c25f8d4f8f54b22b414094cadf2a5b7c2d01a7ec08b158bcdd0c36c0620d": {
     "describe": {
       "columns": [
         {
@@ -1244,8 +1022,13 @@
           "type_info": "Text"
         },
         {
-          "name": "role: _",
+          "name": "salt",
           "ordinal": 7,
+          "type_info": "Text"
+        },
+        {
+          "name": "role: _",
+          "ordinal": 8,
           "type_info": {
             "Custom": {
               "kind": {
@@ -1262,7 +1045,7 @@
         },
         {
           "name": "behaviour: _",
-          "ordinal": 8,
+          "ordinal": 9,
           "type_info": {
             "Custom": {
               "kind": {
@@ -1282,22 +1065,22 @@
         },
         {
           "name": "is_active",
-          "ordinal": 9,
-          "type_info": "Bool"
-        },
-        {
-          "name": "has_verified_email",
           "ordinal": 10,
           "type_info": "Bool"
         },
         {
-          "name": "is_history_private",
+          "name": "has_verified_email",
           "ordinal": 11,
           "type_info": "Bool"
         },
         {
-          "name": "is_profile_private",
+          "name": "is_history_private",
           "ordinal": 12,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_profile_private",
+          "ordinal": 13,
           "type_info": "Bool"
         }
       ],
@@ -1309,6 +1092,386 @@
         false,
         false,
         true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        DELETE FROM \"User\" \n        WHERE id = $1 \n        RETURNING id,\n                  username,\n                  email,\n                  password,\n                  first_login,\n                  last_login,\n                  avatar_url,\n                  salt,\n                  role AS \"role: _\",\n                  behaviour AS \"behaviour: _\",\n                  is_active,\n                  has_verified_email,\n                  is_history_private,\n                  is_profile_private\n        "
+  },
+  "da6a90333bf19fe47198e7944288b0a6538af885344d4d02782ffc3f800da263": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "email",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "password",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "first_login",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "last_login",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "avatar_url",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "salt",
+          "ordinal": 7,
+          "type_info": "Text"
+        },
+        {
+          "name": "role: _",
+          "ordinal": 8,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Normie",
+                  "Verified",
+                  "Mod",
+                  "Admin"
+                ]
+              },
+              "name": "role"
+            }
+          }
+        },
+        {
+          "name": "behaviour: _",
+          "ordinal": 9,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Lurker",
+                  "Downloader",
+                  "Freeleecher",
+                  "Leech",
+                  "Seed",
+                  "Choked",
+                  "Uploader"
+                ]
+              },
+              "name": "behaviour"
+            }
+          }
+        },
+        {
+          "name": "is_active",
+          "ordinal": 10,
+          "type_info": "Bool"
+        },
+        {
+          "name": "has_verified_email",
+          "ordinal": 11,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_history_private",
+          "ordinal": 12,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_profile_private",
+          "ordinal": 13,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Timestamptz",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n                UPDATE \"User\"\n                SET last_login = $1\n                WHERE id = $2\n                RETURNING id, \n                          username, \n                          email, \n                          password, \n                          first_login, \n                          last_login, \n                          avatar_url,\n                          salt,\n                          role AS \"role: _\",\n                          behaviour AS \"behaviour: _\",\n                          is_active,\n                          has_verified_email,\n                          is_history_private,\n                          is_profile_private\n            "
+  },
+  "e4e5d98cc8d16e26ba2e27f696896c606efb36f8b4b237fbe1986a39d863e1ad": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "email",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "password",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "first_login",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "last_login",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "avatar_url",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "salt",
+          "ordinal": 7,
+          "type_info": "Text"
+        },
+        {
+          "name": "role: _",
+          "ordinal": 8,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Normie",
+                  "Verified",
+                  "Mod",
+                  "Admin"
+                ]
+              },
+              "name": "role"
+            }
+          }
+        },
+        {
+          "name": "behaviour: _",
+          "ordinal": 9,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Lurker",
+                  "Downloader",
+                  "Freeleecher",
+                  "Leech",
+                  "Seed",
+                  "Choked",
+                  "Uploader"
+                ]
+              },
+              "name": "behaviour"
+            }
+          }
+        },
+        {
+          "name": "is_active",
+          "ordinal": 10,
+          "type_info": "Bool"
+        },
+        {
+          "name": "has_verified_email",
+          "ordinal": 11,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_history_private",
+          "ordinal": 12,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_profile_private",
+          "ordinal": 13,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        INSERT INTO \"User\" (username, email, password, salt)\n        VALUES ($1, $2, $3, $4)\n        RETURNING id,\n                  username,\n                  email,\n                  password,\n                  first_login,\n                  last_login,\n                  avatar_url,\n                  salt,\n                  role AS \"role: _\",\n                  behaviour AS \"behaviour: _\",\n                  is_active,\n                  has_verified_email,\n                  is_history_private,\n                  is_profile_private;\n    "
+  },
+  "ef35b11a804959c9d459f9ea20c288b868f4bc7777f01bc2e50a2e65a3c0cb03": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "email",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "password",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "first_login",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "last_login",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "avatar_url",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "salt",
+          "ordinal": 7,
+          "type_info": "Text"
+        },
+        {
+          "name": "role: _",
+          "ordinal": 8,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Normie",
+                  "Verified",
+                  "Mod",
+                  "Admin"
+                ]
+              },
+              "name": "role"
+            }
+          }
+        },
+        {
+          "name": "behaviour: _",
+          "ordinal": 9,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Lurker",
+                  "Downloader",
+                  "Freeleecher",
+                  "Leech",
+                  "Seed",
+                  "Choked",
+                  "Uploader"
+                ]
+              },
+              "name": "behaviour"
+            }
+          }
+        },
+        {
+          "name": "is_active",
+          "ordinal": 10,
+          "type_info": "Bool"
+        },
+        {
+          "name": "has_verified_email",
+          "ordinal": 11,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_history_private",
+          "ordinal": 12,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_profile_private",
+          "ordinal": 13,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
         false,
         false,
         false,
@@ -1340,126 +1503,6 @@
         ]
       }
     },
-    "query": "\n        UPDATE \"User\"\n        SET username = $1,\n            avatar_url = $2,\n            role = $3,\n            is_active = $4,\n            is_history_private = $5,\n            is_profile_private = $6\n        WHERE id = $7\n        RETURNING id,\n                  username,\n                  email,\n                  password,\n                  first_login,\n                  last_login,\n                  avatar_url,\n                  role AS \"role: _\",\n                  behaviour AS \"behaviour: _\",\n                  is_active,\n                  has_verified_email,\n                  is_history_private,\n                  is_profile_private\n        "
-  },
-  "ff8cafe98887605832ec72ae08da90f26437af8824f3b06734c34b65036d222e": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Uuid"
-        },
-        {
-          "name": "username",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "email",
-          "ordinal": 2,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "password",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "first_login",
-          "ordinal": 4,
-          "type_info": "Timestamptz"
-        },
-        {
-          "name": "last_login",
-          "ordinal": 5,
-          "type_info": "Timestamptz"
-        },
-        {
-          "name": "avatar_url",
-          "ordinal": 6,
-          "type_info": "Text"
-        },
-        {
-          "name": "role: _",
-          "ordinal": 7,
-          "type_info": {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "Normie",
-                  "Verified",
-                  "Mod",
-                  "Admin"
-                ]
-              },
-              "name": "role"
-            }
-          }
-        },
-        {
-          "name": "behaviour: _",
-          "ordinal": 8,
-          "type_info": {
-            "Custom": {
-              "kind": {
-                "Enum": [
-                  "Lurker",
-                  "Downloader",
-                  "Freeleecher",
-                  "Leech",
-                  "Seed",
-                  "Choked",
-                  "Uploader"
-                ]
-              },
-              "name": "behaviour"
-            }
-          }
-        },
-        {
-          "name": "is_active",
-          "ordinal": 9,
-          "type_info": "Bool"
-        },
-        {
-          "name": "has_verified_email",
-          "ordinal": 10,
-          "type_info": "Bool"
-        },
-        {
-          "name": "is_history_private",
-          "ordinal": 11,
-          "type_info": "Bool"
-        },
-        {
-          "name": "is_profile_private",
-          "ordinal": 12,
-          "type_info": "Bool"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        true,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Text",
-          "Text"
-        ]
-      }
-    },
-    "query": "\n            SELECT id,\n                   username,\n                   email,\n                   password,\n                   first_login,\n                   last_login,\n                   avatar_url,\n                   role AS \"role: _\",\n                   behaviour AS \"behaviour: _\",\n                   is_active,\n                   has_verified_email,\n                   is_history_private,\n                   is_profile_private\n            FROM \"User\" \n            WHERE username = $1 OR email = $2"
+    "query": "\n        UPDATE \"User\"\n        SET username = $1,\n            avatar_url = $2,\n            role = $3,\n            is_active = $4,\n            is_history_private = $5,\n            is_profile_private = $6\n        WHERE id = $7\n        RETURNING id,\n                  username,\n                  email,\n                  password,\n                  first_login,\n                  last_login,\n                  avatar_url,\n                  salt,\n                  role AS \"role: _\",\n                  behaviour AS \"behaviour: _\",\n                  is_active,\n                  has_verified_email,\n                  is_history_private,\n                  is_profile_private\n        "
   }
 }

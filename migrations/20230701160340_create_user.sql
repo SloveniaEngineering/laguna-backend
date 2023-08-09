@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS "User" (
     first_login TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     avatar_url TEXT,
+    salt TEXT NOT NULL,
     role Role NOT NULL DEFAULT 'Normie',
     -- overall behaviour over all peers of this user
     behaviour Behaviour NOT NULL DEFAULT 'Lurker',
