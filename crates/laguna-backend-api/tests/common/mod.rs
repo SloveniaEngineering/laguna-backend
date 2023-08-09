@@ -32,7 +32,7 @@ use laguna_backend_middleware::auth::AuthorizationMiddlewareFactory;
 use laguna_backend_middleware::consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME};
 use laguna_backend_model::role::Role;
 
-use laguna_config::CONFIG_DEV;
+use laguna_config::{make_overridable_with_env_vars, CONFIG_DEV};
 use laguna_config::{Settings, MIGRATIONS_DIR};
 
 use std::process::Command;
@@ -47,31 +47,25 @@ pub(crate) fn get_dev_settings() -> Settings {
     Settings::parse_toml(CONFIG_DEV).expect("Failed to parse settings")
 }
 
-pub(crate) async fn setup() -> (
-    PgPool,
-    String,
-    impl Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
-) {
-    setup_with_settings(get_dev_settings()).await
+pub(crate) async fn setup(
+    pool: &PgPool,
+) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
+    setup_with_settings(get_dev_settings(), pool).await
 }
 
 pub async fn setup_with_settings(
     mut settings: Settings,
-) -> (
-    PgPool,
-    String,
-    impl Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
-) {
+    pool: &PgPool,
+) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
+    make_overridable_with_env_vars(&mut settings);
     setup_logging(&settings);
 
-    let (pool, database_url) = setup_db(&mut settings).await;
-
     let secret_key = Hs256Key::new(settings.application.auth.secret_key.as_str());
-
     let (token_signer, authority) = crate::setup_authority!(secret_key, settings);
+
     let pool_clone = pool.clone();
 
-    let app = setup_with_config(move |service_config| {
+    setup_with_config(move |service_config| {
         service_config
             .app_data(web::Data::new(pool_clone))
             // AuthenticationService by default doesnt include token_signer into app_data, hence we get it from setup_authority!() which is kinda hacky.
@@ -111,9 +105,7 @@ pub async fn setup_with_settings(
             )
             .default_service(web::to(|| HttpResponse::NotFound()));
     })
-    .await;
-
-    (pool, database_url, app)
+    .await
 }
 
 pub async fn setup_with_config<F: FnOnce(&mut ServiceConfig) -> ()>(
@@ -122,6 +114,8 @@ pub async fn setup_with_config<F: FnOnce(&mut ServiceConfig) -> ()>(
     init_service(App::new().configure(config_fn)).await
 }
 
+#[deprecated = "Use sqlx::test macro instead"]
+#[allow(dead_code)]
 pub(crate) async fn teardown(pool: PgPool, database_url: String) {
     pool.close().await;
     let database_drop_command = Command::new("sqlx")
@@ -145,6 +139,8 @@ pub(crate) fn setup_logging(settings: &Settings) {
     }
 }
 
+#[deprecated = "Use sqlx::test macro instead"]
+#[allow(dead_code)]
 pub(crate) async fn setup_db(settings: &mut Settings) -> (PgPool, String) {
     Settings::override_field(&mut settings.application.database.name, "laguna_test_db")
         .expect("Cannot set database name to laguna_test_db");

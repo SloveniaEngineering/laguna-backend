@@ -1529,6 +1529,7 @@ dependencies = [
  "actix-settings",
  "const_format",
  "serde",
+ "url",
 ]
 
 [[package]]
