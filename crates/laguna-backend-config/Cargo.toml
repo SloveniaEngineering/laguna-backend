@@ -9,3 +9,4 @@ serde = { version = "1", features = ["derive"] }
 actix-settings = "*"
 const_format = "*"
 url = "2.4.0"
+secrecy = { version = "*", features = ["serde"] }

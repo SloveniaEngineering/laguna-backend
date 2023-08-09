@@ -16,6 +16,7 @@ use env_logger;
 use fake::{Fake, Faker};
 use jwt_compact::alg::{Hs256, Hs256Key};
 use jwt_compact::TimeOptions;
+use secrecy::ExposeSecret;
 
 use laguna_backend_api::misc::get_app_info;
 use laguna_backend_api::torrent::{torrent_get, torrent_patch, torrent_put};
@@ -58,7 +59,14 @@ pub async fn setup_with_settings(
     make_overridable_with_env_vars(&mut settings);
     setup_logging(&settings);
 
-    let secret_key = Hs256Key::new(settings.application.auth.secret_key.as_str());
+    let secret_key = Hs256Key::new(
+        settings
+            .application
+            .auth
+            .secret_key
+            .expose_secret()
+            .as_str(),
+    );
     let (token_signer, authority) = crate::setup_authority!(secret_key, settings);
 
     let pool_clone = pool.clone();
@@ -128,7 +136,7 @@ pub(crate) fn setup_authority(
     settings: &Settings,
 ) -> Authority<UserDTO, Hs256, impl Fn() -> impl Future<Output = Result<(), actix_web::Error>>, ()>
 {
-    let secret_key = Hs256Key::new(settings.application.auth.secret_key.as_str());
+    let secret_key = Hs256Key::new(settings.application.auth.secret_key.expose_secret().as_str());
 
     let authority = Authority::<UserDTO, Hs256, _, _>::new()
         .refresh_authorizer(|| async move { Ok(()) })
