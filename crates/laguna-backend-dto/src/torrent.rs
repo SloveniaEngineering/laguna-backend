@@ -65,8 +65,8 @@ impl From<Torrent> for TorrentDTO {
 /// <http://bittorrent.org/beps/bep_0023.html>
 /// <http://bittorrent.org/beps/bep_0007.html>
 /// More examples of torrent files:
-/// https://github.com/webtorrent/webtorrent-fixtures/tree/master
-/// https://chocobo1.github.io/bencode_online/ (see example)
+/// <https://github.com/webtorrent/webtorrent-fixtures/tree/master>
+/// <https://chocobo1.github.io/bencode_online> (see example)
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Validate)]
 // #[cfg_attr(feature = "testx", derive(Dummy))]
 pub struct TorrentPutDTO {

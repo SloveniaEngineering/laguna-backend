@@ -10,6 +10,7 @@ pub enum TorrentError {
     DoesNotExist,
     BencodeError(String),
     DidntCreate,
+    DidntUpdate,
 }
 
 impl From<BencodeError> for TorrentError {
@@ -30,6 +31,7 @@ impl ResponseError for TorrentError {
             Self::DoesNotExist => StatusCode::BAD_REQUEST,
             Self::BencodeError(_) => StatusCode::BAD_REQUEST,
             Self::DidntCreate => StatusCode::BAD_REQUEST,
+            Self::DidntUpdate => StatusCode::BAD_REQUEST,
         }
     }
 }
