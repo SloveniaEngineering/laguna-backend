@@ -28,7 +28,8 @@
 3. Git (https://git-scm.com/downloads)
 
 It is recommended to run Linux (either WSL or VM if you are not on Linux) for development.
-This is because backend will be deployed on linux.
+This is because `scripts/*` are written in bash and because backend will be deployed on linux.
+In the future we will add powershell scripts for Windows.
 
 ## Setup & First run
 
@@ -46,9 +47,21 @@ This is because backend will be deployed on linux.
 
 ## Testing
 
-1. Run `scripts/test.sh` to run all tests.
+> **Note**
+> In the future we will likely test validation and **important** logic with unit tests separately from integration tests that work with DB.
 
-To delete test zombie databases if tests failed use `scripts/dbdroptest.sh`.
+1. Run `scripts/test.sh` to run all tests using `_sqlx_test` databases and store test infos in `laguna_dev_db` in `_sqlx_test` schema rather than `public` used for local development.
+
+To delete zombie test databases if tests failed use `scripts/dbdroptest.sh _sqlx_test`.
+
+> **Note**
+> On WSL or Mingw64 you likely don't have a tty terminal. For that you can use `scripts/dbdroptest_fixtty.sh scripts/dbdroptest.sh _sqlx_test`.
+
+> **Note**
+> To delete deprecated **old-format** zombie test databases `scripts/dbdroptest.sh laguna_test_db`.
+
+> **Note**
+> You probably don't want to delete test databases, because they are useful for debugging/inspection.
 
 ## Configuration
 
