@@ -18,14 +18,15 @@ use crate::error::{torrent::TorrentError, APIError};
 
 /// `GET /api/torrent/{id}`
 /// # Example
-/// ## Request
+/// ### Request
 /// ```sh
 /// curl -X GET \
 ///      -i 'http://127.0.0.1:6969/api/torrent/00f045ac-1f4d-4601-b2e3-87476dc462e6'
 ///      -H 'X-Access-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg5OTMwNTksImlhdCI6MTY4ODk5Mjk5OSwiaWQiOiIwMGYwNDVhYy0xZjRkLTQ2MDEtYjJlMy04NzQ3NmRjNDYyZTYiLCJ1c2VybmFtZSI6InRlc3QiLCJmaXJzdF9sb2dpbiI6IjIwMjMtMDctMTBUMTI6NDI6MzIuMzk2NjQ3WiIsImxhc3RfbG9naW4iOiIyMDIzLTA3LTEwVDEyOjQzOjE5LjIxNjA0N1oiLCJhdmF0YXJfdXJsIjpudWxsLCJyb2xlIjoiTm9ybWllIiwiYmVoYXZpb3VyIjoiTHVya2VyIiwiaXNfYWN0aXZlIjp0cnVlLCJoYXNfdmVyaWZpZWRfZW1haWwiOmZhbHNlLCJpc19oaXN0b3J5X3ByaXZhdGUiOnRydWUsImlzX3Byb2ZpbGVfcHJpdmF0ZSI6dHJ1ZX0.izClLn6kANl2kpIv2QqzmKJy7tmpNZqKKvcd4RoGW_c' \
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
 /// ```
-/// ## Response
+/// ### Response
+/// #### Body
 /// ```json
 /// {
 ///   "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
@@ -45,7 +46,8 @@ use crate::error::{torrent::TorrentError, APIError};
 ///   "modded_by": null
 /// }
 /// ```
-/// |Response|Description|
+/// #### Status Code
+/// |Code|Description|
 /// |---|---|
 /// |200 OK|Returns [`TorrentDTO`]|
 /// |400 Bad Request|Torrent not found|
@@ -84,7 +86,7 @@ pub async fn torrent_get(
 
 /// `PATCH /api/torrent/`
 /// # Example
-/// ## Request
+/// ### Request
 /// ```sh
 /// curl -X PATCH \
 ///      -i 'http://127.0.0.1:6969/api/torrent/' \
@@ -99,7 +101,8 @@ pub async fn torrent_get(
 ///         "modded_by": null
 ///      }'
 /// ```
-/// ## Response
+/// ### Response
+/// #### Body
 /// ```json
 /// {
 ///   "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
@@ -119,9 +122,8 @@ pub async fn torrent_get(
 ///   "modded_by": null,
 /// }
 /// ```
-/// * If DB operation fails: HTTP/1.1 500 Internal Server Error
-/// Returns updated [`TorrentDTO`].
-/// |Response|Description|
+/// #### Status Code
+/// |Code|Description|
 /// |---|---|
 /// |200 OK|Successful patch. Returns updated [`TorrentDTO`]|
 /// |400 Bad Request|Didnt patch. Invalid data|
@@ -165,7 +167,7 @@ pub async fn torrent_patch(
 
 /// `PUT /api/torrent/`
 /// # Example
-/// ## Request
+/// ### Request
 /// ```sh
 /// curl -X PUT \
 ///      -i 'http://127.0.0.1:6969/api/torrent/' \
@@ -175,8 +177,9 @@ pub async fn torrent_patch(
 ///      -H 'Content-Disposition: form-data; filename=alice.torrent' \
 ///      -F 'upload=@crates/laguna-backend-api/fixtures/webtorrent-fixtures/fixtures/alice.torrent'
 /// ```
-/// ## Response
-/// |Response|Description|
+/// ### Response
+/// #### Status Code
+/// |Status Code|Description|
 /// |---|---|
 /// |200 OK|Successful upload|
 /// |208 Already Reported|Torrent with that `info_hash` already exists|

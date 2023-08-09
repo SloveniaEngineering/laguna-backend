@@ -1,6 +1,7 @@
 #![doc(html_logo_url = "https://sloveniaengineering.github.io/laguna-backend/logo.png")]
 #![doc(html_favicon_url = "https://sloveniaengineering.github.io/laguna-backend/favicon.ico")]
 #![doc(issue_tracker_base_url = "https://github.com/SloveniaEngineering/laguna-backend")]
+#![doc = include_str!("../README.md")]
 use actix_cors::Cors;
 
 use actix_jwt_auth_middleware::use_jwt::UseJWTOnApp;
@@ -105,7 +106,7 @@ async fn main() -> Result<(), sqlx::Error> {
             .expect("Cannot create key authority");
         let cors = Cors::default()
             .allowed_origin(frontend_address.to_string().as_str())
-            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "PATCH"])
+            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
             .allowed_headers(vec![
                 header::ORIGIN,
                 header::CONNECTION,

@@ -16,6 +16,8 @@ use sqlx::PgPool;
 use crate::error::{user::UserError, APIError};
 
 /// `POST /api/user/auth/login`
+/// Signs in existing user.
+/// For registering see [`register`](crate::login::login).
 /// # Example
 /// ### Request
 /// ```sh
@@ -23,23 +25,22 @@ use crate::error::{user::UserError, APIError};
 ///      -H 'Content-Type: application/json' \
 ///      -i 'http://127.0.0.1:6969/api/user/auth/login' \
 ///      --data '{
-///         "username_or_email": "test",
+///         "username_or_email": "test123",
 ///         "password": "test123"
 ///      }'
 /// ```
 /// ### Response
-/// HTTP/1.1 200 OK
-///
-/// Headers:
+/// #### Headers
 /// ```text
 /// X-Access-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0Njc1OTksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.jAQEpr_tjKc_j-asnoIBEhT8xmhBHXPjYygtwNfb76w; Secure
 /// X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4; Secure
 /// ```
+/// #### Body
 /// ```json
 /// {
 ///   "id": "b33b630d-e098-47d0-bc21-94c6a7467f17"
-///   "username": "test",
-///   "email": "test@laguna.io",
+///   "username": "test123",
+///   "email": "test123@laguna.io",
 ///   "first_login": "2023-07-04T10:18:17.391698Z",
 ///   "last_login": "2023-07-04T10:18:17.391698Z",
 ///   "avatar_url": null,
@@ -50,8 +51,8 @@ use crate::error::{user::UserError, APIError};
 ///   "is_profile_private": true
 /// }
 /// ```
-/// ### Response
-/// |Response|Description|
+/// #### Status Code
+/// |Code|Description|
 /// |---|---|
 /// |200 OK|Successful login. Returns [`UserDTO`] + tokens|
 /// |400 Bad Request|Last login didnt due to invalid input data|

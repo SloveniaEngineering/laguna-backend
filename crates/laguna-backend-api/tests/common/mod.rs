@@ -42,11 +42,11 @@ use sqlx::PgPool;
 
 static ENV_LOGGER_INIT: Once = Once::new();
 
-pub(crate) fn get_dev_settings() -> Settings {
+pub fn get_dev_settings() -> Settings {
     Settings::parse_toml(CONFIG_DEV).expect("Failed to parse settings")
 }
 
-pub(crate) async fn setup(
+pub async fn setup(
     pool: &PgPool,
 ) -> impl Service<Request, Response = ServiceResponse, Error = actix_web::Error> {
     setup_with_settings(get_dev_settings(), pool).await
@@ -120,7 +120,7 @@ pub async fn setup_with_config<F: FnOnce(&mut ServiceConfig) -> ()>(
     init_service(App::new().configure(config_fn)).await
 }
 
-pub(crate) fn setup_logging(settings: &Settings) {
+pub fn setup_logging(settings: &Settings) {
     if settings.actix.enable_log {
         ENV_LOGGER_INIT.call_once(|| {
             env_logger::init_from_env(env_logger::Env::new().default_filter_or("warning"));
@@ -132,7 +132,7 @@ pub(crate) fn setup_logging(settings: &Settings) {
 // Use macro in the meantime.
 #[rustversion::nightly]
 #[feature(impl_trait_in_fn_trait_return)]
-pub(crate) fn setup_authority(
+pub fn setup_authority(
     settings: &Settings,
 ) -> Authority<UserDTO, Hs256, impl Fn() -> impl Future<Output = Result<(), actix_web::Error>>, ()>
 {
@@ -208,7 +208,7 @@ macro_rules! setup_authority {
 }
 
 /// Registers and logs in a default user (Normie) with fake data.
-pub(crate) async fn new_user(
+pub async fn new_user(
     app: &impl dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
 ) -> (RegisterDTO, UserDTO, HeaderValue, HeaderValue) {
     new_user_with(Faker.fake::<RegisterDTO>(), &app).await
@@ -216,7 +216,7 @@ pub(crate) async fn new_user(
 
 /// Registers and logs in a Verified user with fake data.
 #[allow(dead_code)]
-pub(crate) async fn new_verified_user(
+pub async fn new_verified_user(
     app: &impl dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
     pool: &PgPool,
 ) -> (RegisterDTO, UserDTO, HeaderValue, HeaderValue) {
@@ -234,7 +234,7 @@ pub(crate) async fn new_verified_user(
 
 /// Registers and logs in a Moderator user with fake data.
 #[allow(dead_code)]
-pub(crate) async fn new_mod_user(
+pub async fn new_mod_user(
     app: &impl dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
     pool: &PgPool,
 ) -> (RegisterDTO, UserDTO, HeaderValue, HeaderValue) {
@@ -251,7 +251,7 @@ pub(crate) async fn new_mod_user(
 
 /// Registers and logs in an Admin user with fake data.
 #[allow(dead_code)]
-pub(crate) async fn new_admin_user(
+pub async fn new_admin_user(
     app: &impl dev::Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
     pool: &PgPool,
 ) -> (RegisterDTO, UserDTO, HeaderValue, HeaderValue) {
@@ -267,7 +267,7 @@ pub(crate) async fn new_admin_user(
 }
 
 /// Registers and logs in a Normie user given a RegisterDTO.
-pub(crate) async fn new_user_with(
+pub async fn new_user_with(
     register_dto: RegisterDTO,
     app: &impl Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
 ) -> (RegisterDTO, UserDTO, HeaderValue, HeaderValue) {
@@ -277,7 +277,7 @@ pub(crate) async fn new_user_with(
     (register_dto, user_dto, access_token, refresh_token)
 }
 
-pub(crate) async fn register_user_safe(
+pub async fn register_user_safe(
     register_dto: RegisterDTO,
     app: &impl Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
 ) {
@@ -287,7 +287,7 @@ pub(crate) async fn register_user_safe(
     )
 }
 
-pub(crate) async fn login_user_safe(
+pub async fn login_user_safe(
     login_dto: LoginDTO,
     app: &impl Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
 ) -> (UserDTO, HeaderValue, HeaderValue) {
@@ -307,7 +307,7 @@ pub(crate) async fn login_user_safe(
     (user_dto, access_token, refresh_token)
 }
 
-pub(crate) async fn register_user(
+pub async fn register_user(
     register_dto: RegisterDTO,
     app: &impl Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
 ) -> ServiceResponse {
@@ -321,7 +321,7 @@ pub(crate) async fn register_user(
     .unwrap()
 }
 
-pub(crate) async fn login_user(
+pub async fn login_user(
     login_dto: LoginDTO,
     app: &impl Service<Request, Response = ServiceResponse, Error = actix_web::Error>,
 ) -> ServiceResponse {
@@ -336,7 +336,7 @@ pub(crate) async fn login_user(
 }
 
 #[allow(dead_code)]
-pub(crate) async fn as_logged_in(
+pub async fn as_logged_in(
     access_token: HeaderValue,
     refresh_token: HeaderValue,
     mut req: TestRequest,
@@ -352,7 +352,7 @@ pub(crate) async fn as_logged_in(
 // We need this because we have tests (using fake data) that require different strings than original which Faker cannot guarantee.
 // TODO: Find a better way
 #[allow(dead_code)]
-pub(crate) fn different_string(string: String) -> String {
+pub fn different_string(string: String) -> String {
     string[..string.len() - 1].to_owned()
         + char::from_u32(string.chars().last().unwrap() as u32 + 1)
             .unwrap()

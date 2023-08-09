@@ -13,19 +13,22 @@ use sqlx::PgPool;
 use crate::error::{user::UserError, APIError};
 
 /// `POST /api/user/auth/register`
+/// Registers new user.
+/// For login see [`login`](crate::login::login).
 /// # Example
 /// ### Request
 /// ```bash
-/// curl -X POST
+/// curl -X POST \
 ///      -H "Content-Type: application/json" \
 ///      -i 'http://127.0.0.1:6969/api/user/auth/register' \
 ///      --data '{
-///         "username": "test",
-///         "email": "test@laguna.io",
-///         "password": "test123",
+///         "username": "test123",
+///         "email": "test123@laguna.io",
+///         "password": "test123"
 ///      }'
 /// ```
 /// ### Response
+/// #### Status Code
 /// |Response|Description|
 /// |---|---|
 /// |200 OK|Successful register|
