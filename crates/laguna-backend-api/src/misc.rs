@@ -21,6 +21,9 @@ use laguna_backend_dto::meta::AppInfoDTO;
 ///   "repository": "https://github.com/SloveniaEngineering/laguna-backend"
 /// }
 /// ```
+/// |Response|Description|
+/// |---|---|
+/// |200 OK|Successful fetch. Returns [`AppInfoDTO`]|
 pub async fn get_app_info(laguna: web::Data<AppInfoDTO>) -> HttpResponse {
     HttpResponse::Ok().json(laguna)
 }

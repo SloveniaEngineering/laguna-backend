@@ -22,8 +22,6 @@ use crate::error::{user::UserError, APIError};
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
 /// ```
 /// ## Response
-/// * Normal behaviour: HTTP/1.1 200 OK
-/// * Otherwise its already filtered out by auth middleware.
 /// ```json
 /// {
 ///   "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
@@ -39,6 +37,10 @@ use crate::error::{user::UserError, APIError};
 ///   "is_profile_private": true
 /// }
 /// ```
+/// |Response|Description|
+/// |--------|-----------|
+/// |200 OK  |User was found. Returns [`UserDTO`]|
+/// |401 Unauthorized|Authentication/Authorization middleware failed to authenticate user|
 pub async fn user_me_get(user: UserDTO) -> Result<HttpResponse, APIError> {
     Ok(HttpResponse::Ok().json(user))
 }
@@ -54,7 +56,6 @@ pub async fn user_me_get(user: UserDTO) -> Result<HttpResponse, APIError> {
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
 /// ```
 /// ## Response
-/// * If user was found: HTTP/1.1 200 OK
 /// ```json
 /// {
 ///     "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
@@ -70,7 +71,11 @@ pub async fn user_me_get(user: UserDTO) -> Result<HttpResponse, APIError> {
 ///     "is_profile_private": true
 /// }
 /// ```
-/// * If user was not found: HTTP/1.1 400 Bad Request
+/// |Response|Description|
+/// |--------|-----------|
+/// |200 OK|User was found. Returns [`UserDTO`]|
+/// |400 Bad Request|User was not found|
+/// |401 Unauthorized|Authentication/Authorization middleware failed for user requesting this action|
 pub async fn user_get(
     id: web::Path<Uuid>,
     pool: web::Data<PgPool>,
@@ -112,15 +117,42 @@ pub async fn user_get(
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
 /// ```
 /// ## Response
-/// * If user was deleted: HTTP/1.1 200 OK
-/// * If DELETE failed in DB: 500 Internal Server Error
+/// |Response|Description|
+/// |--------|-----------|
+/// |200 OK|User was deleted|
+/// |400 Bad Request|User was not found|
+/// |401 Unauthorized|Authentication/Authorization middleware failed for user requesting this action|
 pub async fn user_me_delete(
     user: UserDTO,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-    sqlx::query!(r#"DELETE FROM "User" WHERE id = $1"#, user.id)
-        .execute(pool.get_ref())
-        .await?;
+    sqlx::query_as!(
+        User,
+        r#"
+        DELETE FROM "User" 
+        WHERE id = $1
+        RETURNING id,
+                  username,
+                  email,
+                  password,
+                  first_login,
+                  last_login,
+                  avatar_url,
+                  salt,
+                  role AS "role: _",
+                  behaviour AS "behaviour: _",
+                  is_active,
+                  has_verified_email,
+                  is_history_private,
+                  is_profile_private
+        "#,
+        user.id
+    )
+    .fetch_optional(pool.get_ref())
+    .await?
+    .map(UserSafe::from)
+    .map(drop) // Don't keep user in stack
+    .ok_or_else(|| UserError::DoesNotExist)?;
     Ok(HttpResponse::Ok().finish())
 }
 
@@ -134,9 +166,11 @@ pub async fn user_me_delete(
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
 /// ```
 /// ## Response
-/// * If user was deleted: HTTP/1.1 200 OK
-/// * If user was not found: HTTP/1.1 400 Bad Request
-/// * If DELETE failed in DB: 500 Internal Server Error
+/// |Response|Description|
+/// |--------|-----------|
+/// |200 OK|User was deleted|
+/// |401 Unauthorized|Authentication/Authorization middleware failed for user requesting this action|
+/// |400 Bad Request|User was not found but permissions are sufficient|
 pub async fn user_delete(
     id: web::Path<Uuid>,
     pool: web::Data<PgPool>,
@@ -165,6 +199,7 @@ pub async fn user_delete(
     )
     .fetch_optional(pool.get_ref())
     .await?
+    .map(UserSafe::from)
     .map(drop) // Don't keep user in stack
     .ok_or_else(|| UserError::DoesNotExist)?;
     Ok(HttpResponse::Ok().finish())
@@ -181,9 +216,6 @@ pub async fn user_delete(
 ///     -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4' \
 /// ```
 /// ## Response
-/// * If user was updated: HTTP/1.1 200 OK
-/// * If user was not found: HTTP/1.1 400 Bad Request
-/// * If insufficient permission: HTTP/1.1 401 Unauthorized
 /// ```json
 /// {
 ///     "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
@@ -199,6 +231,12 @@ pub async fn user_delete(
 ///     "is_profile_private": true
 /// }
 /// ```
+/// |Response|Description|
+/// |--------|-----------|
+/// |200 OK|User was updated. Returns updated [`UserDTO`]|
+/// |400 Bad Request|User was not found but permissions are sufficient|
+/// |401 Unauthorized|Authentication/Authorization middleware failed for user requesting this action|
+/// |403 Forbidden|User requesting this action is trying to patch a different user (not themself)|
 pub async fn user_patch(
     user_patch_dto: UserPatchDTO,
     current_user: UserDTO,
@@ -284,6 +322,10 @@ pub async fn user_patch(
 ///   }
 /// ]
 /// ```
+/// |Response|Description|
+/// |--------|-----------|
+/// |200 OK|[`Vec<PeerDTO>`] were found, if none were found returns empty [`Vec`]|
+/// |401 Unauthorized|Authentication/Authorization middleware failed to authenticate user|
 pub async fn user_peers_get(
     id: web::Path<Uuid>,
     pool: web::Data<PgPool>,

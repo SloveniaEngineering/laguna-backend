@@ -115,17 +115,130 @@
     },
     "query": "\n            SELECT id,\n                   announce_url,\n                   length,\n                   title,\n                   file_name,\n                   nfo,\n                   leech_count,\n                   seed_count,\n                   completed_count,\n                   speedlevel AS \"speedlevel: _\",\n                   info_hash,\n                   uploaded_at,\n                   uploaded_by,\n                   modded_at,\n                   modded_by\n            FROM \"Torrent\" \n            WHERE id = $1"
   },
-  "76096541f7696b2035acdb51754b4f783e345db19b32a815bbf68652121da947": {
+  "842d2b630ddfde04a261fc3623dded622ce5f8dd99127b53fd1baadd68cb452d": {
     "describe": {
-      "columns": [],
-      "nullable": [],
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "email",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "password",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "first_login",
+          "ordinal": 4,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "last_login",
+          "ordinal": 5,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "avatar_url",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "salt",
+          "ordinal": 7,
+          "type_info": "Text"
+        },
+        {
+          "name": "role: _",
+          "ordinal": 8,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Normie",
+                  "Verified",
+                  "Mod",
+                  "Admin"
+                ]
+              },
+              "name": "role"
+            }
+          }
+        },
+        {
+          "name": "behaviour: _",
+          "ordinal": 9,
+          "type_info": {
+            "Custom": {
+              "kind": {
+                "Enum": [
+                  "Lurker",
+                  "Downloader",
+                  "Freeleecher",
+                  "Leech",
+                  "Seed",
+                  "Choked",
+                  "Uploader"
+                ]
+              },
+              "name": "behaviour"
+            }
+          }
+        },
+        {
+          "name": "is_active",
+          "ordinal": 10,
+          "type_info": "Bool"
+        },
+        {
+          "name": "has_verified_email",
+          "ordinal": 11,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_history_private",
+          "ordinal": 12,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_profile_private",
+          "ordinal": 13,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "parameters": {
         "Left": [
           "Uuid"
         ]
       }
     },
-    "query": "DELETE FROM \"User\" WHERE id = $1"
+    "query": "\n        DELETE FROM \"User\" \n        WHERE id = $1\n        RETURNING id,\n                  username,\n                  email,\n                  password,\n                  first_login,\n                  last_login,\n                  avatar_url,\n                  salt,\n                  role AS \"role: _\",\n                  behaviour AS \"behaviour: _\",\n                  is_active,\n                  has_verified_email,\n                  is_history_private,\n                  is_profile_private\n        "
   },
   "848ca53918ea7123bdb3e8c9d830153aa339f9a141b155d4389796e5ad626ff3": {
     "describe": {

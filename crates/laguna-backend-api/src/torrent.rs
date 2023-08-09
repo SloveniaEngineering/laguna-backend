@@ -26,7 +26,6 @@ use crate::error::{torrent::TorrentError, APIError};
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
 /// ```
 /// ## Response
-/// * HTTP/1.1 200 OK
 /// ```json
 /// {
 ///   "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
@@ -46,8 +45,11 @@ use crate::error::{torrent::TorrentError, APIError};
 ///   "modded_by": null
 /// }
 /// ```
-/// * If DB operation fails: HTTP/1.1 500 Internal Server Error
-/// For scheme see [`TorrentDTO`].
+/// |Response|Description|
+/// |---|---|
+/// |200 OK|Returns [`TorrentDTO`]|
+/// |400 Bad Request|Torrent not found|
+/// |401 Unauthorized|Authentication/Authorization failed to process user|
 pub async fn torrent_get(
     id: web::Path<Uuid>,
     pool: web::Data<PgPool>,
@@ -98,7 +100,6 @@ pub async fn torrent_get(
 ///      }'
 /// ```
 /// ## Response
-/// * HTTP/1.1 200 OK
 /// ```json
 /// {
 ///   "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
@@ -120,6 +121,11 @@ pub async fn torrent_get(
 /// ```
 /// * If DB operation fails: HTTP/1.1 500 Internal Server Error
 /// Returns updated [`TorrentDTO`].
+/// |Response|Description|
+/// |---|---|
+/// |200 OK|Successful patch. Returns updated [`TorrentDTO`]|
+/// |400 Bad Request|Didnt patch. Invalid data|
+/// |401 Unauthorized|Authentication/Authorization failed to process user|
 pub async fn torrent_patch(
     torrent_dto: Json<TorrentPatchDTO>,
     pool: web::Data<PgPool>,
@@ -151,8 +157,9 @@ pub async fn torrent_patch(
         torrent_dto.nfo,
         torrent_dto.id
     )
-    .fetch_one(pool.get_ref())
-    .await?;
+    .fetch_optional(pool.get_ref())
+    .await?
+    .ok_or_else(|| TorrentError::DidntUpdate)?;
     Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent)))
 }
 
@@ -169,11 +176,12 @@ pub async fn torrent_patch(
 ///      -F 'upload=@crates/laguna-backend-api/fixtures/webtorrent-fixtures/fixtures/alice.torrent'
 /// ```
 /// ## Response
-/// 1. On upload success: HTTP/1.1 200 OK
-/// 2. If torrent already exists: HTTP/1.1 208 Already Reported
-/// 3. On invalid torrent format or no content-type: HTTP/1.1 400 Bad Request
-/// 4. On non-multipart (or corrupt multipart form-data): HTTP/1.1 422 Unprocessable Entity
-/// 5. If any DB operation fails: HTTP/1.1 500 Internal Server Error
+/// |Response|Description|
+/// |---|---|
+/// |200 OK|Successful upload|
+/// |208 Already Reported|Torrent with that `info_hash` already exists|
+/// |400 Bad Request|Didnt create torrent due to invalid data|
+/// |422 Unprocessable Entity|Invalid data format or corrupt multipart form-data|
 pub async fn torrent_put(
     mut payload: Multipart,
     pool: web::Data<PgPool>,

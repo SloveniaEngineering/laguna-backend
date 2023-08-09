@@ -51,9 +51,11 @@ use crate::error::{user::UserError, APIError};
 /// }
 /// ```
 /// ### Response
-/// 1. On successful login: HTTP/1.1 200 OK
-/// 2. On invalid password/email/username: HTTP/1.1 401 Unauthorized
-/// 3. On invalid format (ie. too long, too short, not email, etc.): HTTP/1.1 400 Bad Request
+/// |Response|Description|
+/// |---|---|
+/// |200 OK|Successful login. Returns [`UserDTO`] + tokens|
+/// |400 Bad Request|Last login didnt due to invalid input data|
+/// |401 Unauthorized|Invalid password/email/username|
 pub async fn login(
     login_dto: Json<LoginDTO>,
     pool: web::Data<PgPool>,

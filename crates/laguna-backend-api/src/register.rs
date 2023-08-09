@@ -26,10 +26,11 @@ use crate::error::{user::UserError, APIError};
 ///      }'
 /// ```
 /// ### Response
-/// 1. On successful register: HTTP/1.1 200 OK
-/// 2. On already registered: HTTP/1.1 208 Already Reported
-/// 3. On invalid format (ie. too long, too short, not email, etc.): HTTP/1.1 400 Bad Request
-/// 4. On DB operation failure: HTTP/1.1 500 Internal Server Error
+/// |Response|Description|
+/// |---|---|
+/// |200 OK|Successful register|
+/// |208 Already Reported|User already exists|
+/// |400 Bad Request|User was not created due to invalid input data|
 pub async fn register(
     register_dto: Json<RegisterDTO>,
     pool: web::Data<PgPool>,
