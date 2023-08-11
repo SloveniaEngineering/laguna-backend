@@ -5,6 +5,7 @@ use laguna_backend_model::consts::{TORRENT_FILENAME_MAX_LEN, TORRENT_FILENAME_MI
 use laguna_backend_model::consts::{TORRENT_TITLE_MAX_LEN, TORRENT_TITLE_MIN_LEN};
 use laguna_backend_model::speedlevel::SpeedLevel;
 use laguna_backend_model::torrent::Torrent;
+use laguna_backend_tracker_common::info_hash::InfoHash;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use uuid::Uuid;
@@ -12,7 +13,7 @@ use validator::Validate;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Validate)]
 pub struct TorrentDTO {
-    pub id: Uuid,
+    pub info_hash: InfoHash,
     pub announce_url: String,
     pub length: i32,
     #[validate(
@@ -30,7 +31,6 @@ pub struct TorrentDTO {
     pub seed_count: i32,
     pub completed_count: i32,
     pub speedlevel: SpeedLevel,
-    pub info_hash: String,
     pub uploaded_at: DateTime<Utc>,
     pub uploaded_by: Uuid,
     pub modded_at: Option<DateTime<Utc>>,
@@ -40,7 +40,7 @@ pub struct TorrentDTO {
 impl From<Torrent> for TorrentDTO {
     fn from(torrent: Torrent) -> Self {
         Self {
-            id: torrent.id,
+            info_hash: torrent.info_hash,
             announce_url: torrent.announce_url,
             length: torrent.length,
             title: torrent.title,
@@ -50,7 +50,6 @@ impl From<Torrent> for TorrentDTO {
             seed_count: torrent.seed_count,
             completed_count: torrent.completed_count,
             speedlevel: torrent.speedlevel,
-            info_hash: torrent.info_hash,
             uploaded_at: torrent.uploaded_at,
             uploaded_by: torrent.uploaded_by,
             modded_at: torrent.modded_at,
@@ -150,7 +149,7 @@ pub struct TorrentPutInfoProfileDTO {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Validate)]
 pub struct TorrentPatchDTO {
-    pub id: Uuid,
+    pub info_hash: InfoHash,
     #[validate(length(min = "TORRENT_TITLE_MIN_LEN", max = "TORRENT_TITLE_MAX_LEN"))]
     pub title: String,
     #[validate(length(min = "TORRENT_FILENAME_MIN_LEN", max = "TORRENT_FILENAME_MAX_LEN"))]

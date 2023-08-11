@@ -354,9 +354,8 @@ pub async fn user_peers_get(
                    behaviour AS "behaviour: _",
                    created_at,
                    updated_at,
-                   user_id,
-                   torrent_id
-            FROM "Peer" 
+                   user_id
+            FROM "Peer"
             WHERE user_id = $1
             "#,
         id.into_inner()

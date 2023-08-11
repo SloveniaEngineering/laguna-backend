@@ -12,16 +12,16 @@ use futures::{StreamExt, TryStreamExt};
 use sha2::Sha256;
 use sqlx::PgPool;
 
-use uuid::Uuid;
+use laguna_backend_tracker::prelude::info_hash::{InfoHash, SHA256_LENGTH};
 
 use crate::error::{torrent::TorrentError, APIError};
 
-/// `GET /api/torrent/{id}`
+/// `GET /api/torrent/{info_hash}`
 /// # Example
 /// ### Request
 /// ```sh
 /// curl -X GET \
-///      -i 'http://127.0.0.1:6969/api/torrent/00f045ac-1f4d-4601-b2e3-87476dc462e6'
+///      -i 'http://127.0.0.1:6969/api/torrent/<20 bytes of info hash>'
 ///      -H 'X-Access-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg5OTMwNTksImlhdCI6MTY4ODk5Mjk5OSwiaWQiOiIwMGYwNDVhYy0xZjRkLTQ2MDEtYjJlMy04NzQ3NmRjNDYyZTYiLCJ1c2VybmFtZSI6InRlc3QiLCJmaXJzdF9sb2dpbiI6IjIwMjMtMDctMTBUMTI6NDI6MzIuMzk2NjQ3WiIsImxhc3RfbG9naW4iOiIyMDIzLTA3LTEwVDEyOjQzOjE5LjIxNjA0N1oiLCJhdmF0YXJfdXJsIjpudWxsLCJyb2xlIjoiTm9ybWllIiwiYmVoYXZpb3VyIjoiTHVya2VyIiwiaXNfYWN0aXZlIjp0cnVlLCJoYXNfdmVyaWZpZWRfZW1haWwiOmZhbHNlLCJpc19oaXN0b3J5X3ByaXZhdGUiOnRydWUsImlzX3Byb2ZpbGVfcHJpdmF0ZSI6dHJ1ZX0.izClLn6kANl2kpIv2QqzmKJy7tmpNZqKKvcd4RoGW_c' \
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4'
 /// ```
@@ -53,13 +53,13 @@ use crate::error::{torrent::TorrentError, APIError};
 /// |400 Bad Request|Torrent not found|
 /// |401 Unauthorized|Authentication/Authorization failed to process user|
 pub async fn torrent_get(
-    id: web::Path<Uuid>,
+    info_hash: web::Path<InfoHash>,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
     let torrent = sqlx::query_as!(
         Torrent,
         r#"
-            SELECT id,
+            SELECT info_hash,
                    announce_url,
                    length,
                    title,
@@ -69,14 +69,13 @@ pub async fn torrent_get(
                    seed_count,
                    completed_count,
                    speedlevel AS "speedlevel: _",
-                   info_hash,
                    uploaded_at,
                    uploaded_by,
                    modded_at,
                    modded_by
             FROM "Torrent" 
-            WHERE id = $1"#,
-        id.into_inner()
+            WHERE info_hash = $1"#,
+        info_hash.into_inner() as _
     )
     .fetch_optional(pool.get_ref())
     .await?
@@ -94,7 +93,7 @@ pub async fn torrent_get(
 ///      -H 'X-Access-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg5OTMwNTksImlhdCI6MTY4ODk5Mjk5OSwiaWQiOiIwMGYwNDVhYy0xZjRkLTQ2MDEtYjJlMy04NzQ3NmRjNDYyZTYiLCJ1c2VybmFtZSI6InRlc3QiLCJmaXJzdF9sb2dpbiI6IjIwMjMtMDctMTBUMTI6NDI6MzIuMzk2NjQ3WiIsImxhc3RfbG9naW4iOiIyMDIzLTA3LTEwVDEyOjQzOjE5LjIxNjA0N1oiLCJhdmF0YXJfdXJsIjpudWxsLCJyb2xlIjoiTm9ybWllIiwiYmVoYXZpb3VyIjoiTHVya2VyIiwiaXNfYWN0aXZlIjp0cnVlLCJoYXNfdmVyaWZpZWRfZW1haWwiOmZhbHNlLCJpc19oaXN0b3J5X3ByaXZhdGUiOnRydWUsImlzX3Byb2ZpbGVfcHJpdmF0ZSI6dHJ1ZX0.izClLn6kANl2kpIv2QqzmKJy7tmpNZqKKvcd4RoGW_c' \
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4' \
 ///      --data '{
-///         "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
+///         "id": "<20 bytes of info_hash>",
 ///         "title": "TEST (2020)",
 ///         "file_name": "test_upload",
 ///         "nfo": null,
@@ -137,8 +136,8 @@ pub async fn torrent_patch(
         r#"
             UPDATE "Torrent" 
             SET title = $1, file_name = $2, nfo = $3
-            WHERE id = $4
-            RETURNING id,
+            WHERE info_hash = $4
+            RETURNING info_hash,
                       announce_url,
                       length,
                       title,
@@ -148,7 +147,6 @@ pub async fn torrent_patch(
                       seed_count,
                       completed_count,
                       speedlevel AS "speedlevel: _",
-                      info_hash,
                       uploaded_at,
                       uploaded_by,
                       modded_at,
@@ -157,7 +155,7 @@ pub async fn torrent_patch(
         torrent_dto.title,
         torrent_dto.file_name,
         torrent_dto.nfo,
-        torrent_dto.id
+        torrent_dto.info_hash as _
     )
     .fetch_optional(pool.get_ref())
     .await?
@@ -188,8 +186,6 @@ pub async fn torrent_patch(
 pub async fn torrent_put(
     mut payload: Multipart,
     pool: web::Data<PgPool>,
-    host: web::Data<String>,
-    port: web::Data<u16>,
     user: UserDTO,
 ) -> Result<HttpResponse, APIError> {
     if let Some(mut field) = payload.try_next().await? {
@@ -203,38 +199,51 @@ pub async fn torrent_put(
         }
         let torrent_put_dto = serde_bencode::from_bytes::<TorrentPutDTO>(&torrent_buf)?;
         let info_hash = Sha256::digest(serde_bencode::to_bytes(&torrent_put_dto.info)?);
+        let info_hash =
+            InfoHash::from(<[u8; SHA256_LENGTH]>::try_from(info_hash.as_slice()).unwrap());
         let maybe_torrent = sqlx::query_as!(
             Torrent,
             r#"
-                SELECT id,
-                      announce_url,
-                      length,
-                      title,
-                      file_name,
-                      nfo,
-                      leech_count,
-                      seed_count,
-                      completed_count,
-                      speedlevel AS "speedlevel: _",
-                      info_hash,
-                      uploaded_at,
-                      uploaded_by,
-                      modded_at,
-                      modded_by
-                FROM "Torrent" WHERE info_hash = $1"#,
-            format!("{:x}", info_hash)
+                SELECT info_hash,
+                       announce_url,
+                       length,
+                       title,
+                       file_name,
+                       nfo,
+                       leech_count,
+                       seed_count,
+                       completed_count,
+                       speedlevel AS "speedlevel: _",
+                       uploaded_at,
+                       uploaded_by,
+                       modded_at,
+                       modded_by
+                FROM "Torrent"
+                WHERE info_hash = $1
+            "#,
+            info_hash as _
         )
         .fetch_optional(pool.get_ref())
         .await?;
         if let Some(_) = maybe_torrent {
             return Ok(HttpResponse::AlreadyReported().finish());
         }
-        sqlx::query_as!(
+        let _torrent = sqlx::query_as!(
             Torrent,
             r#"
-            INSERT INTO "Torrent" (announce_url, title, length, file_name, nfo, info_hash, uploaded_at, uploaded_by, speedlevel)
+            INSERT INTO "Torrent" (
+                info_hash,
+                announce_url,
+                title,
+                length,
+                file_name,
+                nfo,
+                uploaded_at,
+                uploaded_by,
+                speedlevel
+            )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING id,
+            RETURNING info_hash,
                       announce_url,
                       length,
                       title,
@@ -244,18 +253,17 @@ pub async fn torrent_put(
                       seed_count,
                       completed_count,
                       speedlevel AS "speedlevel: _",
-                      info_hash,
                       uploaded_at,
                       uploaded_by,
                       modded_at,
                       modded_by
             "#,
-            torrent_put_dto.announce_url.unwrap_or_else(|| format!("{}:{}/api/torrent/announce", host.into_inner(), port.into_inner())),
+            info_hash as _,
+            torrent_put_dto.announce_url.unwrap_or_default(),
             torrent_put_dto.title,
             torrent_put_dto.info.length,
             torrent_put_dto.info.name,
             torrent_put_dto.nfo,
-            format!("{:x}", info_hash),
             Utc::now(),
             user.id,
             torrent_put_dto.speedlevel as _

@@ -14,11 +14,11 @@ pub struct AnnounceRequest {
     pub peer_id: PeerId,
     pub ip: Option<IpAddr>,
     pub port: u16,
-    pub uploaded: u64,
-    pub downloaded: u64,
-    pub left: u64,
+    pub uploaded: i64,
+    pub downloaded: i64,
+    pub left: i64,
     pub event: Option<AnnounceEvent>,
-    pub numwant: Option<u64>,
+    pub numwant: Option<i64>,
     pub compact: Option<bool>,
     pub no_peer_id: Option<bool>,
     pub key: Option<String>,
@@ -27,37 +27,27 @@ pub struct AnnounceRequest {
 
 impl Announcement for AnnounceRequest {
     #[inline]
-    fn info_hash(&self) -> &InfoHash {
-        &self.info_hash
-    }
-
-    #[inline]
     fn peer_id(&self) -> &PeerId {
         &self.peer_id
     }
 
     #[inline]
-    fn ip(&self) -> Option<IpAddr> {
-        self.ip
+    fn info_hash(&self) -> &InfoHash {
+        &self.info_hash
     }
 
     #[inline]
-    fn port(&self) -> u16 {
-        self.port
-    }
-
-    #[inline]
-    fn uploaded(&self) -> u64 {
+    fn uploaded(&self) -> i64 {
         self.uploaded
     }
 
     #[inline]
-    fn downloaded(&self) -> u64 {
+    fn downloaded(&self) -> i64 {
         self.downloaded
     }
 
     #[inline]
-    fn left(&self) -> u64 {
+    fn left(&self) -> i64 {
         self.left
     }
 
@@ -72,7 +62,17 @@ impl Announcement for AnnounceRequest {
     }
 
     #[inline]
-    fn numwant(&self) -> u64 {
+    fn port(&self) -> u16 {
+        self.port
+    }
+
+    #[inline]
+    fn ip(&self) -> Option<IpAddr> {
+        self.ip
+    }
+
+    #[inline]
+    fn numwant(&self) -> i64 {
         self.numwant.unwrap_or(50)
     }
 

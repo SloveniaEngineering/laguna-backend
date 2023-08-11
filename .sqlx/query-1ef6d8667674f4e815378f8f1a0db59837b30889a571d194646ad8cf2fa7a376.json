@@ -1,0 +1,111 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT info_hash,\n                       announce_url,\n                       length,\n                       title,\n                       file_name,\n                       nfo,\n                       leech_count,\n                       seed_count,\n                       completed_count,\n                       speedlevel AS \"speedlevel: _\",\n                       uploaded_at,\n                       uploaded_by,\n                       modded_at,\n                       modded_by\n                FROM \"Torrent\"\n                WHERE info_hash = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "info_hash",
+        "type_info": "Bytea"
+      },
+      {
+        "ordinal": 1,
+        "name": "announce_url",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "length",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "title",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "file_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "nfo",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "leech_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
+        "name": "seed_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "completed_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "speedlevel: _",
+        "type_info": {
+          "Custom": {
+            "name": "speedlevel",
+            "kind": {
+              "Enum": [
+                "Lowspeed",
+                "Mediumspeed",
+                "Highspeed"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "uploaded_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 11,
+        "name": "uploaded_by",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 12,
+        "name": "modded_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 13,
+        "name": "modded_by",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "1ef6d8667674f4e815378f8f1a0db59837b30889a571d194646ad8cf2fa7a376"
+}

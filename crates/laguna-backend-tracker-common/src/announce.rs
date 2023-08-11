@@ -11,15 +11,16 @@ pub enum AnnounceEvent {
     Started,
     Stopped,
     Completed,
+    Empty,
 }
 
 /// Announcement trait shared by HTTP, UDP and WS Announcement Messages.
 pub trait Announcement {
     fn peer_id(&self) -> &PeerId;
     fn info_hash(&self) -> &InfoHash;
-    fn uploaded(&self) -> u64;
-    fn downloaded(&self) -> u64;
-    fn left(&self) -> u64;
+    fn uploaded(&self) -> i64;
+    fn downloaded(&self) -> i64;
+    fn left(&self) -> i64;
     fn event(&self) -> Option<AnnounceEvent> {
         None
     }
@@ -30,7 +31,7 @@ pub trait Announcement {
     fn ip(&self) -> Option<IpAddr> {
         None
     }
-    fn numwant(&self) -> u64 {
+    fn numwant(&self) -> i64 {
         50
     }
     fn key(&self) -> Option<&String> {

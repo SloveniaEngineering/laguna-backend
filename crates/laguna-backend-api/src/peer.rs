@@ -1,7 +1,19 @@
-use actix_web::{web, HttpResponse};
+use crate::error::peer::PeerError;
+use crate::error::APIError;
+
+use actix_web::http::header::USER_AGENT;
+use actix_web::{web, HttpRequest, HttpResponse};
+use chrono::Utc;
 use laguna_backend_dto::user::UserDTO;
+
+use laguna_backend_model::peer::Peer;
 use laguna_backend_tracker::http::announce::{AnnounceRequest, AnnounceResponse};
+
 use laguna_backend_tracker::prelude::peer::{PeerDictStream, PeerStream};
+use sqlx::types::ipnetwork::IpNetwork;
+use sqlx::PgPool;
+
+use std::str::FromStr;
 
 /// GET `/api/peer/announce`
 /// # Example
@@ -9,9 +21,11 @@ use laguna_backend_tracker::prelude::peer::{PeerDictStream, PeerStream};
 /// **NOTE**: The -G allows GET to send data via query string. See: <https://stackoverflow.com/questions/13371284/curl-command-line-url-parameters>.
 ///
 /// **FIXME**: This example doesn't work yet, URL encoding info_hash and peer_id is weird ASF.
-///        Generally we need to send 20 bytes of info_hash and 20 bytes of peer_id via GET request. Curl might be an issue here.
+///            Send 20 bytes of info_hash and 20 bytes of peer_id via GET request.
+///            Curl might be an issue here.
 ///
 /// ```bash
+/// # -G + -d 'neki=123' gives http://127.0.0.1:6969/api/peer/announce?neki=123
 /// curl -X GET \
 ///      -G \
 ///      -i 'http://127.0.0.1:6969/api/peer/announce' \
@@ -36,11 +50,97 @@ use laguna_backend_tracker::prelude::peer::{PeerDictStream, PeerStream};
 /// ```text
 /// ```
 pub async fn peer_announce(
+    req: HttpRequest,
     announce_data: web::Query<AnnounceRequest>,
-    _user: UserDTO,
-) -> HttpResponse {
-    println!("{:?}", announce_data);
-    HttpResponse::Ok().body(
+    pool: web::Data<PgPool>,
+    user: UserDTO,
+) -> Result<HttpResponse, APIError> {
+    let maybe_peer = sqlx::query_as!(
+        Peer,
+        r#"
+        SELECT id,
+               md5_hash,
+               info_hash,
+               ip,
+               port,
+               agent,
+               uploaded_bytes,
+               downloaded_bytes,
+               left_bytes,
+               behaviour AS "behaviour: _",
+               created_at,
+               updated_at,
+               user_id
+        FROM "Peer"
+        WHERE id = $1
+        "#,
+        announce_data.peer_id as _
+    )
+    .fetch_optional(pool.get_ref())
+    .await?;
+
+    if let Some(_peer) = maybe_peer {
+        // We already know this peer, checkup on it
+        return Ok(HttpResponse::AlreadyReported().finish());
+    }
+
+    let ip = announce_data.ip.map(IpNetwork::from).or_else(|| {
+        req.connection_info()
+            .realip_remote_addr() // go over proxy (if it exists)
+            .and_then(|maybe_ip| IpNetwork::from_str(maybe_ip).ok())
+    });
+
+    let user_agent = req
+        .headers()
+        .get(USER_AGENT)
+        .map(|hv| hv.to_str().expect("Cannot convert header value to str"));
+
+    let _peer = sqlx::query_as!(
+        Peer,
+        r#"
+        INSERT INTO "Peer" (
+            id,
+            info_hash,
+            ip,
+            port,
+            agent,
+            uploaded_bytes,
+            downloaded_bytes,
+            left_bytes,
+            created_at,
+            user_id
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id,
+                  md5_hash,
+                  info_hash,
+                  ip,
+                  port,
+                  agent,
+                  uploaded_bytes,
+                  downloaded_bytes,
+                  left_bytes,
+                  behaviour AS "behaviour: _",
+                  created_at,
+                  updated_at,
+                  user_id
+        "#,
+        announce_data.peer_id as _,
+        announce_data.info_hash as _,
+        ip,
+        announce_data.port as i32,
+        user_agent,
+        announce_data.uploaded,
+        announce_data.downloaded,
+        announce_data.left,
+        Utc::now(),
+        user.id
+    )
+    .fetch_optional(pool.get_ref())
+    .await?
+    .ok_or_else(|| PeerError::DidntCreate)?;
+
+    Ok(HttpResponse::Ok().body(
         serde_bencode::to_bytes(&AnnounceResponse {
             failure_reason: None,
             warning_message: None,
@@ -52,5 +152,5 @@ pub async fn peer_announce(
             peers: PeerStream::Dict(PeerDictStream::new()),
         })
         .unwrap(),
-    )
+    ))
 }

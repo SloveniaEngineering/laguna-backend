@@ -29,3 +29,6 @@ codegen-units = 256
 
 [env]
 WORKSPACE_ROOT = { value = "", relative = true }
+
+[profile.dev.package.sqlx-macros]
+opt-level = 3

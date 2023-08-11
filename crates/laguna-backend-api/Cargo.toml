@@ -17,14 +17,15 @@ documentation = "https://sloveniaengineering.github.io/laguna-backend"
 laguna-backend-model = { path = "../laguna-backend-model" }
 laguna-backend-middleware = { path = "../laguna-backend-middleware" }
 actix-web = { version = "4", features = ["cookies"] }
-sqlx = { version = "0.6.3", features = [
-    "runtime-actix-rustls",
+sqlx = { version = "0.7.1", features = [
+    "runtime-tokio",
+    "tls-rustls",
     "postgres",
     "uuid",
     "migrate",
+    "ipnetwork",
     "macros",
     "time",
-    "offline",
     "json",
 ] }
 actix-jwt-auth-middleware = "0.3.0"
@@ -45,6 +46,7 @@ futures = "*"
 serde_bencode = "0.2.3"
 laguna-backend-dto = { path = "../laguna-backend-dto" }
 laguna-backend-tracker = { path = "../laguna-backend-tracker" }
+laguna-backend-tracker-common = { path = "../laguna-backend-tracker-common" }
 laguna_config = { package = "laguna-backend-config", path = "../laguna-backend-config" }
 secrecy = { version = "*", features = ["serde"] }
 

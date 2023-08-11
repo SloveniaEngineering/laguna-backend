@@ -1,3 +1,5 @@
+use std::array::TryFromSliceError;
+use std::fmt::Formatter;
 use std::{
     fmt,
     net::{Ipv4Addr, SocketAddr, SocketAddrV4},
@@ -5,15 +7,32 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use serde_with::Bytes;
+
+pub const PEER_ID_LENGTH: usize = 20;
+pub const PEER_CLIENT_LENGTH: usize = 2;
+
+pub const PEER_BIN_DICT_LENGTH: usize = 6;
 
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, Eq, PartialEq, sqlx::Type)]
+#[sqlx(transparent)]
 pub struct PeerId(
     // OLD: See: https://github.com/serde-rs/bytes/pull/28
     // #[serde(with = "serde_byte_array")]
-    #[serde_as(as = "Bytes")] pub [u8; 20],
+    #[serde_as(as = "[_; PEER_ID_LENGTH]")] pub [u8; PEER_ID_LENGTH],
 );
+
+impl From<Vec<u8>> for PeerId {
+    fn from(value: Vec<u8>) -> Self {
+        PeerId(<[u8; PEER_ID_LENGTH]>::try_from(value.as_slice()).unwrap())
+    }
+}
+
+impl fmt::Display for PeerId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_fmt(format_args!("{:x?}", self.0))
+    }
+}
 
 /// Peer client identification enum.
 /// Resources:
@@ -125,13 +144,20 @@ pub enum PeerClient {
     ZipTorrent,
 }
 
-pub enum PeerClientError {
+pub enum PeerIdError {
     UnknownClient,
+    Invalid(TryFromSliceError),
 }
 
-impl TryFrom<[u8; 2]> for PeerClient {
-    type Error = PeerClientError;
-    fn try_from(name: [u8; 2]) -> Result<Self, Self::Error> {
+impl From<TryFromSliceError> for PeerIdError {
+    fn from(value: TryFromSliceError) -> Self {
+        Self::Invalid(value)
+    }
+}
+
+impl TryFrom<[u8; PEER_CLIENT_LENGTH]> for PeerClient {
+    type Error = PeerIdError;
+    fn try_from(name: [u8; PEER_CLIENT_LENGTH]) -> Result<Self, Self::Error> {
         match &name {
             b"7T" => Ok(PeerClient::ATorrentForAndroid),
             b"AB" => Ok(PeerClient::AnyEventBitTorrent),
@@ -234,7 +260,7 @@ impl TryFrom<[u8; 2]> for PeerClient {
             b"XT" => Ok(PeerClient::XanTorrent),
             b"XX" => Ok(PeerClient::XTorrent),
             b"ZT" => Ok(PeerClient::ZipTorrent),
-            _ => Err(PeerClientError::UnknownClient),
+            _ => Err(PeerIdError::UnknownClient),
         }
     }
 }
@@ -348,14 +374,14 @@ impl fmt::Display for PeerClient {
 }
 
 impl PeerId {
-    pub fn client(&self) -> Result<PeerClient, PeerClientError> {
+    pub fn client(&self) -> Result<PeerClient, PeerIdError> {
         if self.0[0] == b'M' {
             return Ok(PeerClient::Mainline);
         }
         if self.0[0] == b'-' {
             return PeerClient::try_from([self.0[1], self.0[2]]);
         }
-        Err(PeerClientError::UnknownClient)
+        Err(PeerIdError::UnknownClient)
     }
 
     pub fn version(&self) -> String {
@@ -388,7 +414,7 @@ pub struct PeerDict {
 /// First 4 bytes are IP address, last 2 bytes are port.
 /// Network byte order (big endian).
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PeerBin(pub [u8; 6]);
+pub struct PeerBin(pub [u8; PEER_BIN_DICT_LENGTH]);
 
 impl Peer for PeerDict {
     fn id(&self) -> Option<PeerId> {

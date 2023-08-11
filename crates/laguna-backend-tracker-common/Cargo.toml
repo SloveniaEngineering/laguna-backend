@@ -11,3 +11,15 @@ actix-web = "4"
 serde_bytes = "*"
 serde-byte-array = "0.1.2"
 serde_with = "3.2.0"
+actix = "*"
+sqlx = { version = "0.7.1", features = [
+    "runtime-tokio",
+    "tls-rustls",
+    "postgres",
+    "uuid",
+    "migrate",
+    "macros",
+    "chrono",
+    "json",
+    "ipnetwork"
+] }

@@ -3,11 +3,12 @@ use chrono::{DateTime, Utc};
 
 use serde::{Deserialize, Serialize};
 
+use laguna_backend_tracker_common::info_hash::InfoHash;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, sqlx::FromRow)]
 pub struct Torrent {
-    pub id: Uuid,
+    pub info_hash: InfoHash,
     pub announce_url: String,
     pub length: i32,
     pub title: String,
@@ -17,7 +18,6 @@ pub struct Torrent {
     pub seed_count: i32,
     pub completed_count: i32,
     pub speedlevel: SpeedLevel,
-    pub info_hash: String,
     pub uploaded_at: DateTime<Utc>,
     pub uploaded_by: Uuid,
     pub modded_at: Option<DateTime<Utc>>,

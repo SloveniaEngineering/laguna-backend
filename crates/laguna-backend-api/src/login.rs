@@ -17,7 +17,7 @@ use crate::error::{user::UserError, APIError};
 
 /// `POST /api/user/auth/login`
 /// Signs in existing user.
-/// For registering see [`register`](crate::login::login).
+/// For registering see [`register`](login).
 /// # Example
 /// ### Request
 /// ```sh
