@@ -19,14 +19,15 @@ exclude = ["crates/laguna-backend-config"]
 
 [dependencies]
 actix-web = "4"
-sqlx = { version = "0.7.1", features = [
+sqlx = { version="0.7.1", features = [
     "runtime-tokio",
     "tls-rustls",
     "postgres",
     "uuid",
+    "ipnetwork",
     "migrate",
     "macros",
-    "time",
+    "chrono",
     "json",
 ] }
 env_logger = "0.10.0"

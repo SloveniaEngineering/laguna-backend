@@ -15,16 +15,18 @@ documentation = "https://sloveniaengineering.github.io/laguna-backend"
 
 [dependencies]
 actix-web = "4"
-sqlx = { version = "0.7.1", features = [
+sqlx = { version="0.7.1", features = [
     "runtime-tokio",
     "tls-rustls",
     "postgres",
     "uuid",
+    "ipnetwork",
     "migrate",
     "macros",
     "chrono",
     "json",
 ] }
+
 log = "0.4.19"
 env_logger = "0.10.0"
 sha2 = "0.10"

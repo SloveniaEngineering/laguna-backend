@@ -53,34 +53,15 @@ use crate::error::{torrent::TorrentError, APIError};
 /// |400 Bad Request|Torrent not found|
 /// |401 Unauthorized|Authentication/Authorization failed to process user|
 pub async fn torrent_get(
-    info_hash: web::Path<InfoHash>,
-    pool: web::Data<PgPool>,
+  info_hash: web::Path<InfoHash>,
+  pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-    let torrent = sqlx::query_as!(
-        Torrent,
-        r#"
-            SELECT info_hash,
-                   announce_url,
-                   length,
-                   title,
-                   file_name,
-                   nfo,
-                   leech_count,
-                   seed_count,
-                   completed_count,
-                   speedlevel AS "speedlevel: _",
-                   uploaded_at,
-                   uploaded_by,
-                   modded_at,
-                   modded_by
-            FROM "Torrent" 
-            WHERE info_hash = $1"#,
-        info_hash.into_inner() as _
-    )
+  let torrent = sqlx::query_as::<_, Torrent>("SELECT * FROM torrent_get($1)")
+    .bind(info_hash.into_inner())
     .fetch_optional(pool.get_ref())
     .await?
     .ok_or_else(|| TorrentError::DoesNotExist)?;
-    Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent)))
+  Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent)))
 }
 
 /// `PATCH /api/torrent/`
@@ -128,39 +109,19 @@ pub async fn torrent_get(
 /// |400 Bad Request|Didnt patch. Invalid data|
 /// |401 Unauthorized|Authentication/Authorization failed to process user|
 pub async fn torrent_patch(
-    torrent_dto: Json<TorrentPatchDTO>,
-    pool: web::Data<PgPool>,
+  torrent_dto: Json<TorrentPatchDTO>,
+  pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-    let torrent = sqlx::query_as!(
-        Torrent,
-        r#"
-            UPDATE "Torrent" 
-            SET title = $1, file_name = $2, nfo = $3
-            WHERE info_hash = $4
-            RETURNING info_hash,
-                      announce_url,
-                      length,
-                      title,
-                      file_name,
-                      nfo,
-                      leech_count,
-                      seed_count,
-                      completed_count,
-                      speedlevel AS "speedlevel: _",
-                      uploaded_at,
-                      uploaded_by,
-                      modded_at,
-                      modded_by
-        "#,
-        torrent_dto.title,
-        torrent_dto.file_name,
-        torrent_dto.nfo,
-        torrent_dto.info_hash as _
-    )
+  let torrent_dto = torrent_dto.into_inner();
+  let torrent = sqlx::query_as::<_, Torrent>("SELECT * FROM torrent_patch($1, $2, $3, $4)")
+    .bind(torrent_dto.info_hash)
+    .bind(torrent_dto.title)
+    .bind(torrent_dto.file_name)
+    .bind(torrent_dto.nfo.unwrap_or_default())
     .fetch_optional(pool.get_ref())
     .await?
     .ok_or_else(|| TorrentError::DidntUpdate)?;
-    Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent)))
+  Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent)))
 }
 
 /// `PUT /api/torrent/`
@@ -184,95 +145,46 @@ pub async fn torrent_patch(
 /// |400 Bad Request|Didnt create torrent due to invalid data|
 /// |422 Unprocessable Entity|Invalid data format or corrupt multipart form-data|
 pub async fn torrent_put(
-    mut payload: Multipart,
-    pool: web::Data<PgPool>,
-    user: UserDTO,
+  mut payload: Multipart,
+  pool: web::Data<PgPool>,
+  user: UserDTO,
 ) -> Result<HttpResponse, APIError> {
-    if let Some(mut field) = payload.try_next().await? {
-        let content_type = field.content_type();
-        if let None = content_type {
-            return Ok(HttpResponse::BadRequest().finish());
-        }
-        let mut torrent_buf = Vec::new();
-        while let Some(chunk) = field.next().await {
-            torrent_buf.extend_from_slice(&chunk?);
-        }
-        let torrent_put_dto = serde_bencode::from_bytes::<TorrentPutDTO>(&torrent_buf)?;
-        let info_hash = Sha256::digest(serde_bencode::to_bytes(&torrent_put_dto.info)?);
-        let info_hash =
-            InfoHash::from(<[u8; SHA256_LENGTH]>::try_from(info_hash.as_slice()).unwrap());
-        let maybe_torrent = sqlx::query_as!(
-            Torrent,
-            r#"
-                SELECT info_hash,
-                       announce_url,
-                       length,
-                       title,
-                       file_name,
-                       nfo,
-                       leech_count,
-                       seed_count,
-                       completed_count,
-                       speedlevel AS "speedlevel: _",
-                       uploaded_at,
-                       uploaded_by,
-                       modded_at,
-                       modded_by
-                FROM "Torrent"
-                WHERE info_hash = $1
-            "#,
-            info_hash as _
-        )
-        .fetch_optional(pool.get_ref())
-        .await?;
-        if let Some(_) = maybe_torrent {
-            return Ok(HttpResponse::AlreadyReported().finish());
-        }
-        let _torrent = sqlx::query_as!(
-            Torrent,
-            r#"
-            INSERT INTO "Torrent" (
-                info_hash,
-                announce_url,
-                title,
-                length,
-                file_name,
-                nfo,
-                uploaded_at,
-                uploaded_by,
-                speedlevel
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING info_hash,
-                      announce_url,
-                      length,
-                      title,
-                      file_name,
-                      nfo,
-                      leech_count,
-                      seed_count,
-                      completed_count,
-                      speedlevel AS "speedlevel: _",
-                      uploaded_at,
-                      uploaded_by,
-                      modded_at,
-                      modded_by
-            "#,
-            info_hash as _,
-            torrent_put_dto.announce_url.unwrap_or_default(),
-            torrent_put_dto.title,
-            torrent_put_dto.info.length,
-            torrent_put_dto.info.name,
-            torrent_put_dto.nfo,
-            Utc::now(),
-            user.id,
-            torrent_put_dto.speedlevel as _
-        )
-        .fetch_optional(pool.get_ref())
-        .await?
-        .ok_or_else(|| TorrentError::DidntCreate)?;
-
-        return Ok(HttpResponse::Ok().finish());
+  if let Some(mut field) = payload.try_next().await? {
+    let content_type = field.content_type();
+    if let None = content_type {
+      return Ok(HttpResponse::BadRequest().finish());
     }
-    Ok(HttpResponse::UnprocessableEntity().finish())
+    let mut torrent_buf = Vec::new();
+    while let Some(chunk) = field.next().await {
+      torrent_buf.extend_from_slice(&chunk?);
+    }
+    let torrent_put_dto = serde_bencode::from_bytes::<TorrentPutDTO>(&torrent_buf)?;
+    let info_hash = Sha256::digest(serde_bencode::to_bytes(&torrent_put_dto.info)?);
+    let info_hash = InfoHash::from(<[u8; SHA256_LENGTH]>::try_from(info_hash.as_slice()).unwrap());
+    let maybe_torrent = sqlx::query_as::<_, Torrent>("SELECT * FROM torrent_get($1)")
+      .bind(info_hash.clone())
+      .fetch_optional(pool.get_ref())
+      .await?;
+    if let Some(_) = maybe_torrent {
+      return Ok(HttpResponse::AlreadyReported().finish());
+    }
+    let _torrent = sqlx::query_as::<_, Torrent>(
+      "SELECT * FROM torrent_insert($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+    )
+    .bind(info_hash)
+    .bind(torrent_put_dto.announce_url.unwrap_or_default())
+    .bind(torrent_put_dto.title)
+    .bind(torrent_put_dto.info.length)
+    .bind(torrent_put_dto.info.name)
+    .bind(torrent_put_dto.nfo)
+    .bind(Utc::now())
+    .bind(user.id)
+    .bind(torrent_put_dto.speedlevel)
+    .fetch_optional(pool.get_ref())
+    .await?
+    .ok_or_else(|| TorrentError::DidntCreate)?;
+
+    return Ok(HttpResponse::Ok().finish());
+  }
+  Ok(HttpResponse::UnprocessableEntity().finish())
 }

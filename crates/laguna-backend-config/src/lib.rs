@@ -29,6 +29,7 @@ pub struct ApplicationSettings {
 #[serde(rename_all = "kebab-case")]
 pub struct AuthSettings {
     pub secret_key: Secret<String>,
+    pub password_pepper: Secret<String>,
     pub access_token_lifetime_seconds: i64,
     pub refresh_token_lifetime_seconds: i64,
 }
@@ -93,11 +94,14 @@ pub fn make_overridable_with_env_vars(settings: &mut Settings) {
     Settings::override_field_with_env_var(&mut settings.actix.tls.enabled, "ACTIX_TLS_ENABLED").expect("ACTIX_TLS_ENABLED not specified");
     Settings::override_field_with_env_var(&mut settings.actix.tls.certificate, "ACTIX_TLS_CERTIFICATE").expect("ACTIX_TLS_CERTIFICATE not specified");
     Settings::override_field_with_env_var(&mut settings.actix.tls.private_key, "ACTIX_TLS_PRIVATE_KEY").expect("ACTIX_TLS_PRIVATE_KEY not specified");
-    if let Ok(application_secret_key) = env::var("APPLICATION_SECRET_KEY") {
-        settings.application.auth.secret_key = Secret::new(application_secret_key);
+    if let Ok(application_auth_secret_key) = env::var("APPLICATION_AUTH_SECRET_KEY") {
+        settings.application.auth.secret_key = Secret::new(application_auth_secret_key);
     }
-    Settings::override_field_with_env_var(&mut settings.application.auth.access_token_lifetime_seconds, "APPLICATION_ACCESS_TOKEN_LIFETIME_SECONDS").expect("ACCESS_TOKEN_LIFETIME_SECONDS not specified");
-    Settings::override_field_with_env_var(&mut settings.application.auth.refresh_token_lifetime_seconds, "APPLICATION_REFRESH_TOKEN_LIFETIME_SECONDS").expect("REFRESH_TOKEN_LIFETIME_SECONDS not specified");
+    if let Ok(application_auth_password_pepper) = env::var("APPLICATION_AUTH_PASSWORD_PEPPER") {
+        settings.application.auth.password_pepper = Secret::new(application_auth_password_pepper);
+    }
+    Settings::override_field_with_env_var(&mut settings.application.auth.access_token_lifetime_seconds, "APPLICATION_AUTH_ACCESS_TOKEN_LIFETIME_SECONDS").expect("ACCESS_AUTH_TOKEN_LIFETIME_SECONDS not specified");
+    Settings::override_field_with_env_var(&mut settings.application.auth.refresh_token_lifetime_seconds, "APPLICATION_AUTH_REFRESH_TOKEN_LIFETIME_SECONDS").expect("REFRESH_AUTH_TOKEN_LIFETIME_SECONDS not specified");
     Settings::override_field_with_env_var(&mut settings.application.database.proto, "APPLICATION_DATABASE_PROTO").expect("DATABASE_PROTO not specified");
     if let Ok(application_database_host) = env::var("APPLICATION_DATABASE_HOST") {
         settings.application.database.host = Secret::new(application_database_host);

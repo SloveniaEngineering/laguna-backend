@@ -17,15 +17,15 @@ documentation = "https://sloveniaengineering.github.io/laguna-backend"
 laguna-backend-model = { path = "../laguna-backend-model" }
 laguna-backend-middleware = { path = "../laguna-backend-middleware" }
 actix-web = { version = "4", features = ["cookies"] }
-sqlx = { version = "0.7.1", features = [
+sqlx = { version="0.7.1", features = [
     "runtime-tokio",
     "tls-rustls",
     "postgres",
     "uuid",
-    "migrate",
     "ipnetwork",
+    "migrate",
     "macros",
-    "time",
+    "chrono",
     "json",
 ] }
 actix-jwt-auth-middleware = "0.3.0"

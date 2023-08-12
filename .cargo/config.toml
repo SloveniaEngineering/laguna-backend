@@ -32,3 +32,18 @@ WORKSPACE_ROOT = { value = "", relative = true }
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3
+
+# Additional optimizations
+
+# LLVM remark output
+# cargo install cargo-remark
+# cargo +nightly remark build --open
+# See: https://github.com/Kobzol/cargo-remark
+# Bug: Comment [profile.release] to make it work.
+# Warning: RAM hog.
+
+
+# Profile guided optimization (PGO) 
+# cargo install cargo-pgo
+# See: https://github.com/Kobzol/cargo-pgo
+# Warning: Untested.

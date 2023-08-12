@@ -7,9 +7,9 @@ use chrono::Utc;
 use laguna_backend_dto::user::UserDTO;
 
 use laguna_backend_model::peer::Peer;
-use laguna_backend_tracker::http::announce::{AnnounceRequest, AnnounceResponse};
+use laguna_backend_tracker::http::announce::AnnounceRequest;
 
-use laguna_backend_tracker::prelude::peer::{PeerDictStream, PeerStream};
+use laguna_backend_tracker_common::announce::AnnounceEvent;
 use sqlx::types::ipnetwork::IpNetwork;
 use sqlx::PgPool;
 
@@ -50,107 +50,82 @@ use std::str::FromStr;
 /// ```text
 /// ```
 pub async fn peer_announce(
-    req: HttpRequest,
-    announce_data: web::Query<AnnounceRequest>,
-    pool: web::Data<PgPool>,
-    user: UserDTO,
+  req: HttpRequest,
+  announce_data: web::Query<AnnounceRequest>,
+  pool: web::Data<PgPool>,
+  user: UserDTO,
 ) -> Result<HttpResponse, APIError> {
-    let maybe_peer = sqlx::query_as!(
-        Peer,
-        r#"
-        SELECT id,
-               md5_hash,
-               info_hash,
-               ip,
-               port,
-               agent,
-               uploaded_bytes,
-               downloaded_bytes,
-               left_bytes,
-               behaviour AS "behaviour: _",
-               created_at,
-               updated_at,
-               user_id
-        FROM "Peer"
-        WHERE id = $1
-        "#,
-        announce_data.peer_id as _
-    )
+  let maybe_peer = sqlx::query_as::<_, Peer>("SELECT * FROM peer_get($1)")
+    .bind(&announce_data.peer_id)
     .fetch_optional(pool.get_ref())
     .await?;
 
-    if let Some(_peer) = maybe_peer {
-        // We already know this peer, checkup on it
-        return Ok(HttpResponse::AlreadyReported().finish());
-    }
+  if let Some(peer) = maybe_peer {
+    // We already know this peer, checkup on it
+    return handle_peer_request(peer, announce_data.into_inner()).await;
+  }
 
-    let ip = announce_data.ip.map(IpNetwork::from).or_else(|| {
-        req.connection_info()
-            .realip_remote_addr() // go over proxy (if it exists)
-            .and_then(|maybe_ip| IpNetwork::from_str(maybe_ip).ok())
-    });
+  let ip = announce_data.ip.map(IpNetwork::from).or_else(|| {
+    req
+      .connection_info()
+      .realip_remote_addr() // go over proxy (if it exists)
+      .and_then(|maybe_ip| IpNetwork::from_str(maybe_ip).ok())
+  });
 
-    let user_agent = req
-        .headers()
-        .get(USER_AGENT)
-        .map(|hv| hv.to_str().expect("Cannot convert header value to str"));
+  let user_agent = req
+    .headers()
+    .get(USER_AGENT)
+    .map(|hv| hv.to_str().expect("Cannot convert header value to str"));
 
-    let _peer = sqlx::query_as!(
-        Peer,
-        r#"
-        INSERT INTO "Peer" (
-            id,
-            info_hash,
-            ip,
-            port,
-            agent,
-            uploaded_bytes,
-            downloaded_bytes,
-            left_bytes,
-            created_at,
-            user_id
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id,
-                  md5_hash,
-                  info_hash,
-                  ip,
-                  port,
-                  agent,
-                  uploaded_bytes,
-                  downloaded_bytes,
-                  left_bytes,
-                  behaviour AS "behaviour: _",
-                  created_at,
-                  updated_at,
-                  user_id
-        "#,
-        announce_data.peer_id as _,
-        announce_data.info_hash as _,
-        ip,
-        announce_data.port as i32,
-        user_agent,
-        announce_data.uploaded,
-        announce_data.downloaded,
-        announce_data.left,
-        Utc::now(),
-        user.id
-    )
-    .fetch_optional(pool.get_ref())
-    .await?
-    .ok_or_else(|| PeerError::DidntCreate)?;
+  let peer =
+    sqlx::query_as::<_, Peer>("SELECT * FROM peer_insert($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)")
+      .bind(&announce_data.peer_id)
+      .bind(&announce_data.info_hash)
+      .bind(ip)
+      .bind(announce_data.port as i32)
+      .bind(user_agent)
+      .bind(announce_data.uploaded)
+      .bind(announce_data.downloaded)
+      .bind(announce_data.left)
+      .bind(Utc::now())
+      .bind(user.id)
+      .fetch_optional(pool.get_ref())
+      .await?
+      .ok_or_else(|| PeerError::DidntCreate)?;
 
-    Ok(HttpResponse::Ok().body(
-        serde_bencode::to_bytes(&AnnounceResponse {
-            failure_reason: None,
-            warning_message: None,
-            interval: 0,
-            min_interval: None,
-            tracker_id: None,
-            complete: 0,
-            incomplete: 0,
-            peers: PeerStream::Dict(PeerDictStream::new()),
-        })
-        .unwrap(),
-    ))
+  handle_peer_request(peer, announce_data.into_inner()).await
+}
+
+async fn handle_peer_request(
+  peer: Peer,
+  announce_data: AnnounceRequest,
+) -> Result<HttpResponse, APIError> {
+  let event = announce_data.event.unwrap_or_else(|| AnnounceEvent::Empty);
+  match event {
+    AnnounceEvent::Started => handle_peer_started(peer, announce_data).await,
+    AnnounceEvent::Completed => handle_peer_completed(peer, announce_data).await,
+    AnnounceEvent::Stopped => handle_peer_stopped(peer, announce_data).await,
+    AnnounceEvent::Empty => Ok(HttpResponse::UnprocessableEntity().finish()),
+  }
+}
+
+async fn handle_peer_started(
+  _peer: Peer,
+  _announce_data: AnnounceRequest,
+) -> Result<HttpResponse, APIError> {
+  Ok(HttpResponse::Ok().finish())
+}
+
+async fn handle_peer_stopped(
+  _peer: Peer,
+  _announce_data: AnnounceRequest,
+) -> Result<HttpResponse, APIError> {
+  Ok(HttpResponse::Ok().finish())
+}
+
+async fn handle_peer_completed(
+  _peer: Peer,
+  _announce_data: AnnounceRequest,
+) -> Result<HttpResponse, APIError> {
+  Ok(HttpResponse::Ok().finish())
 }

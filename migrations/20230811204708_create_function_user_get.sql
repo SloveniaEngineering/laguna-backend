@@ -1,0 +1,14 @@
+CREATE OR REPLACE FUNCTION user_get (
+    IN UUID
+)
+RETURNS TABLE (LIKE "User")
+IMMUTABLE
+STRICT
+PARALLEL SAFE
+ROWS 1
+LANGUAGE SQL
+AS $body$
+    SELECT *
+    FROM "User"
+    WHERE id = $1;
+$body$;

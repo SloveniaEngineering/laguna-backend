@@ -58,93 +58,54 @@ use crate::error::{user::UserError, APIError};
 /// |400 Bad Request|Last login didnt due to invalid input data|
 /// |401 Unauthorized|Invalid password/email/username|
 pub async fn login(
-    login_dto: Json<LoginDTO>,
-    pool: web::Data<PgPool>,
-    signer: web::Data<TokenSigner<UserDTO, Hs256>>,
+  login_dto: Json<LoginDTO>,
+  pool: web::Data<PgPool>,
+  signer: web::Data<TokenSigner<UserDTO, Hs256>>,
 ) -> Result<HttpResponse, APIError> {
-    let fetched_user = sqlx::query_as!(
-        User,
-        r#"
-        SELECT id, 
-               username, 
-               email, 
-               password, 
-               first_login, 
-               last_login, 
-               avatar_url,
-               salt,
-               role AS "role: _",
-               behaviour AS "behaviour: _",
-               is_active,
-               has_verified_email,
-               is_history_private,
-               is_profile_private
-        FROM "User" WHERE username = $1 OR email = $1
-        "#,
-        &login_dto.username_or_email
-    )
+  let user = sqlx::query_as::<_, User>("SELECT * FROM user_lookup($1, $1)")
+    .bind(&login_dto.username_or_email)
     .fetch_optional(pool.get_ref())
     .await?
-    .map(UserSafe::from);
+    .map(UserSafe::from)
+    .ok_or_else(|| UserError::DoesNotExist)?;
 
-    if let Some(logged_user) = fetched_user {
-        let argon_context = Argon2::new(
-            Algorithm::Argon2id,
-            Version::V0x13,
-            ParamsBuilder::new()
-                .p_cost(1)
-                .m_cost(12288)
-                .t_cost(3)
-                .build()
-                .unwrap(),
-        );
-        let password_hash = PasswordHash::new(logged_user.password.expose_secret()).unwrap();
-        if let Ok(_) = argon_context.verify_password(login_dto.password.as_bytes(), &password_hash)
-        {
-            // Logged user has been updated, we need to return the updated user.
-            let user = sqlx::query_as!(
-                User,
-                r#"
-                UPDATE "User"
-                SET last_login = $1
-                WHERE id = $2
-                RETURNING id, 
-                          username, 
-                          email, 
-                          password, 
-                          first_login, 
-                          last_login, 
-                          avatar_url,
-                          salt,
-                          role AS "role: _",
-                          behaviour AS "behaviour: _",
-                          is_active,
-                          has_verified_email,
-                          is_history_private,
-                          is_profile_private
-            "#,
-                Utc::now(),
-                logged_user.id
-            )
-            .fetch_optional(pool.get_ref())
-            .await?
-            .map(UserSafe::from)
-            .map(UserDTO::from)
-            .ok_or_else(|| UserError::DidntUpdate)?;
-            return Ok(HttpResponse::Ok()
-                // TODO: get rid of clones
-                .append_header((
-                    ACCESS_TOKEN_HEADER_NAME,
-                    signer.create_access_header_value(&user.clone().into())?,
-                ))
-                .append_header((
-                    REFRESH_TOKEN_HEADER_NAME,
-                    signer.create_refresh_header_value(&user.clone().into())?,
-                ))
-                .json(user));
-        }
-    }
-
+  let argon_context = Argon2::new(
+    Algorithm::Argon2id,
+    Version::V0x13,
+    ParamsBuilder::new()
+      .p_cost(1)
+      .m_cost(12288)
+      .t_cost(3)
+      .build()
+      .unwrap(),
+  );
+  let password_hash = PasswordHash::new(user.password.expose_secret()).unwrap();
+  if let Err(_) = argon_context.verify_password(login_dto.password.as_bytes(), &password_hash) {
     // SECURITY: Don't report "Password" or "Username" invalid to avoid brute-force attacks.
-    Ok(HttpResponse::Unauthorized().finish())
+    return Ok(HttpResponse::Unauthorized().finish());
+  }
+  // Logged user has been updated, we need to return the updated user.
+  // TODO(kenpaicat): This is fine, UTC stamp on backend recieve is fine.
+  //                  But we probably should do this on INSERT TRIGGER or as DEFAULT on table.
+  let user = sqlx::query_as::<_, User>("SELECT * FROM user_patch_login($1, $2)")
+    .bind(user.id)
+    .bind(Utc::now())
+    .fetch_optional(pool.get_ref())
+    .await?
+    .map(UserSafe::from)
+    .map(UserDTO::from)
+    .ok_or_else(|| UserError::DidntUpdate)?;
+  Ok(
+    HttpResponse::Ok()
+      // TODO: get rid of clones
+      .append_header((
+        ACCESS_TOKEN_HEADER_NAME,
+        signer.create_access_header_value(&user.clone().into())?,
+      ))
+      .append_header((
+        REFRESH_TOKEN_HEADER_NAME,
+        signer.create_refresh_header_value(&user.clone().into())?,
+      ))
+      .json(user),
+  )
 }

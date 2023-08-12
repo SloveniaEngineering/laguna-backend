@@ -1,37 +1,39 @@
 use actix_web::http::header::ContentType;
 use actix_web::{body::BoxBody, http::StatusCode};
 use actix_web::{HttpResponse, ResponseError};
-use derive_more::Display;
 use serde::{Deserialize, Serialize};
-pub use serde_bencode::Error as BencodeError;
+use std::fmt;
+use std::fmt::Formatter;
 
-#[derive(Debug, PartialEq, Eq, Display, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TorrentError {
-    DoesNotExist,
-    BencodeError(String),
-    DidntCreate,
-    DidntUpdate,
+  DoesNotExist,
+  DidntCreate,
+  DidntUpdate,
 }
 
-impl From<BencodeError> for TorrentError {
-    fn from(value: BencodeError) -> Self {
-        Self::BencodeError(value.to_string())
+impl fmt::Display for TorrentError {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    match self {
+      Self::DoesNotExist => f.write_str("Torrent not found."),
+      Self::DidntCreate => f.write_str("Torrent not created."),
+      Self::DidntUpdate => f.write_str("Torrent not updated."),
     }
+  }
 }
 
 impl ResponseError for TorrentError {
-    fn status_code(&self) -> StatusCode {
-        match self {
-            Self::DoesNotExist => StatusCode::BAD_REQUEST,
-            Self::BencodeError(_) => StatusCode::BAD_REQUEST,
-            Self::DidntCreate => StatusCode::BAD_REQUEST,
-            Self::DidntUpdate => StatusCode::BAD_REQUEST,
-        }
+  fn status_code(&self) -> StatusCode {
+    match self {
+      Self::DoesNotExist => StatusCode::BAD_REQUEST,
+      Self::DidntCreate => StatusCode::BAD_REQUEST,
+      Self::DidntUpdate => StatusCode::BAD_REQUEST,
     }
+  }
 
-    fn error_response(&self) -> HttpResponse<BoxBody> {
-        HttpResponse::build(self.status_code())
-            .content_type(ContentType::plaintext())
-            .body(self.to_string())
-    }
+  fn error_response(&self) -> HttpResponse<BoxBody> {
+    HttpResponse::build(self.status_code())
+      .content_type(ContentType::plaintext())
+      .body(self.to_string())
+  }
 }
