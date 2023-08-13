@@ -18,7 +18,7 @@ async fn test_get_torrent() {}
 #[ignore = "Not yet implemented fully"]
 #[cfg(not(tarpaulin))]
 async fn test_put_torrent(pool: PgPool) -> sqlx::Result<()> {
-  let app = common::setup(&pool).await;
+  let app = common::setup_test(&pool).await;
   let (_, _user_dto, access_token, refresh_token) = common::new_user(&app).await;
   let mut hmp = HeaderMap::new();
   // hmp.append(HeaderName::from_static("X-Access-Token"), access_token);

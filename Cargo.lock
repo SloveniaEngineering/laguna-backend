@@ -436,6 +436,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-trait"
+version = "0.1.73"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc00ceb34980c03614e35a3a4e218276a0a824e911d07651cd0d858a51e8c0f0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.28",
+]
+
+[[package]]
 name = "atoi"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -563,6 +574,42 @@ checksum = "238e4886760d98c4f899360c834fa93e62cf7f721ac3c2da375cbdf4b8679aae"
 dependencies = [
  "bytes",
 ]
+
+[[package]]
+name = "cached"
+version = "0.44.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b195e4fbc4b6862bbd065b991a34750399c119797efff72492f28a5864de8700"
+dependencies = [
+ "async-trait",
+ "cached_proc_macro",
+ "cached_proc_macro_types",
+ "futures",
+ "hashbrown 0.13.2",
+ "instant",
+ "once_cell",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "cached_proc_macro"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b48814962d2fd604c50d2b9433c2a41a0ab567779ee2c02f7fba6eca1221f082"
+dependencies = [
+ "cached_proc_macro_types",
+ "darling 0.14.4",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "cached_proc_macro_types"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a4f925191b4367301851c6d99b09890311d74b0d43f274c0b34c86d308a3663"
 
 [[package]]
 name = "cc"
@@ -1201,6 +1248,12 @@ checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 
 [[package]]
 name = "hashbrown"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
+
+[[package]]
+name = "hashbrown"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c6201b9ff9fd90a5a3bac2e56a830d0caa509576f0e503818ee82c181b3437a"
@@ -1363,6 +1416,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "instant"
+version = "0.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
+dependencies = [
+ "cfg-if",
+]
+
+[[package]]
 name = "ioe"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1453,6 +1515,7 @@ version = "0.1.0"
 dependencies = [
  "actix-cors",
  "actix-jwt-auth-middleware",
+ "actix-service",
  "actix-settings",
  "actix-web",
  "argon2",
@@ -1461,7 +1524,6 @@ dependencies = [
  "digest",
  "env_logger",
  "jwt-compact",
- "laguna-backend-config",
  "laguna-backend-internal",
  "log",
  "secrecy",
@@ -1491,6 +1553,7 @@ dependencies = [
  "laguna-backend-dto",
  "laguna-backend-middleware",
  "laguna-backend-model",
+ "laguna-backend-setup",
  "laguna-backend-tracker",
  "laguna-backend-tracker-common",
  "log",
@@ -1539,9 +1602,11 @@ name = "laguna-backend-internal"
 version = "0.1.0"
 dependencies = [
  "laguna-backend-api",
+ "laguna-backend-config",
  "laguna-backend-dto",
  "laguna-backend-middleware",
  "laguna-backend-model",
+ "laguna-backend-setup",
  "laguna-backend-tracker",
 ]
 
@@ -1591,6 +1656,32 @@ dependencies = [
  "sqlx",
  "uuid",
  "validator",
+]
+
+[[package]]
+name = "laguna-backend-setup"
+version = "0.1.0"
+dependencies = [
+ "actix-cors",
+ "actix-http",
+ "actix-jwt-auth-middleware",
+ "actix-service",
+ "actix-settings",
+ "actix-web",
+ "argon2",
+ "cached",
+ "chrono",
+ "const_format",
+ "env_logger",
+ "jwt-compact",
+ "laguna-backend-api",
+ "laguna-backend-config",
+ "laguna-backend-dto",
+ "laguna-backend-middleware",
+ "laguna-backend-model",
+ "rustversion",
+ "secrecy",
+ "sqlx",
 ]
 
 [[package]]
@@ -2840,7 +2931,19 @@ dependencies = [
  "pin-project-lite",
  "signal-hook-registry",
  "socket2 0.5.3",
+ "tokio-macros",
  "windows-sys",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "630bdcf245f78637c13ec01ffae6187cca34625e8c63150d424b59e55af2675e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.28",
 ]
 
 [[package]]

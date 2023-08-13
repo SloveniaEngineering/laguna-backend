@@ -29,7 +29,7 @@ use crate::error::{torrent::TorrentError, APIError};
 /// #### Body
 /// ```json
 /// {
-///   "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
+///   "info_hash": "aae8b4b6a0b9b6b5b4b6b5b4b6b5b4b6b5b4b6b5",
 ///   "announce_url": "http://127.0.0.1:6969/api/torrent/announce",
 ///   "length": 100,
 ///   "title": "TEST (2020)",
@@ -39,7 +39,6 @@ use crate::error::{torrent::TorrentError, APIError};
 ///   "seed_count": 0,
 ///   "completed_count": 0,
 ///   "speedlevel": "Lowspeed",
-///   "info_hash": "aae8b4b6a0b9b6b5b4b6b5b4b6b5b4b6b5b4b6b5",
 ///   "uploaded_at": "2023-07-10T12:42:32.396647Z",
 ///   "uploaded_by": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
 ///   "modded_at": null,
@@ -69,7 +68,7 @@ pub async fn torrent_get(
 /// ### Request
 /// ```sh
 /// curl -X PATCH \
-///      -i 'http://127.0.0.1:6969/api/torrent/' \
+///      -i 'http://127.0.0.1:6969/api/torrent' \
 ///      -H 'Content-Type: application/json' \
 ///      -H 'X-Access-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg5OTMwNTksImlhdCI6MTY4ODk5Mjk5OSwiaWQiOiIwMGYwNDVhYy0xZjRkLTQ2MDEtYjJlMy04NzQ3NmRjNDYyZTYiLCJ1c2VybmFtZSI6InRlc3QiLCJmaXJzdF9sb2dpbiI6IjIwMjMtMDctMTBUMTI6NDI6MzIuMzk2NjQ3WiIsImxhc3RfbG9naW4iOiIyMDIzLTA3LTEwVDEyOjQzOjE5LjIxNjA0N1oiLCJhdmF0YXJfdXJsIjpudWxsLCJyb2xlIjoiTm9ybWllIiwiYmVoYXZpb3VyIjoiTHVya2VyIiwiaXNfYWN0aXZlIjp0cnVlLCJoYXNfdmVyaWZpZWRfZW1haWwiOmZhbHNlLCJpc19oaXN0b3J5X3ByaXZhdGUiOnRydWUsImlzX3Byb2ZpbGVfcHJpdmF0ZSI6dHJ1ZX0.izClLn6kANl2kpIv2QqzmKJy7tmpNZqKKvcd4RoGW_c' \
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4' \
@@ -85,7 +84,7 @@ pub async fn torrent_get(
 /// #### Body
 /// ```json
 /// {
-///   "id": "00f045ac-1f4d-4601-b2e3-87476dc462e6",
+///   "info_hash": "aae8b4b6a0b9b6b5b4b6b5b4b6b5b4b6b5b4b6b5",
 ///   "announce_url": "http://127.0.0.1:6969/api/torrent/announce",
 ///   "length": 100,
 ///   "title": "Test, the movie (2020)",
@@ -95,7 +94,6 @@ pub async fn torrent_get(
 ///   "seed_count": 0,
 ///   "completed_count": 0,
 ///   "speedlevel": "Lowspeed",
-///   "info_hash": "aae8b4b6a0b9b6b5b4b6b5b4b6b5b4b6b5b4b6b5",
 ///   "uploaded_at": "2023-07-10T12:42:32.396647Z",
 ///   "uploaded_by": "ffff45ac-1f4d-46f1-b2e3-87476dc462e6",
 ///   "modded_at": null,

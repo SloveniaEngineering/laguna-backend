@@ -9,7 +9,7 @@ mod common;
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_get_me(pool: PgPool) -> sqlx::Result<()> {
-  let app = common::setup(&pool).await;
+  let app = common::setup_test(&pool).await;
   let (_, user_dto, access_token, refresh_token) = common::new_user(&app).await;
   let get_me_res = common::as_logged_in(
     access_token,
@@ -26,7 +26,7 @@ async fn test_get_me(pool: PgPool) -> sqlx::Result<()> {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_get_user(pool: PgPool) -> sqlx::Result<()> {
-  let app = common::setup(&pool).await;
+  let app = common::setup_test(&pool).await;
   let (_, user_dto, access_token, refresh_token) = common::new_user(&app).await;
   let get_me_res = common::as_logged_in(
     access_token,
@@ -43,7 +43,7 @@ async fn test_get_user(pool: PgPool) -> sqlx::Result<()> {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_delete_me(pool: PgPool) -> sqlx::Result<()> {
-  let app = common::setup(&pool).await;
+  let app = common::setup_test(&pool).await;
   let (_, _, access_token, refresh_token) = common::new_user(&app).await;
   let delete_me_res = common::as_logged_in(
     access_token,
@@ -59,7 +59,7 @@ async fn test_delete_me(pool: PgPool) -> sqlx::Result<()> {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_delete_user_by_normie(pool: PgPool) -> sqlx::Result<()> {
-  let app = common::setup(&pool).await;
+  let app = common::setup_test(&pool).await;
   let (_, user_dto, access_token, refresh_token) = common::new_user(&app).await;
   let delete_me_res = common::as_logged_in(
     access_token,
@@ -77,7 +77,7 @@ async fn test_delete_user_by_normie(pool: PgPool) -> sqlx::Result<()> {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_delete_user_by_verified_user(pool: PgPool) -> sqlx::Result<()> {
-  let app = common::setup(&pool).await;
+  let app = common::setup_test(&pool).await;
   let (_, user_dto, access_token, refresh_token) = common::new_verified_user(&app, &pool).await;
   let delete_me_res = common::as_logged_in(
     access_token,
@@ -95,7 +95,7 @@ async fn test_delete_user_by_verified_user(pool: PgPool) -> sqlx::Result<()> {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_delete_user_by_mod(pool: PgPool) -> sqlx::Result<()> {
-  let app = common::setup(&pool).await;
+  let app = common::setup_test(&pool).await;
   let (_, user_dto, access_token, refresh_token) = common::new_mod_user(&app, &pool).await;
   let delete_me_res = common::as_logged_in(
     access_token,
@@ -113,7 +113,7 @@ async fn test_delete_user_by_mod(pool: PgPool) -> sqlx::Result<()> {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_delete_user_by_admin(pool: PgPool) -> sqlx::Result<()> {
-  let app = common::setup(&pool).await;
+  let app = common::setup_test(&pool).await;
   let (_, user_dto, access_token, refresh_token) = common::new_admin_user(&app, &pool).await;
   let delete_me_res = common::as_logged_in(
     access_token,
@@ -129,7 +129,7 @@ async fn test_delete_user_by_admin(pool: PgPool) -> sqlx::Result<()> {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_delete_inexistant_user(pool: PgPool) -> sqlx::Result<()> {
-  let app = common::setup(&pool).await;
+  let app = common::setup_test(&pool).await;
   let (_, _, access_token, refresh_token) = common::new_admin_user(&app, &pool).await;
   let delete_me_res = common::as_logged_in(
     access_token,
@@ -145,7 +145,7 @@ async fn test_delete_inexistant_user(pool: PgPool) -> sqlx::Result<()> {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_get_inexistant_user(pool: PgPool) -> sqlx::Result<()> {
-  let app = common::setup(&pool).await;
+  let app = common::setup_test(&pool).await;
   let (_, _, access_token, refresh_token) = common::new_user(&app).await;
   let get_me_res = common::as_logged_in(
     access_token,
@@ -161,7 +161,7 @@ async fn test_get_inexistant_user(pool: PgPool) -> sqlx::Result<()> {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_patch_user(pool: PgPool) -> sqlx::Result<()> {
-  let app = common::setup(&pool).await;
+  let app = common::setup_test(&pool).await;
   let (_, user_dto, access_token, refresh_token) = common::new_user(&app).await;
   let get_me_res = common::as_logged_in(
     access_token,
@@ -191,7 +191,7 @@ async fn test_patch_user(pool: PgPool) -> sqlx::Result<()> {
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_patch_user_remove_avatar_url(pool: PgPool) -> sqlx::Result<()> {
-  let app = common::setup(&pool).await;
+  let app = common::setup_test(&pool).await;
   let (_, user_dto, access_token, refresh_token) = common::new_user(&app).await;
   let get_me_res = common::as_logged_in(
     access_token.clone(),

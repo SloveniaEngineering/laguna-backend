@@ -47,7 +47,7 @@ serde_bencode = "0.2.3"
 laguna-backend-dto = { path = "../laguna-backend-dto" }
 laguna-backend-tracker = { path = "../laguna-backend-tracker" }
 laguna-backend-tracker-common = { path = "../laguna-backend-tracker-common" }
-laguna_config = { package = "laguna-backend-config", path = "../laguna-backend-config" }
+laguna-backend-config = { path = "../laguna-backend-config" }
 secrecy = { version = "*", features = ["serde"] }
 
 [dev-dependencies]
@@ -59,6 +59,7 @@ fake = { version = "2.6.1" }
 # See: https://github.com/cksac/fake-rs/issues/53
 laguna-backend-model = { path = "../laguna-backend-model", features = ["testx"] }
 laguna-backend-dto = { path = "../laguna-backend-dto", features = ["testx"] }
+laguna-backend-setup = { path = "../laguna-backend-setup" }
 
 # CLI for sqlx.
 # More: https://github.com/launchbadge/sqlx/blob/main/sqlx-cli/README.md

@@ -234,7 +234,7 @@ pub async fn user_patch(
 ///   {
 ///     "id": "<20 bytes of peer_id>",
 ///     "md5_hash": "aae0bfbf0b0b0b0b0b0b0b0b0b0b0b0b", // md5
-///     "info_hash": "afaf9284efc8fae8f8a8f8a8f8a8f8a8", // sha-256
+///     "info_hash": "afaf9284efc8fae8f8a8f8a8f8a8f8a8", // sha-256 (40 bytes)
 ///     "ip": "127.0.0.1",
 ///     "port": "45701",
 ///     "agent": "curl/7.75.0",

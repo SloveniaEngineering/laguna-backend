@@ -40,10 +40,10 @@ chrono = { version = "*", features = ["serde"] }
 uuid = { version = "*", features = ["serde", "v4", "fast-rng"] }
 digest = { version = "0.10.7", default-features = false }
 laguna = { package = "laguna-backend-internal", path = "crates/laguna-backend-internal" }
-laguna_config = { package = "laguna-backend-config", path = "crates/laguna-backend-config" }
 actix-cors = "0.6.4"
 actix-settings = "*"
 const_format = "*"
+actix-service = "*"
 secrecy = { version = "*", features = ["serde"] }
 
 [dev-dependencies]

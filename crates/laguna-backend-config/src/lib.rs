@@ -6,18 +6,12 @@ use serde::{Deserialize, Serialize};
 use secrecy::{Secret, ExposeSecret};
 
 pub const WORKSPACE_ROOT: &str = env!("WORKSPACE_ROOT");
-
-pub const CONFIG_DIR: &str = formatcp!("{}/configs", WORKSPACE_ROOT);
+pub const LAGUNA_CONFIG: &str = formatcp!("{}/Laguna.toml", WORKSPACE_ROOT);
 pub const MIGRATIONS_DIR: &str = formatcp!("{}/migrations", WORKSPACE_ROOT);
-
-pub const CONFIG_PROD_NAME: &str = "prod.toml";
-pub const CONFIG_DEV_NAME: &str = "dev.toml";
-pub const CONFIG_DEV: &str = formatcp!("{}/{}", CONFIG_DIR, CONFIG_DEV_NAME);
-pub const CONFIG_PROD: &str = formatcp!("{}/{}", CONFIG_DIR, CONFIG_PROD_NAME);
 
 pub type Settings = BasicSettings<ApplicationSettings>;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct ApplicationSettings {
     pub database: DatabaseSettings,
@@ -25,7 +19,7 @@ pub struct ApplicationSettings {
     pub frontend: FrontendSettings,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct AuthSettings {
     pub secret_key: Secret<String>,
@@ -34,7 +28,7 @@ pub struct AuthSettings {
     pub refresh_token_lifetime_seconds: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct DatabaseSettings {
     pub proto: String,
@@ -66,7 +60,7 @@ impl DatabaseSettings {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct FrontendSettings {
     pub host: String,
@@ -116,5 +110,22 @@ pub fn make_overridable_with_env_vars(settings: &mut Settings) {
     Settings::override_field_with_env_var(&mut settings.application.frontend.port, "APPLICATION_FRONTEND_PORT").expect("FRONTEND_PORT not specified");
     if let Ok(database_url) = env::var("DATABASE_URL") {
         settings.application.database = DatabaseSettings::from_url(database_url);
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_database_url_from_url() {
+        let db_settings = DatabaseSettings::from_url(String::from("postgres://postgres:postgres@127.0.0.1:5432/laguna_dev_db"));
+        assert_eq!(db_settings.proto, String::from("postgres"));
+        assert_eq!(db_settings.host.expose_secret().to_string(), String::from("127.0.0.1"));
+        assert_eq!(db_settings.port, 5432);
+        assert_eq!(db_settings.username, String::from("postgres"));
+        assert_eq!(db_settings.password.expose_secret().to_string(), String::from("postgres"));
+        assert_eq!(db_settings.name, String::from("laguna_dev_db"));
     }
 }

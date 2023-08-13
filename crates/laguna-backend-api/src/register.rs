@@ -2,7 +2,7 @@ use actix_web::{web, HttpResponse};
 use actix_web_validator::Json;
 use argon2::{
   password_hash::{rand_core::OsRng, SaltString},
-  Algorithm, Argon2, ParamsBuilder, PasswordHasher, Version,
+  Argon2, PasswordHasher,
 };
 
 use laguna_backend_dto::register::RegisterDTO;
@@ -37,6 +37,7 @@ use crate::error::{user::UserError, APIError};
 pub async fn register(
   register_dto: Json<RegisterDTO>,
   pool: web::Data<PgPool>,
+  argon_context: web::Data<Argon2<'static>>,
 ) -> Result<HttpResponse, APIError> {
   // In own scope for faster drop of fetched_user, because we don't need it much.
   let register_dto = register_dto.into_inner();
@@ -54,18 +55,6 @@ pub async fn register(
     }
   }
 
-  // https://github.com/SloveniaEngineering/laguna-backend/issues/54#issuecomment-1645126931
-  let argon_context = Argon2::new(
-    Algorithm::Argon2id,
-    Version::V0x13,
-    ParamsBuilder::new()
-      .p_cost(1)
-      .m_cost(12288) // 12MiB in kibibytes
-      .t_cost(3)
-      .build()
-      .unwrap(),
-  );
-
   let salt = SaltString::generate(&mut OsRng);
   let password_hash = argon_context
     .hash_password(register_dto.password.as_bytes(), salt.as_salt())
@@ -81,5 +70,6 @@ pub async fn register(
     .fetch_optional(pool.get_ref())
     .await?
     .ok_or_else(|| UserError::DidntCreate)?;
+
   Ok(HttpResponse::Ok().finish())
 }
