@@ -78,7 +78,6 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
 
   let config_fn = move |service_config: &mut ServiceConfig| {
     service_config
-      //.app_data(web::Data::new(pool_clone))
       .app_data(web::Data::new(argon_context.clone()))
       // AuthenticationService by default doesnt include token_signer into app_data, hence we get it from setup_authority!() which is kinda hacky.
       .app_data(web::Data::new(token_signer.clone()))
