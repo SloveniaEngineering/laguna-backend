@@ -15,7 +15,6 @@ documentation = "https://sloveniaengineering.github.io/laguna-backend"
 
 [workspace]
 members = ["crates/*"]
-exclude = ["crates/laguna-backend-config"]
 
 [dependencies]
 actix-web = "4"

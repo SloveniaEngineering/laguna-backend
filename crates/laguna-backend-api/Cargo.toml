@@ -13,6 +13,7 @@ description = "Laguna backend source tree"
 repository = "https://github.com/SloveniaEngineering/laguna-backend"
 documentation = "https://sloveniaengineering.github.io/laguna-backend"
 
+
 [dependencies]
 laguna-backend-model = { path = "../laguna-backend-model" }
 laguna-backend-middleware = { path = "../laguna-backend-middleware" }
