@@ -7,17 +7,19 @@ use std::fmt::Formatter;
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TorrentError {
-  DoesNotExist,
+  DidntFind,
   DidntCreate,
   DidntUpdate,
+  Invalid,
 }
 
 impl fmt::Display for TorrentError {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
-      Self::DoesNotExist => f.write_str("Torrent not found."),
-      Self::DidntCreate => f.write_str("Torrent not created."),
-      Self::DidntUpdate => f.write_str("Torrent not updated."),
+      Self::DidntFind => f.write_str("Torrent ne obstaja."),
+      Self::DidntCreate => f.write_str("Torrent ni bil ustvarjen."),
+      Self::DidntUpdate => f.write_str("Torrent ni bil posodobljen."),
+      Self::Invalid => f.write_str("Torrent ni v pravilni obliki.")
     }
   }
 }
@@ -25,9 +27,10 @@ impl fmt::Display for TorrentError {
 impl ResponseError for TorrentError {
   fn status_code(&self) -> StatusCode {
     match self {
-      Self::DoesNotExist => StatusCode::BAD_REQUEST,
+      Self::DidntFind => StatusCode::BAD_REQUEST,
       Self::DidntCreate => StatusCode::BAD_REQUEST,
       Self::DidntUpdate => StatusCode::BAD_REQUEST,
+      Self::Invalid => StatusCode::UNPROCESSABLE_ENTITY,
     }
   }
 

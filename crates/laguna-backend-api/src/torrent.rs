@@ -59,7 +59,7 @@ pub async fn torrent_get(
     .bind(info_hash.into_inner())
     .fetch_optional(pool.get_ref())
     .await?
-    .ok_or_else(|| TorrentError::DoesNotExist)?;
+    .ok_or_else(|| TorrentError::DidntFind)?;
   Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent)))
 }
 
@@ -184,5 +184,5 @@ pub async fn torrent_put(
 
     return Ok(HttpResponse::Ok().finish());
   }
-  Ok(HttpResponse::UnprocessableEntity().finish())
+  Err(TorrentError::Invalid.into())
 }

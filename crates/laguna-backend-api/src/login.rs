@@ -17,7 +17,7 @@ use crate::error::{user::UserError, APIError};
 
 /// `POST /api/user/auth/login`
 /// Signs in existing user.
-/// For registering see [`register`](login).
+/// For registering see [`register`](crate::register::register).
 /// # Example
 /// ### Request
 /// ```sh
@@ -68,12 +68,13 @@ pub async fn login(
     .fetch_optional(pool.get_ref())
     .await?
     .map(UserSafe::from)
-    .ok_or_else(|| UserError::DoesNotExist)?;
+    .ok_or_else(|| UserError::InvalidCredentials)?;
 
   let password_hash = PasswordHash::new(user.password.expose_secret()).unwrap();
   if let Err(_) = argon_context.verify_password(login_dto.password.as_bytes(), &password_hash) {
-    // SECURITY: Don't report "Password" or "Username" invalid to avoid brute-force attacks.
-    return Ok(HttpResponse::Unauthorized().finish());
+    // SECURITY: Don't report only "Password" or "Username" invalid to avoid brute-force attacks.
+    return Err(UserError::InvalidCredentials.into());
+    // return Ok(HttpResponse::Unauthorized().body("Uporabniško ime ali geslo napačno"));
   }
   // Logged user has been updated, we need to return the updated user.
   // TODO(kenpaicat): This is fine, UTC stamp on backend recieve is fine.

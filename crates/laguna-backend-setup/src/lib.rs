@@ -18,13 +18,9 @@ use laguna_backend_api::login::login;
 use laguna_backend_api::misc::{get_app_info, healthcheck};
 use laguna_backend_api::register::register;
 use laguna_backend_api::torrent::{torrent_get, torrent_patch, torrent_put};
-use laguna_backend_api::user::{
-  user_delete, user_get, user_me_delete, user_me_get, user_patch, user_peers_get,
-};
+use laguna_backend_api::user::{user_get, user_me_delete, user_me_get, user_patch, user_peers_get};
 use laguna_backend_dto::meta::AppInfoDTO;
 use laguna_backend_dto::user::UserDTO;
-use laguna_backend_middleware::auth::AuthorizationMiddlewareFactory;
-use laguna_backend_model::role::Role;
 use laguna_config::make_overridable_with_env_vars;
 use laguna_config::{Settings, LAGUNA_CONFIG};
 use secrecy::ExposeSecret;
@@ -111,15 +107,6 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
               .route("/me", web::get().to(user_me_get))
               .route("/{id}", web::get().to(user_get))
               .route("/me", web::delete().to(user_me_delete))
-              .route(
-                "/{id}",
-                web::delete()
-                  .to(user_delete)
-                  .wrap(AuthorizationMiddlewareFactory::new(
-                    secret_key.clone(),
-                    Role::Admin,
-                  )),
-              )
               .route("/{id}/peers", web::get().to(user_peers_get)),
           )
           .service(
