@@ -18,7 +18,9 @@ pub enum UserError {
 impl fmt::Display for UserError {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
-      Self::InvalidCredentials => f.write_str("Uporabniško ime, elektronski naslov ali geslo napačno."),
+      Self::InvalidCredentials => {
+        f.write_str("Uporabniško ime, elektronski naslov ali geslo napačno.")
+      },
       Self::ExclusiveAccess => f.write_str("Samo za ene oči."),
       Self::DidntFind => f.write_str("Zahtevan uporabnik ne obstaja."),
       Self::DidntCreate => f.write_str("Uporabnik ni bil ustvarjen."),

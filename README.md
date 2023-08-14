@@ -1,5 +1,7 @@
-<h1 align="center">Laguna backend</h1>
-<hr>
+<h2 align="center">
+    Laguna <br>
+    backend
+</h2>
 
 <p align="center">
     <img src="https://github.com/SloveniaEngineering/laguna-backend/actions/workflows/rust.yml/badge.svg" alt="CI status">

@@ -19,13 +19,13 @@ use laguna_backend_api::misc::{get_app_info, healthcheck};
 use laguna_backend_api::register::register;
 use laguna_backend_api::torrent::{torrent_get, torrent_patch, torrent_put};
 use laguna_backend_api::user::{user_get, user_me_delete, user_me_get, user_patch, user_peers_get};
-use laguna_backend_dto::meta::AppInfoDTO;
+
 use laguna_backend_dto::user::UserDTO;
 use laguna_config::make_overridable_with_env_vars;
 use laguna_config::{Settings, LAGUNA_CONFIG};
 use secrecy::ExposeSecret;
 use sqlx::postgres::{PgPool, PgPoolOptions};
-use std::env;
+
 use std::sync::Once;
 
 static ENV_LOGGER_INIT: Once = Once::new();
@@ -70,24 +70,11 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
   let secret_key = setup_secret_key(&settings);
   let (token_signer, authority) = crate::setup_authority!(secret_key, settings);
   let argon_context = setup_argon_context(&settings);
-  // let pool_clone = pool.clone();
-
   let config_fn = move |service_config: &mut ServiceConfig| {
     service_config
       .app_data(web::Data::new(argon_context.clone()))
       // AuthenticationService by default doesnt include token_signer into app_data, hence we get it from setup_authority!() which is kinda hacky.
       .app_data(web::Data::new(token_signer.clone()))
-      .app_data(web::Data::new(AppInfoDTO {
-        version: env::var("CARGO_PKG_VERSION").expect("CARGO_PKG_VERSION not set"),
-        authors: env::var("CARGO_PKG_AUTHORS")
-          .expect("CARGO_PKG_AUTHORS not set")
-          .split(":")
-          .map(ToString::to_string)
-          .collect::<Vec<String>>(),
-        license: env::var("CARGO_PKG_LICENSE").expect("CARGO_PKG_LICENSE not set"),
-        description: env::var("CARGO_PKG_DESCRIPTION").expect("CARGO_PKG_DESCRIPTION not set"),
-        repository: env::var("CARGO_PKG_REPOSITORY").expect("CARGO_PKG_REPOSITORY not set"),
-      }))
       .service(
         web::scope("/api/user/auth")
           .route("/register", web::post().to(register))
