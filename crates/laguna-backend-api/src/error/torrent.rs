@@ -19,7 +19,7 @@ impl fmt::Display for TorrentError {
       Self::DidntFind => f.write_str("Torrent ne obstaja."),
       Self::DidntCreate => f.write_str("Torrent ni bil ustvarjen."),
       Self::DidntUpdate => f.write_str("Torrent ni bil posodobljen."),
-      Self::Invalid => f.write_str("Torrent ni v pravilni obliki.")
+      Self::Invalid => f.write_str("Torrent ni v pravilni obliki."),
     }
   }
 }

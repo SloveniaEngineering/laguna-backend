@@ -3,7 +3,6 @@ use actix_web::test::{read_body_json, TestRequest};
 
 use laguna_backend_dto::user::{UserDTO, UserPatchDTO};
 use sqlx::PgPool;
-use uuid::Uuid;
 
 mod common;
 
@@ -56,7 +55,6 @@ async fn test_delete_me(pool: PgPool) -> sqlx::Result<()> {
   assert_eq!(delete_me_res.status(), StatusCode::OK);
   Ok(())
 }
-
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_patch_user(pool: PgPool) -> sqlx::Result<()> {
