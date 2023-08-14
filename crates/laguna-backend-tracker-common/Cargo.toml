@@ -1,0 +1,34 @@
+[package]
+name = "laguna-backend-tracker-common"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+readme = "README.md"
+authors = [
+    "kenpaicat <133065911+kenpaicat@users.noreply.github.com>",
+    "kozabrada123 <59031733+kozabrada123@users.noreply.github.com>",
+    "LinuxHeki <linuxheki@gmail.com>",
+]
+description = "Laguna backend source tree"
+repository = "https://github.com/SloveniaEngineering/laguna-backend"
+documentation = "https://sloveniaengineering.github.io/laguna-backend"
+
+
+[dependencies]
+serde = { version = "*", features = ["derive"] }
+actix-web = "4"
+serde_bytes = "*"
+serde-byte-array = "0.1.2"
+serde_with = "3.2.0"
+actix = "*"
+sqlx = { version="0.7.1", features = [
+    "runtime-tokio",
+    "tls-rustls",
+    "postgres",
+    "uuid",
+    "ipnetwork",
+    "migrate",
+    "macros",
+    "chrono",
+    "json",
+] }

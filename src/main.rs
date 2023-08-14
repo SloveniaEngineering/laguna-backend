@@ -1,142 +1,43 @@
-use actix_cors::Cors;
+#![doc(html_logo_url = "https://sloveniaengineering.github.io/laguna-backend/logo.png")]
+#![doc(html_favicon_url = "https://sloveniaengineering.github.io/laguna-backend/favicon.ico")]
+#![doc(issue_tracker_base_url = "https://github.com/SloveniaEngineering/laguna-backend")]
+#![doc = include_str!("../README.md")]
 
-use actix_jwt_auth_middleware::use_jwt::UseJWTOnApp;
+use actix_settings::ApplySettings;
 
-use actix_jwt_auth_middleware::Authority;
-use actix_jwt_auth_middleware::TokenSigner;
-use actix_web::http::header;
-use actix_web::{middleware, web, App, HttpResponse, HttpServer};
-
-use chrono::Duration;
-use jwt_compact::alg::Hs256;
-use jwt_compact::alg::Hs256Key;
-use jwt_compact::TimeOptions;
-use laguna::api::login::login;
-use laguna::api::misc::get_app_info;
-use laguna::api::register::register;
-
-use laguna::api::torrent::get_torrent;
-use laguna::api::torrent::get_torrent_download;
-use laguna::api::torrent::get_torrent_with_info_hash;
-use laguna::api::torrent::get_torrents_with_filter;
-use laguna::api::torrent::put_torrent;
-use laguna::api::user::delete_me;
-use laguna::api::user::delete_user;
-use laguna::api::user::get_me;
-use laguna::api::user::get_user;
-use laguna::middleware::consts::ACCESS_TOKEN_HEADER_NAME;
-use laguna::middleware::consts::REFRESH_TOKEN_HEADER_NAME;
-use laguna::model::user::UserDTO;
+use actix_web::middleware::Logger;
+use actix_web::web;
+use actix_web::HttpServer;
+use laguna::dto::meta::AppInfoDTO;
+use laguna::setup::get_settings;
 use std::env;
 
-use sqlx::postgres::PgPoolOptions;
+use laguna::setup::setup;
+use laguna::setup::setup_cors;
+use laguna::setup::setup_db;
 
 #[actix_web::main]
 async fn main() -> Result<(), sqlx::Error> {
-    // Logging level from RUST_LOG env variable.
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-
-    // Database connection setup.
-    let pool = PgPoolOptions::new()
-        .max_connections(100)
-        .connect(&env::var("DATABASE_URL").expect("DATABASE_URL not set"))
-        .await?;
-
-    // Run database migrations.
-    sqlx::migrate!("./migrations").run(&pool).await?;
-
-    // Server setup
-    let key = Hs256Key::new("some random shit");
-    let host = env::var("HOST").expect("HOST not specified");
-    let port = env::var("PORT")
-        .expect("PORT not specified")
-        .parse::<u16>()
-        .expect("PORT invalid");
-
-    HttpServer::new(move || {
-        let authority = Authority::<UserDTO, Hs256, _, _>::new()
-            .refresh_authorizer(|| async move { Ok(()) })
-            .enable_header_tokens(true)
-            .access_token_name(ACCESS_TOKEN_HEADER_NAME)
-            .refresh_token_name(REFRESH_TOKEN_HEADER_NAME)
-            .token_signer(Some(
-                TokenSigner::new()
-                    .signing_key(key.clone())
-                    .algorithm(Hs256)
-                    .access_token_lifetime(Duration::days(1))
-                    .refresh_token_lifetime(Duration::days(3))
-                    .time_options(TimeOptions::from_leeway(Duration::days(1)))
-                    .build()
-                    .expect("Cannot create token signer"),
-            ))
-            .verifying_key(key.clone())
-            .build()
-            .expect("Cannot create key authority");
-        let cors = Cors::default()
-            .allowed_origin(
-                format!(
-                    "{}:{}",
-                    env::var("FRONTEND_HOST").expect("FRONTEND_HOST not set"),
-                    env::var("FRONTEND_PORT").expect("FRONTEND_PORT not set")
-                )
-                .as_str(),
-            )
-            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "PATCH"])
-            .allowed_headers(vec![
-                header::ORIGIN,
-                header::CONNECTION,
-                header::ACCEPT,
-                header::CONTENT_TYPE,
-                header::REFERER,
-                header::USER_AGENT,
-                header::HOST,
-                header::ACCEPT_ENCODING,
-                header::ACCEPT_LANGUAGE,
-                header::ACCESS_CONTROL_REQUEST_HEADERS,
-            ])
-            .max_age(3600);
-        App::new()
-            .wrap(middleware::Logger::default())
-            .wrap(cors)
-            .app_data(web::Data::new(pool.clone()))
-            .service(
-                web::scope("/api/user/auth")
-                    .service(register)
-                    .service(login),
-            )
-            .use_jwt(
-                authority,
-                web::scope("/api")
-                    .service(
-                        web::scope("/user")
-                            .service(get_me)
-                            .service(get_user)
-                            .service(
-                                web::scope("/delete")
-                                    .service(delete_me)
-                                    .service(delete_user),
-                            ),
-                    )
-                    .service(web::scope("/misc").service(get_app_info))
-                    .service(
-                        web::scope("/torrent")
-                            .service(web::scope("/download").service(get_torrent_download))
-                            .service(web::scope("/upload").service(put_torrent))
-                            .service(get_torrent_with_info_hash)
-                            .service(get_torrents_with_filter)
-                            .service(get_torrent),
-                    ),
-            )
-            .default_service(web::to(|| HttpResponse::NotFound()))
-    })
-    .bind((host, port))
-    .expect("Cannot bind address")
-    .run()
-    .await
-    .expect("Cannot start server");
-
-    // Is this necessary?
-    // pool.close().await;
-
-    Ok(())
+  HttpServer::new(move || {
+    setup()
+      .wrap(Logger::default())
+      .wrap(setup_cors(&get_settings()))
+      .data_factory(|| async move { setup_db(&get_settings()).await })
+      .app_data(web::Data::new(AppInfoDTO {
+        version: env::var("CARGO_PKG_VERSION").expect("CARGO_PKG_VERSION not set"),
+        authors: env::var("CARGO_PKG_AUTHORS")
+          .expect("CARGO_PKG_AUTHORS not set")
+          .split(":")
+          .map(ToString::to_string)
+          .collect::<Vec<String>>(),
+        license: env::var("CARGO_PKG_LICENSE").expect("CARGO_PKG_LICENSE not set"),
+        description: env::var("CARGO_PKG_DESCRIPTION").expect("CARGO_PKG_DESCRIPTION not set"),
+        repository: env::var("CARGO_PKG_REPOSITORY").expect("CARGO_PKG_REPOSITORY not set"),
+      }))
+  })
+  .apply_settings(&get_settings())
+  .run()
+  .await
+  .expect("Cannot start server");
+  Ok(())
 }

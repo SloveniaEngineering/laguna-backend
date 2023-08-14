@@ -2,72 +2,153 @@ name: Rust
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [master]
   pull_request:
-    branches: [ "master" ]
+    branches: [master, dev]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build_and_test:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        rust: [stable]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target/
+          key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Run build
+        run: cargo build
 
+  test:
     services:
       postgres:
-        image: postgres
+        image: postgres:latest
         env:
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          POSTGRES_DB: laguna_dev_db
         ports:
           - 5432:5432
-
+        options: >-
+          --health-cmd pg_isready 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+    needs: build
+    strategy:
+      fail-fast: false
+      # NOTE: Only use Linux for testing
+      # Server will likely be deployed on linux
+      # GH Actions doesn't support containers on Windows
+      # MacOS doesn't have docker installed by default
+      matrix:
+        os: [ubuntu-latest]
+        rust: [stable]
+    runs-on: ${{ matrix.os }}
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/laguna_dev_db
     steps:
-    - uses: actions/checkout@v3
-    - name: Install lld and clang
-      run: sudo apt-get install lld clang -y --no-install-recommends
-    - uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: ubuntu-latest-cargo-${{ hashFiles('**/Cargo.lock') }}
-    - name: Build
-      # Build for debug so that tests use the same libs
-      run: cargo build
-    # Apparently this method is not reliable hence we use --force when installing.
-    # TODO: Find a quicker way to "install" sqlx-cli
-    # - name: Check if sqlx-cli exists
-    #  id: check_sqlx_exists
-    #  uses: andstor/file-existence-action@v2
-    #  with:
-    #    files: "~/.cargo/bin/cargo-sqlx, ~/.cargo/bin/sqlx"
-    - name: Install sqlx-cli
-      # if: steps.check_sqlx_exists.outputs.files_exists == 'false'
-      run: cargo install --force sqlx-cli --no-default-features --features rustls,postgres
-    - name: Setup database and run tests
-      run: scripts/test.sh
-  
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target/
+          key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Run tests
+        run: RUST_LOG=warn cargo test --all --features testx -- --nocapture
+
+  coverage:
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: laguna_dev_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+    needs: test
+    # Don't coverage dependabot
+    if: github.actor != 'dependabot[bot]'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        rust: [stable]
+    env:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/laguna_dev_db
+    runs-on: ${{ matrix.os }}
+    container:
+      image: xd009642/tarpaulin
+      options: --security-opt seccomp=unconfined
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target/
+          key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Generate coverage data
+        run: |
+          RUST_LOG=warn cargo tarpaulin --workspace --timeout 120 --out Xml --features testx
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v3 # Make sure to use v3 because it allows tokenless upload
+        with:
+          fail_ci_if_error: true
+
   deploy_docs:
-    needs: build_and_test
+    needs: [build, test]
     permissions:
       contents: write
     runs-on: ubuntu-latest
-    # Only deploy docs if master branch
     if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v3
       - name: Build Docs
-        run: cargo doc --no-deps --document-private-items --workspace
+        run: cargo doc --no-deps --workspace --features dox
       - name: Doc Index Page Redirection
-        run: echo '<meta http-equiv="refresh" content="1; url=laguna_backend/index.html">' > target/doc/index.html
+        run: echo '<meta http-equiv="refresh" content="0; url=laguna_backend/index.html">' > target/doc/index.html
       - name: Deploy Docs
         uses: peaceiris/actions-gh-pages@v3
         with:

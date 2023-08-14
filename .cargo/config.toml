@@ -3,20 +3,20 @@
 # cargo install -f cargo-binutils
 # rustup component add llvm-tools-preview
 # ```
-[target.x86_64-pc-windows-msvc]
-rustflags = ["-C", "link-arg=-fuse-ld=lld"]
-[target.x86_64-pc-windows-gnu]
-rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+# [target.x86_64-pc-windows-msvc]
+# rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+# [target.x86_64-pc-windows-gnu]
+# rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 # On Linux:
 # - Ubuntu, `sudo apt-get install lld clang`
 # - Arch, `sudo pacman -S lld clang`
-[target.x86_64-unknown-linux-gnu]
-rustflags = ["-C", "linker=clang", "-C", "link-arg=-fuse-ld=lld"]
+# [target.x86_64-unknown-linux-gnu]
+# rustflags = ["-C", "linker=clang", "-C", "link-arg=-fuse-ld=lld"]
 # On MacOS, `brew install michaeleisel/zld/zld`
-[target.x86_64-apple-darwin]
-rustflags = ["-C", "link-arg=-fuse-ld=/usr/local/bin/zld"]
-[target.aarch64-apple-darwin]
-rustflags = ["-C", "link-arg=-fuse-ld=/usr/local/bin/zld"]
+# [target.x86_64-apple-darwin]
+# rustflags = ["-C", "link-arg=-fuse-ld=/usr/local/bin/zld"]
+# [target.aarch64-apple-darwin]
+# rustflags = ["-C", "link-arg=-fuse-ld=/usr/local/bin/zld"]
 
 # See defaults: https://doc.rust-lang.org/cargo/reference/profiles.html#release
 [profile.release]
@@ -26,3 +26,24 @@ strip = "symbols"
 panic = "abort"
 # Incremental compilation
 codegen-units = 256
+
+[env]
+WORKSPACE_ROOT = { value = "", relative = true }
+
+[profile.dev.package.sqlx-macros]
+opt-level = 3
+
+# Additional optimizations
+
+# LLVM remark output
+# cargo install cargo-remark
+# cargo +nightly remark build --open
+# See: https://github.com/Kobzol/cargo-remark
+# Bug: Comment [profile.release] to make it work.
+# Warning: RAM hog.
+
+
+# Profile guided optimization (PGO) 
+# cargo install cargo-pgo
+# See: https://github.com/Kobzol/cargo-pgo
+# Warning: Untested.
