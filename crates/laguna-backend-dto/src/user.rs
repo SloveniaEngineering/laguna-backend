@@ -15,7 +15,7 @@ use validator::Validate;
 /// Unlike [`User`], [`UserDTO`] doesn't expose the following fields:
 /// 1. `email`
 /// 2. `password`
-/// Also, [`UserDTO`] has `last_login` as an [`Option`].
+/// Also, [`UserDTO`]has `last_login` as an [`Option`].
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, FromRequest, Validate)]
 pub struct UserDTO {
   /// The user's id

@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 /// User DB object.
-/// Not to be confused with [`UserDTO`] used for API.
 #[derive(Serialize, Deserialize, Debug, Clone, FromRequest, FromRow)]
 pub struct User {
   /// UUID generated using uuid_generate_v4() on DB
