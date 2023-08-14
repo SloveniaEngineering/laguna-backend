@@ -17,14 +17,15 @@ documentation = "https://sloveniaengineering.github.io/laguna-backend"
 laguna-backend-model = { path = "../laguna-backend-model" }
 laguna-backend-middleware = { path = "../laguna-backend-middleware" }
 actix-web = { version = "4", features = ["cookies"] }
-sqlx = { version = "0.6.3", features = [
-    "runtime-actix-rustls",
+sqlx = { version="0.7.1", features = [
+    "runtime-tokio",
+    "tls-rustls",
     "postgres",
     "uuid",
+    "ipnetwork",
     "migrate",
     "macros",
-    "time",
-    "offline",
+    "chrono",
     "json",
 ] }
 actix-jwt-auth-middleware = "0.3.0"
@@ -44,8 +45,11 @@ actix-web-validator = "5.0.1"
 futures = "*"
 serde_bencode = "0.2.3"
 laguna-backend-dto = { path = "../laguna-backend-dto" }
-laguna_config = { package = "laguna-backend-config", path = "../laguna-backend-config" }
+laguna-backend-tracker = { path = "../laguna-backend-tracker" }
+laguna-backend-tracker-common = { path = "../laguna-backend-tracker-common" }
+laguna-backend-config = { path = "../laguna-backend-config" }
 secrecy = { version = "*", features = ["serde"] }
+rand = "*"
 
 [dev-dependencies]
 actix-http = "3.3.1"
@@ -56,6 +60,7 @@ fake = { version = "2.6.1" }
 # See: https://github.com/cksac/fake-rs/issues/53
 laguna-backend-model = { path = "../laguna-backend-model", features = ["testx"] }
 laguna-backend-dto = { path = "../laguna-backend-dto", features = ["testx"] }
+laguna-backend-setup = { path = "../laguna-backend-setup" }
 
 # CLI for sqlx.
 # More: https://github.com/launchbadge/sqlx/blob/main/sqlx-cli/README.md

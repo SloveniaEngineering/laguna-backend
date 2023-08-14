@@ -1,0 +1,14 @@
+CREATE OR REPLACE FUNCTION user_peers_get(
+    IN UUID
+)
+RETURNS TABLE (LIKE "Peer")
+IMMUTABLE
+STRICT
+PARALLEL SAFE
+LANGUAGE SQL
+ROWS 5
+AS $body$
+    SELECT *
+    FROM "Peer"
+    WHERE user_id = $1;
+$body$;

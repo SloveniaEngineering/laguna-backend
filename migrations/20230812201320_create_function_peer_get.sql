@@ -1,0 +1,14 @@
+CREATE OR REPLACE FUNCTION peer_get(
+    id BYTEA -- peer_id
+)
+RETURNS TABLE (LIKE "Peer")
+IMMUTABLE
+STRICT
+PARALLEL SAFE
+LANGUAGE SQL
+ROWS 1
+AS $body$
+    SELECT *
+    FROM "Peer"
+    WHERE id = $1;
+$body$;

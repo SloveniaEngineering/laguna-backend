@@ -15,16 +15,18 @@ documentation = "https://sloveniaengineering.github.io/laguna-backend"
 
 [dependencies]
 actix-web = "4"
-sqlx = { version = "0.6.3", features = [
-    "runtime-actix-rustls",
+sqlx = { version="0.7.1", features = [
+    "runtime-tokio",
+    "tls-rustls",
     "postgres",
     "uuid",
+    "ipnetwork",
     "migrate",
     "macros",
-    "offline",
     "chrono",
     "json",
 ] }
+
 log = "0.4.19"
 env_logger = "0.10.0"
 sha2 = "0.10"
@@ -36,6 +38,7 @@ serde_bytes = "0.11.11"
 chrono = { version = "*", features = ["serde"] } 
 validator = { version = "0.16", features = ["derive", "unic"] }
 actix-web-validator = "5.0.1"
+laguna-backend-tracker-common = { path = "../laguna-backend-tracker-common" }
 serde_bencode = "0.2.3"
 secrecy = { version = "*", features = ["serde"] }
 

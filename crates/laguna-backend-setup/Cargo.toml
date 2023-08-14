@@ -1,0 +1,36 @@
+[package]
+name = "laguna-backend-setup"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+laguna_config = { package = "laguna-backend-config", path = "../laguna-backend-config" }
+actix-web = "4"
+actix-http = "*"
+actix-jwt-auth-middleware = "0.3.0"
+laguna-backend-middleware = { path = "../laguna-backend-middleware" }
+laguna-backend-model = { path = "../laguna-backend-model" }
+laguna-backend-api = { path = "../laguna-backend-api" }
+laguna-backend-dto = { path = "../laguna-backend-dto" }
+rustversion = "1.0"
+sqlx = { version="0.7.1", features = [
+    "runtime-tokio",
+    "tls-rustls",
+    "postgres",
+    "uuid",
+    "ipnetwork",
+    "migrate",
+    "macros",
+    "chrono",
+    "json",
+] }
+jwt-compact = "0.7.0"
+env_logger = "*"
+argon2 = { version = "*", features = ["std"] }
+secrecy = { version = "*", features = ["serde"] }
+chrono = { version = "*", features = ["serde"]}
+actix-settings = "*"
+actix-service = "*"
+actix-cors = "*"
+const_format = "*"
+cached = "*"

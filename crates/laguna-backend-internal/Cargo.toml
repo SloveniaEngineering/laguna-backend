@@ -17,4 +17,7 @@ documentation = "https://sloveniaengineering.github.io/laguna-backend"
 laguna-backend-api = { path = "../laguna-backend-api" }
 laguna-backend-model = { path = "../laguna-backend-model" }
 laguna-backend-middleware = { path = "../laguna-backend-middleware" }
+laguna-backend-tracker = { path = "../laguna-backend-tracker" }
 laguna-backend-dto = { path = "../laguna-backend-dto" }
+laguna-backend-setup = { path = "../laguna-backend-setup" }
+laguna-backend-config = { path = "../laguna-backend-config" } 
