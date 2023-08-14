@@ -174,7 +174,7 @@ async fn test_login_with_wrong_username(pool: PgPool) -> sqlx::Result<()> {
     &app,
   )
   .await;
-  assert_eq!(login_res.status(), StatusCode::BAD_REQUEST);
+  assert_eq!(login_res.status(), StatusCode::UNAUTHORIZED);
   Ok(())
 }
 
@@ -190,7 +190,7 @@ async fn test_login_with_wrong_email(pool: PgPool) -> sqlx::Result<()> {
     &app,
   )
   .await;
-  assert_eq!(login_res.status(), StatusCode::BAD_REQUEST);
+  assert_eq!(login_res.status(), StatusCode::UNAUTHORIZED);
   Ok(())
 }
 
@@ -403,7 +403,7 @@ async fn test_sql_username_injection_attempt_on_login(pool: PgPool) -> sqlx::Res
     &app,
   )
   .await;
-  assert_eq!(login_res.status(), StatusCode::BAD_REQUEST);
+  assert_eq!(login_res.status(), StatusCode::UNAUTHORIZED);
   let users = sqlx::query_as::<_, User>(
     r#"
         SELECT id,
