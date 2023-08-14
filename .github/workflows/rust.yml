@@ -62,7 +62,7 @@ jobs:
         rust: [stable]
     runs-on: ${{ matrix.os }}
     env:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/laguna_dev_db
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/laguna_dev_db
     steps:
       - uses: actions/checkout@v3
         with:
