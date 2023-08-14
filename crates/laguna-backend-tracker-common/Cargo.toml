@@ -1,0 +1,25 @@
+[package]
+name = "laguna-backend-tracker-common"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = { version = "*", features = ["derive"] }
+actix-web = "4"
+serde_bytes = "*"
+serde-byte-array = "0.1.2"
+serde_with = "3.2.0"
+actix = "*"
+sqlx = { version="0.7.1", features = [
+    "runtime-tokio",
+    "tls-rustls",
+    "postgres",
+    "uuid",
+    "ipnetwork",
+    "migrate",
+    "macros",
+    "chrono",
+    "json",
+] }
