@@ -34,6 +34,7 @@ pub struct Torrent {
   pub seed_count: i32,
   pub completed_count: i32,
   pub speedlevel: SpeedLevel,
+  pub creation_date: DateTime<Utc>,
   pub uploaded_at: DateTime<Utc>,
   pub uploaded_by: Uuid,
   pub modded_at: Option<DateTime<Utc>>,

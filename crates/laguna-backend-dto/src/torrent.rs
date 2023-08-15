@@ -6,7 +6,7 @@ use laguna_backend_model::consts::{TORRENT_FILENAME_MAX_LEN, TORRENT_FILENAME_MI
 use laguna_backend_model::consts::{TORRENT_TITLE_MAX_LEN, TORRENT_TITLE_MIN_LEN};
 use laguna_backend_model::speedlevel::SpeedLevel;
 use laguna_backend_model::torrent::Torrent;
-use laguna_backend_tracker_common::info_hash::InfoHash;
+
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 
@@ -105,10 +105,7 @@ pub struct TorrentPutInfoProfileDTO {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Validate)]
 pub struct TorrentPatchDTO {
-  pub info_hash: InfoHash,
   #[validate(length(min = "TORRENT_TITLE_MIN_LEN", max = "TORRENT_TITLE_MAX_LEN"))]
   pub title: String,
-  #[validate(length(min = "TORRENT_FILENAME_MIN_LEN", max = "TORRENT_FILENAME_MAX_LEN"))]
-  pub file_name: String,
   pub nfo: Option<String>,
 }

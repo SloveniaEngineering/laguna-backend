@@ -11,7 +11,7 @@ use actix_web::http::header;
 
 use actix_web::web::ServiceConfig;
 
-use actix_web::{web, App, HttpResponse};
+use actix_web::{guard, web, App, HttpResponse};
 use argon2::Argon2;
 use argon2::{Algorithm, ParamsBuilder, Version};
 use cached::proc_macro::once;
@@ -24,6 +24,7 @@ use laguna_backend_api::torrent::{torrent_get, torrent_patch, torrent_put};
 use laguna_backend_api::user::{user_get, user_me_delete, user_me_get, user_patch, user_peers_get};
 
 use laguna_backend_dto::user::UserDTO;
+use laguna_backend_middleware::mime::APPLICATION_XBITTORRENT;
 use laguna_config::make_overridable_with_env_vars;
 use laguna_config::{Settings, LAGUNA_CONFIG};
 use secrecy::ExposeSecret;
@@ -101,9 +102,15 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
           )
           .service(
             web::scope("/torrent")
-              .route("/", web::get().to(torrent_get))
-              .route("/", web::put().to(torrent_put))
-              .route("/", web::patch().to(torrent_patch)),
+              .route("/{info_hash}", web::get().to(torrent_get))
+              .route(
+                "/",
+                web::put().to(torrent_put).guard(guard::Header(
+                  header::CONTENT_TYPE.as_str(),
+                  APPLICATION_XBITTORRENT,
+                )),
+              )
+              .route("/{info_hash}", web::patch().to(torrent_patch)),
           ),
       )
       .default_service(web::to(|| HttpResponse::NotFound()));

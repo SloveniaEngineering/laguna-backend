@@ -1548,6 +1548,7 @@ dependencies = [
  "env_logger",
  "fake",
  "futures",
+ "hex",
  "jwt-compact",
  "laguna-backend-config",
  "laguna-backend-dto",
