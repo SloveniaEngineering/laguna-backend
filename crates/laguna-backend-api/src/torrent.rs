@@ -9,10 +9,11 @@ use laguna_backend_model::torrent::Torrent;
 
 use digest::Digest;
 use futures::{StreamExt, TryStreamExt};
-use sha2::Sha256;
+use laguna_backend_tracker_common::info_hash::SHA1_LENGTH;
+use sha1::Sha1;
 use sqlx::PgPool;
 
-use laguna_backend_tracker::prelude::info_hash::{InfoHash, SHA256_LENGTH};
+use laguna_backend_tracker::prelude::info_hash::InfoHash;
 
 use crate::error::{torrent::TorrentError, APIError};
 
@@ -132,7 +133,7 @@ pub async fn torrent_patch(
 ///      -H 'X-Refresh-Token: eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2ODg0NjkzMzksImlhdCI6MTY4ODQ2NzUzOSwidXNlcm5hbWUiOiJ0ZXN0IiwiZW1haWwiOiJ0ZXN0QGxhZ3VuYS5pbyIsInBhc3N3b3JkIjoiZWNkNzE4NzBkMTk2MzMxNmE5N2UzYWMzNDA4Yzk4MzVhZDhjZjBmM2MxYmM3MDM1MjdjMzAyNjU1MzRmNzVhZSIsImZpcnN0X2xvZ2luIjoiMjAyMy0wNy0wNFQxMDoxODoxNy4zOTE2OThaIiwibGFzdF9sb2dpbiI6IjIwMjMtMDctMDRUMTA6MTg6MTcuMzkxNjk4WiIsImF2YXRhcl91cmwiOm51bGwsInJvbGUiOiJOb3JtaWUiLCJpc19hY3RpdmUiOnRydWUsImhhc192ZXJpZmllZF9lbWFpbCI6ZmFsc2UsImlzX2hpc3RvcnlfcHJpdmF0ZSI6dHJ1ZSwiaXNfcHJvZmlsZV9wcml2YXRlIjp0cnVlfQ.5fdMnIj0WqV0lszANlJD_x5-Oyq2h8bhqDkllz1CGg4' \
 ///      -H 'Content-Type: multipart/form-data'  \
 ///      -H 'Content-Disposition: form-data; filename=alice.torrent' \
-///      -F 'upload=@crates/laguna-backend-api/fixtures/webtorrent-fixtures/fixtures/alice.torrent'
+///      -F 'upload=@crates/laguna-backend-api/tests/fixtures/webtorrent-fixtures/fixtures/alice.torrent'
 /// ```
 /// ### Response
 /// #### Status Code
@@ -157,8 +158,9 @@ pub async fn torrent_put(
       torrent_buf.extend_from_slice(&chunk?);
     }
     let torrent_put_dto = serde_bencode::from_bytes::<TorrentPutDTO>(&torrent_buf)?;
-    let info_hash = Sha256::digest(serde_bencode::to_bytes(&torrent_put_dto.info)?);
-    let info_hash = InfoHash::from(<[u8; SHA256_LENGTH]>::try_from(info_hash.as_slice()).unwrap());
+    // TODO: Support bittorrent v2 with sha256 (40 bytes aka 80 in repr)
+    let info_hash = Sha1::digest(serde_bencode::to_bytes(&torrent_put_dto.info)?);
+    let info_hash = InfoHash::from(<[u8; SHA1_LENGTH]>::try_from(info_hash.as_slice()).unwrap());
     let maybe_torrent = sqlx::query_as::<_, Torrent>("SELECT * FROM torrent_get($1)")
       .bind(info_hash.clone())
       .fetch_optional(pool.get_ref())
@@ -171,13 +173,13 @@ pub async fn torrent_put(
     )
     .bind(info_hash)
     .bind(torrent_put_dto.announce_url.unwrap_or_default())
-    .bind(torrent_put_dto.title)
+    .bind(torrent_put_dto.info.name.clone()) //  TODO: replace with title
     .bind(torrent_put_dto.info.length)
     .bind(torrent_put_dto.info.name)
-    .bind(torrent_put_dto.nfo)
+    .bind(torrent_put_dto.nfo.unwrap_or_default())
+    .bind(torrent_put_dto.creation_date)
     .bind(Utc::now())
     .bind(user.id)
-    .bind(torrent_put_dto.speedlevel)
     .fetch_optional(pool.get_ref())
     .await?
     .ok_or_else(|| TorrentError::DidntCreate)?;

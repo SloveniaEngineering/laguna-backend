@@ -1,3 +1,5 @@
+use chrono::serde::ts_seconds;
+use chrono::{DateTime, Utc};
 #[cfg(feature = "testx")]
 use fake::Dummy;
 use laguna_backend_model::consts::{TORRENT_FILENAME_MAX_LEN, TORRENT_FILENAME_MIN_LEN};
@@ -41,9 +43,9 @@ pub struct TorrentPutDTO {
   pub comment: Option<String>,
   // encoding is set by torrent client, we deny all except UTF-8
   pub encoding: Option<String>,
-  // creation date is set by torrent client
-  #[serde(rename = "creation date")]
-  pub creation_date: i32,
+  // this is a timestamp, creation date is set by torrent client
+  #[serde(rename = "creation date", with = "ts_seconds")]
+  pub creation_date: DateTime<Utc>,
   // created by is set by torrent client
   #[serde(rename = "created by")]
   pub created_by: Option<String>,

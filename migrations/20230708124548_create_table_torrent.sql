@@ -5,9 +5,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TYPE SpeedLevel AS ENUM ('Lowspeed', 'Mediumspeed', 'Highspeed');
 
 CREATE TABLE IF NOT EXISTS "Torrent" (
-    info_hash BYTEA PRIMARY KEY NOT NULL CHECK (length(info_hash) = 40),
-    announce_url VARCHAR(255) NOT NULL,
-    length INTEGER NOT NULL,
+    info_hash BYTEA PRIMARY KEY NOT NULL CHECK (length(info_hash) = 20),
+    announce_url VARCHAR(255),
+    length BIGINT NOT NULL,
     title VARCHAR(100) NOT NULL,
     file_name VARCHAR(100) NOT NULL,
     -- https://en.wikipedia.org/wiki/.nfo
@@ -16,8 +16,7 @@ CREATE TABLE IF NOT EXISTS "Torrent" (
     seed_count INTEGER NOT NULL DEFAULT 0 CHECK (seed_count >= 0),
     completed_count INTEGER NOT NULL DEFAULT 0 CHECK (completed_count >= 0),
     speedlevel SpeedLevel NOT NULL DEFAULT 'Lowspeed',
-    -- info_hash is SHA-256 hash of "info" section of torrent file (BitTorrent v2)
-    -- info_hash TEXT UNIQUE NOT NULL,
+    creation_date TIMESTAMP WITH TIME ZONE NOT NULL,
     uploaded_at TIMESTAMP WITH TIME ZONE NOT NULL,
     uploaded_by UUID NOT NULL,
     modded_at TIMESTAMP WITH TIME ZONE,

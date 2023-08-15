@@ -17,8 +17,8 @@ use validator::Validate;
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, FromRow, Validate)]
 pub struct Torrent {
   pub info_hash: InfoHash,
-  pub announce_url: String,
-  pub length: i32,
+  pub announce_url: Option<String>,
+  pub length: i64,
   #[validate(
     non_control_character,
     length(min = "TORRENT_TITLE_MIN_LEN", max = "TORRENT_TITLE_MAX_LEN")
