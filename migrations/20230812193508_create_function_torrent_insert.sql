@@ -1,5 +1,6 @@
 CREATE OR REPLACE FUNCTION torrent_insert(
     IN BYTEA, -- info_hash
+    IN BYTEA, -- raw torrent file
     IN VARCHAR(255), -- announce_url
     IN VARCHAR(100), -- title
     IN BIGINT, -- length
@@ -16,6 +17,7 @@ LANGUAGE SQL
 AS $body$
     INSERT INTO "Torrent" (
         info_hash,
+        raw,
         announce_url,
         title,
         length,
@@ -25,6 +27,6 @@ AS $body$
         uploaded_at,
         uploaded_by
     )
-    VALUES ($1, nullif($2, ''), $3, $4, $5, nullif($6, ''), $7, $8, $9)
+    VALUES ($1, $2, nullif($3, ''), $4, $5, $6, nullif($7, ''), $8, $9, $10)
     RETURNING *;
 $body$;

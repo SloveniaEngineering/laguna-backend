@@ -6,6 +6,7 @@ CREATE TYPE SpeedLevel AS ENUM ('Lowspeed', 'Mediumspeed', 'Highspeed');
 
 CREATE TABLE IF NOT EXISTS "Torrent" (
     info_hash BYTEA PRIMARY KEY NOT NULL CHECK (length(info_hash) = 20),
+    raw BYTEA NOT NULL,
     announce_url VARCHAR(255),
     length BIGINT NOT NULL,
     title VARCHAR(100) NOT NULL,

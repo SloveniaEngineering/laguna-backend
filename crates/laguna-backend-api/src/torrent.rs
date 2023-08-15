@@ -162,9 +162,10 @@ pub async fn torrent_put(
     return Ok(HttpResponse::AlreadyReported().finish());
   }
   let torrent_dto = sqlx::query_as::<_, Torrent>(
-    "SELECT * FROM torrent_insert($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+    "SELECT * FROM torrent_insert($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
   )
   .bind(info_hash)
+  .bind(Vec::<u8>::from(body))
   .bind(torrent_put_dto.announce_url.unwrap_or_default())
   .bind(torrent_put_dto.info.name.clone()) //  TODO: replace with title
   .bind(torrent_put_dto.info.length)

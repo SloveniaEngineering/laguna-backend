@@ -40,6 +40,7 @@ async fn test_get_torrent_bunny(pool: PgPool) -> sqlx::Result<()> {
     info_hash: InfoHash::from(vec![
       175, 143, 16, 243, 11, 249, 174, 254, 207, 54, 134, 146, 43, 250, 13, 91, 210, 144, 163, 149,
     ]),
+    raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/bunny.torrent").to_vec(),
     announce_url: None,
     length: 434839491,
     title: String::from("bbb_sunflower_1080p_30fps_stereo_abl.mp4"),
@@ -95,6 +96,7 @@ async fn test_put_torrent(pool: PgPool) -> sqlx::Result<()> {
     info_hash: InfoHash::from(vec![
       210, 71, 78, 134, 201, 91, 25, 184, 188, 253, 185, 43, 193, 44, 157, 68, 102, 124, 250, 54,
     ]),
+    raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent").to_vec(),
     announce_url: None,
     length: 362017,
     title: String::from("Leaves of Grass by Walt Whitman.epub"),
@@ -138,6 +140,7 @@ async fn test_patch_torrent(pool: PgPool) -> sqlx::Result<()> {
     info_hash: InfoHash::from(vec![
       210, 71, 78, 134, 201, 91, 25, 184, 188, 253, 185, 43, 193, 44, 157, 68, 102, 124, 250, 54,
     ]),
+    raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent").to_vec(),
     announce_url: None,
     length: 362017,
     title: String::from("Leaves of Grass by Walt Whitman.epub"),
