@@ -168,7 +168,7 @@ pub async fn torrent_put(
     if let Some(_) = maybe_torrent {
       return Ok(HttpResponse::AlreadyReported().finish());
     }
-    let _torrent = sqlx::query_as::<_, Torrent>(
+    sqlx::query_as::<_, Torrent>(
       "SELECT * FROM torrent_insert($1, $2, $3, $4, $5, $6, $7, $8, $9)",
     )
     .bind(info_hash)
@@ -182,6 +182,7 @@ pub async fn torrent_put(
     .bind(user.id)
     .fetch_optional(pool.get_ref())
     .await?
+    .map(drop)
     .ok_or_else(|| TorrentError::DidntCreate)?;
 
     return Ok(HttpResponse::Ok().finish());
