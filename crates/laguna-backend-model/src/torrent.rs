@@ -4,7 +4,6 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use laguna_backend_tracker_common::info_hash::InfoHash;
-use serde_bytes::ByteBuf;
 use uuid::Uuid;
 
 use crate::consts::TORRENT_FILENAME_MAX_LEN;

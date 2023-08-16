@@ -21,7 +21,7 @@ use laguna_backend_api::login::login;
 use laguna_backend_api::misc::{get_app_info, healthcheck};
 use laguna_backend_api::register::register;
 use laguna_backend_api::torrent::{torrent_get, torrent_patch, torrent_put};
-use laguna_backend_api::user::{user_get, user_me_delete, user_me_get, user_patch, user_peers_get};
+use laguna_backend_api::user::{user_get, user_me_delete, user_me_get, user_patch, user_peers_get, user_torrents_get};
 
 use laguna_backend_dto::user::UserDTO;
 use laguna_backend_middleware::mime::APPLICATION_XBITTORRENT;
@@ -98,7 +98,8 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
               .route("/me", web::get().to(user_me_get))
               .route("/{id}", web::get().to(user_get))
               .route("/me", web::delete().to(user_me_delete))
-              .route("/{id}/peers", web::get().to(user_peers_get)),
+              .route("/{id}/peers", web::get().to(user_peers_get))
+              .route("/{id}/torrents", web::get().to(user_torrents_get)),
           )
           .service(
             web::scope("/torrent")
