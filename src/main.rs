@@ -36,7 +36,8 @@ async fn main() -> Result<(), sqlx::Error> {
         description: env::var("CARGO_PKG_DESCRIPTION").expect("CARGO_PKG_DESCRIPTION not set"),
         repository: env::var("CARGO_PKG_REPOSITORY").expect("CARGO_PKG_REPOSITORY not set"),
       }))
-      .wrap(NormalizePath::new(TrailingSlash::Always))
+      // FIXME: This shit is so annoying and doesn't work w/FE
+      .wrap(NormalizePath::new(TrailingSlash::MergeOnly))
   })
   .apply_settings(&get_settings())
   .run()
