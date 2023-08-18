@@ -92,7 +92,7 @@ pub async fn user_get(
     .await?
     .map(UserSafe::from)
     .map(UserDTO::from)
-    .ok_or_else(|| UserError::DidntFind)?;
+    .ok_or_else(|| UserError::NotFound)?;
   Ok(HttpResponse::Ok().json(user))
 }
 
@@ -122,7 +122,7 @@ pub async fn user_me_delete(
     .await?
     .map(UserSafe::from)
     .map(drop) // Zero-ize immediately
-    .ok_or_else(|| UserError::DidntFind)?;
+    .ok_or_else(|| UserError::NotFound)?;
   Ok(HttpResponse::Ok().finish())
 }
 
@@ -174,7 +174,7 @@ pub async fn user_patch(
   // TODO: Should this be middleware?
   let user_id = user_id.into_inner();
   if user_id != current_user.id {
-    return Err(UserError::ExclusiveAccess.into());
+    return Err(UserError::Exclusive.into());
   }
   let user_patch_dto = user_patch_dto.into_inner();
   let user = sqlx::query_as::<_, User>("SELECT * FROM user_patch($1, $2, $3, $4)")
@@ -186,7 +186,7 @@ pub async fn user_patch(
     .await?
     .map(UserSafe::from)
     .map(UserDTO::from)
-    .ok_or_else(|| UserError::DidntUpdate)?;
+    .ok_or_else(|| UserError::NotUpdated)?;
   Ok(HttpResponse::Ok().json(user))
 }
 

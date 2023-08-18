@@ -9,10 +9,10 @@ use std::fmt::Formatter;
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UserError {
   InvalidCredentials,
-  DidntFind,
-  ExclusiveAccess,
-  DidntCreate,
-  DidntUpdate,
+  NotFound,
+  Exclusive,
+  NotCreated,
+  NotUpdated,
 }
 
 impl fmt::Display for UserError {
@@ -21,10 +21,10 @@ impl fmt::Display for UserError {
       Self::InvalidCredentials => {
         f.write_str("Uporabniško ime, elektronski naslov ali geslo napačno.")
       },
-      Self::ExclusiveAccess => f.write_str("Samo za ene oči."),
-      Self::DidntFind => f.write_str("Zahtevan uporabnik ne obstaja."),
-      Self::DidntCreate => f.write_str("Uporabnik ni bil ustvarjen."),
-      Self::DidntUpdate => f.write_str("Uporabnik ni bil posodobljen."),
+      Self::Exclusive => f.write_str("Samo za ene oči."),
+      Self::NotFound => f.write_str("Zahtevan uporabnik ne obstaja."),
+      Self::NotCreated => f.write_str("Uporabnik ni bil ustvarjen."),
+      Self::NotUpdated => f.write_str("Uporabnik ni bil posodobljen."),
     }
   }
 }
@@ -32,11 +32,11 @@ impl fmt::Display for UserError {
 impl ResponseError for UserError {
   fn status_code(&self) -> StatusCode {
     match self {
-      Self::ExclusiveAccess => StatusCode::FORBIDDEN,
+      Self::Exclusive => StatusCode::FORBIDDEN,
       Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
-      Self::DidntFind => StatusCode::BAD_REQUEST,
-      Self::DidntCreate => StatusCode::BAD_REQUEST,
-      Self::DidntUpdate => StatusCode::BAD_REQUEST,
+      Self::NotFound => StatusCode::BAD_REQUEST,
+      Self::NotCreated => StatusCode::BAD_REQUEST,
+      Self::NotUpdated => StatusCode::BAD_REQUEST,
     }
   }
 

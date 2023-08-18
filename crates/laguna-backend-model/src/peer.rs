@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::ipnetwork::IpNetwork;
 use uuid::Uuid;
 
-use laguna_backend_tracker_common::info_hash::InfoHash;
+use laguna_backend_tracker_common::info_hash::{InfoHash, SHA1_LENGTH};
 use laguna_backend_tracker_common::peer::PeerId;
 
 use crate::behaviour::Behaviour;
@@ -13,7 +13,7 @@ pub struct Peer {
   pub id: PeerId,
   pub md5_hash: Option<String>,
   /// Foreign key to info_hash on Torrent
-  pub info_hash: InfoHash,
+  pub info_hash: InfoHash<SHA1_LENGTH>,
   pub ip: Option<IpNetwork>,
   pub port: i32,
   pub agent: Option<String>,

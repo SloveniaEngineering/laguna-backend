@@ -223,8 +223,7 @@ async fn test_user_torrents_get(pool: PgPool) -> sqlx::Result<()> {
   let get_torrents_res = common::as_logged_in(
     access_token,
     refresh_token,
-    TestRequest::get()
-      .uri(&format!("/api/user/{}/torrents", user_dto.id)),
+    TestRequest::get().uri(&format!("/api/user/{}/torrents", user_dto.id)),
     &app,
   )
   .await

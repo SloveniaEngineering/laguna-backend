@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 
 use serde::{Deserialize, Serialize};
 
-use laguna_backend_tracker_common::info_hash::InfoHash;
+use laguna_backend_tracker_common::info_hash::{InfoHash, SHA1_LENGTH};
 use uuid::Uuid;
 
 use crate::consts::TORRENT_FILENAME_MAX_LEN;
@@ -16,7 +16,7 @@ use validator::Validate;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, FromRow, Validate)]
 pub struct Torrent {
-  pub info_hash: InfoHash,
+  pub info_hash: InfoHash<SHA1_LENGTH>,
   pub raw: Vec<u8>,
   pub announce_url: Option<String>,
   pub length: i64,

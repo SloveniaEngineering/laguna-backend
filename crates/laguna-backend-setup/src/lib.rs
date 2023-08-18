@@ -20,8 +20,12 @@ use jwt_compact::{alg::Hs256, alg::Hs256Key, TimeOptions};
 use laguna_backend_api::login::login;
 use laguna_backend_api::misc::{get_app_info, healthcheck};
 use laguna_backend_api::register::register;
-use laguna_backend_api::torrent::{torrent_get, torrent_patch, torrent_put};
-use laguna_backend_api::user::{user_get, user_me_delete, user_me_get, user_patch, user_peers_get, user_torrents_get};
+use laguna_backend_api::torrent::{
+  torrent_delete, torrent_get, torrent_patch, torrent_put, torrent_swarm,
+};
+use laguna_backend_api::user::{
+  user_get, user_me_delete, user_me_get, user_patch, user_peers_get, user_torrents_get,
+};
 
 use laguna_backend_dto::user::UserDTO;
 use laguna_backend_middleware::mime::APPLICATION_XBITTORRENT;
@@ -111,7 +115,9 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
                   APPLICATION_XBITTORRENT,
                 )),
               )
-              .route("/{info_hash}", web::patch().to(torrent_patch)),
+              .route("/{info_hash}", web::patch().to(torrent_patch))
+              .route("/{info_hash}", web::delete().to(torrent_delete))
+              .route("/{info_hash}/swarm", web::get().to(torrent_swarm)),
           ),
       )
       .default_service(web::to(|| HttpResponse::NotFound()));

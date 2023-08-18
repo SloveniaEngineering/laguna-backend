@@ -7,5 +7,6 @@ pub mod consts;
 pub mod peer;
 pub mod role;
 pub mod speedlevel;
+pub mod swarm;
 pub mod torrent;
 pub mod user;

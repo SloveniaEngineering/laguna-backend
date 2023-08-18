@@ -1,30 +1,41 @@
 use actix_web::body::BoxBody;
 use actix_web::http::StatusCode;
 use actix_web::{http::header::ContentType, HttpResponse, ResponseError};
-use laguna_backend_tracker::prelude::info_hash::InfoHash;
+use laguna_backend_tracker::prelude::info_hash::{InfoHash, SHA1_LENGTH};
 use laguna_backend_tracker::prelude::peer::PeerId;
+use laguna_backend_tracker_common::announce::AnnounceEvent;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::Formatter;
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PeerError {
-  DoesNotExist(PeerId),
-  UnknownTorrent(InfoHash),
-  DidntCreate,
+  NotFound(PeerId),
+  UnknownTorrent(InfoHash<SHA1_LENGTH>),
+  UnexpectedEvent {
+    event: AnnounceEvent,
+    message: String,
+  },
+  NotCreated,
+  NotUpdated,
 }
 
 impl fmt::Display for PeerError {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
-      Self::DidntCreate => f.write_str("Failed to create peer."),
+      Self::UnexpectedEvent { event, message } => f.write_fmt(format_args!(
+        "Unexpected event {:?} received from client. {}",
+        event, message
+      )),
+      Self::NotCreated => f.write_str("Failed to create peer."),
       Self::UnknownTorrent(info_hash) => f.write_fmt(format_args!(
         "No torrent with info_hash {} found.",
         info_hash
       )),
-      Self::DoesNotExist(peer_id) => {
+      Self::NotFound(peer_id) => {
         f.write_fmt(format_args!("No client with id {} was found.", peer_id))
       },
+      Self::NotUpdated => f.write_str("Peer ni bil posodobljen."),
     }
   }
 }
@@ -32,9 +43,11 @@ impl fmt::Display for PeerError {
 impl ResponseError for PeerError {
   fn status_code(&self) -> StatusCode {
     match self {
-      Self::DoesNotExist(_) => StatusCode::BAD_REQUEST,
+      Self::NotFound(_) => StatusCode::BAD_REQUEST,
       Self::UnknownTorrent(_) => StatusCode::BAD_REQUEST,
-      Self::DidntCreate => StatusCode::BAD_REQUEST,
+      Self::UnexpectedEvent { .. } => StatusCode::BAD_REQUEST,
+      Self::NotCreated => StatusCode::BAD_REQUEST,
+      Self::NotUpdated => StatusCode::BAD_REQUEST,
     }
   }
 

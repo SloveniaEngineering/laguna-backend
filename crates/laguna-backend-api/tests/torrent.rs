@@ -9,7 +9,10 @@ use actix_web::test::{read_body_json, TestRequest};
 
 use chrono::{DateTime, Utc};
 
-use laguna_backend_dto::torrent::{TorrentDTO, TorrentPatchDTO};
+use laguna_backend_dto::{
+  peer::PeerDTO,
+  torrent::{TorrentDTO, TorrentPatchDTO},
+};
 use laguna_backend_middleware::mime::APPLICATION_XBITTORRENT;
 use laguna_backend_model::speedlevel::SpeedLevel;
 use laguna_backend_tracker_common::info_hash::InfoHash;
@@ -183,6 +186,68 @@ async fn test_patch_torrent(pool: PgPool) -> sqlx::Result<()> {
   };
 
   assert_eq!(torrent_dto, expected_torrent_dto);
+
+  Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_delete_torrent(pool: PgPool) -> sqlx::Result<()> {
+  let app = common::setup_test(&pool).await;
+  let (_, _, access_token, refresh_token) = common::new_user(&app).await;
+  let put_res = common::as_logged_in(
+    access_token.clone(),
+    refresh_token.clone(),
+    TestRequest::put()
+      .uri("/api/torrent/")
+      .insert_header((header::CONTENT_TYPE.as_str(), APPLICATION_XBITTORRENT))
+      .set_payload(include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent") as &[u8]),
+    &app,
+  )
+  .await
+  .unwrap();
+  assert_eq!(put_res.status(), StatusCode::OK);
+  let torrent_dto = read_body_json::<TorrentDTO, _>(put_res).await;
+  let delete_res = common::as_logged_in(
+    access_token,
+    refresh_token,
+    TestRequest::delete().uri(&format!("/api/torrent/{}", torrent_dto.info_hash)),
+    &app,
+  )
+  .await
+  .unwrap();
+  assert_eq!(delete_res.status(), StatusCode::OK);
+  Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_get_torrent_swarm(pool: PgPool) -> sqlx::Result<()> {
+  let app = common::setup_test(&pool).await;
+  let (_, _, access_token, refresh_token) = common::new_user(&app).await;
+  let put_res = common::as_logged_in(
+    access_token.clone(),
+    refresh_token.clone(),
+    TestRequest::put()
+      .uri("/api/torrent/")
+      .insert_header((header::CONTENT_TYPE.as_str(), APPLICATION_XBITTORRENT))
+      .set_payload(include_bytes!("fixtures/webtorrent-fixtures/fixtures/bunny.torrent") as &[u8]),
+    &app,
+  )
+  .await
+  .unwrap();
+  assert_eq!(put_res.status(), StatusCode::OK);
+
+  let torrent_dto = read_body_json::<TorrentDTO, _>(put_res).await;
+
+  let get_res = common::as_logged_in(
+    access_token,
+    refresh_token,
+    TestRequest::get().uri(&format!("/api/torrent/{}/swarm", torrent_dto.info_hash)),
+    &app,
+  )
+  .await
+  .unwrap();
+  assert_eq!(get_res.status(), StatusCode::OK);
+  assert_eq!(read_body_json::<Vec<PeerDTO>, _>(get_res).await, vec![]);
 
   Ok(())
 }

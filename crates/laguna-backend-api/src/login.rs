@@ -86,7 +86,7 @@ pub async fn login(
     .await?
     .map(UserSafe::from)
     .map(UserDTO::from)
-    .ok_or_else(|| UserError::DidntUpdate)?;
+    .ok_or_else(|| UserError::NotUpdated)?;
   Ok(
     HttpResponse::Ok()
       // TODO: get rid of clones

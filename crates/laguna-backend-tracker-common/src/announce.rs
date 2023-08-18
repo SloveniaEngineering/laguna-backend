@@ -1,7 +1,7 @@
 use std::net::IpAddr;
 
 use crate::{
-  info_hash::InfoHash,
+  info_hash::{InfoHash, SHA1_LENGTH},
   peer::{PeerId, PeerStream},
 };
 use serde::{Deserialize, Serialize};
@@ -11,13 +11,15 @@ pub enum AnnounceEvent {
   Started,
   Stopped,
   Completed,
+  Updated,
+  Paused,
   Empty,
 }
 
 /// Announcement trait shared by HTTP, UDP and WS Announcement Messages.
 pub trait Announcement {
   fn peer_id(&self) -> &PeerId;
-  fn info_hash(&self) -> &InfoHash;
+  fn info_hash(&self) -> &InfoHash<SHA1_LENGTH>;
   fn uploaded(&self) -> i64;
   fn downloaded(&self) -> i64;
   fn left(&self) -> i64;
