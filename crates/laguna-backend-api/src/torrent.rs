@@ -202,14 +202,12 @@ pub async fn torrent_put(
 pub async fn torrent_delete(
   info_hash: web::Path<String>,
   pool: web::Data<PgPool>,
-  user: UserDTO,
 ) -> Result<HttpResponse, APIError> {
   let mut info_hash_raw = [0u8; SHA1_LENGTH];
   hex::decode_to_slice(info_hash.into_inner(), &mut info_hash_raw).map_err(APIError::from)?;
   let info_hash = InfoHash::from(info_hash_raw);
-  let torrent_dto = sqlx::query_as::<_, Torrent>("SELECT * FROM torrent_delete($1, $2)")
+  let torrent_dto = sqlx::query_as::<_, Torrent>("SELECT * FROM torrent_delete($1)")
     .bind(info_hash)
-    .bind(user.id)
     .fetch_optional(pool.get_ref())
     .await?
     .map(TorrentDTO::from)
