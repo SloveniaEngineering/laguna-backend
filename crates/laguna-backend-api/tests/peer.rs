@@ -21,11 +21,13 @@ pub async fn test_announce_peer_started(pool: PgPool) -> sqlx::Result<()> {
 }
 
 #[sqlx::test(migrations = "../../migrations")]
+#[ignore]
 async fn test_announce_peer_stopped(_pool: PgPool) -> sqlx::Result<()> {
   Ok(())
 }
 
 #[sqlx::test(migrations = "../../migrations")]
+#[ignore]
 async fn test_patch_peer(_pool: PgPool) -> sqlx::Result<()> {
   Ok(())
 }
