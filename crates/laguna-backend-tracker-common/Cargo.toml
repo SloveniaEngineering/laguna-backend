@@ -19,7 +19,7 @@ serde = { version = "*", features = ["derive"] }
 actix-web = "4"
 serde_bytes = "*"
 serde-byte-array = "0.1.2"
-serde_with = "3.2.0"
+serde_with = "3.3.0"
 actix = "*"
 sqlx = { version="0.7.1", features = [
     "runtime-tokio",
