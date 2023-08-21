@@ -28,7 +28,7 @@ serde_bytes = "0.11.11"
 serde_with = "3.2.0"
 
 # Mark as optional when we don't use feature "testx".
-fake = { version = "2.6", features=["derive", "uuid", "chrono", "http"], optional = true }
+fake = { version = "2.8", features=["derive", "uuid", "chrono", "http"], optional = true }
 rand = { version = "*", optional = true }
 
 [features]
