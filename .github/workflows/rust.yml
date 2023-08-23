@@ -134,8 +134,6 @@ jobs:
           RUST_LOG=warn cargo tarpaulin --workspace --timeout 120 --out Xml --features testx
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v3 # Make sure to use v3 because it allows tokenless upload
-        with:
-          fail_ci_if_error: true
 
   deploy_docs:
     needs: [build, test]
