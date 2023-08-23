@@ -3,6 +3,8 @@
 #![doc(issue_tracker_base_url = "https://github.com/SloveniaEngineering/laguna-backend")]
 #![doc = include_str!("../README.md")]
 
+#![forbid(unsafe_code)]
+
 use actix_settings::ApplySettings;
 
 use actix_web::middleware::Logger;
@@ -29,7 +31,7 @@ async fn main() -> Result<(), sqlx::Error> {
         version: env::var("CARGO_PKG_VERSION").expect("CARGO_PKG_VERSION not set"),
         authors: env::var("CARGO_PKG_AUTHORS")
           .expect("CARGO_PKG_AUTHORS not set")
-          .split(":")
+          .split(':')
           .map(ToString::to_string)
           .collect::<Vec<String>>(),
         license: env::var("CARGO_PKG_LICENSE").expect("CARGO_PKG_LICENSE not set"),
