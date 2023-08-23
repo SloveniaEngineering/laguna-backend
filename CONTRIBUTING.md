@@ -193,8 +193,10 @@ Basic types are:
 2. `C` - Challenge
 3. `D` - Difficulty
 4. `M` - Special type for unsorted
-5. `T` - Type of issue/PR
-6. `V` - Type of SemVer version to bump after resolve
+5. `N` - Needs
+6. `P` - Priority
+7. `T` - Type of issue/PR
+8. `V` - Type of SemVer version to bump after resolve
 
 ### Versioning
 
