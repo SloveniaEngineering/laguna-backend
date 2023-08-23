@@ -92,7 +92,7 @@ pub async fn user_get(
     .await?
     .map(UserSafe::from)
     .map(UserDTO::from)
-    .ok_or_else(|| UserError::NotFound)?;
+    .ok_or(UserError::NotFound)?;
   Ok(HttpResponse::Ok().json(user))
 }
 
@@ -122,7 +122,7 @@ pub async fn user_me_delete(
     .await?
     .map(UserSafe::from)
     .map(drop) // Zero-ize immediately
-    .ok_or_else(|| UserError::NotFound)?;
+    .ok_or(UserError::NotFound)?;
   Ok(HttpResponse::Ok().finish())
 }
 
@@ -186,7 +186,7 @@ pub async fn user_patch(
     .await?
     .map(UserSafe::from)
     .map(UserDTO::from)
-    .ok_or_else(|| UserError::NotUpdated)?;
+    .ok_or(UserError::NotUpdated)?;
   Ok(HttpResponse::Ok().json(user))
 }
 
