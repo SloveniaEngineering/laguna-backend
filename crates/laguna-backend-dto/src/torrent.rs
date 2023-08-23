@@ -1,10 +1,12 @@
+use chrono::serde::ts_seconds;
+use chrono::{DateTime, Utc};
 #[cfg(feature = "testx")]
 use fake::Dummy;
 use laguna_backend_model::consts::{TORRENT_FILENAME_MAX_LEN, TORRENT_FILENAME_MIN_LEN};
 use laguna_backend_model::consts::{TORRENT_TITLE_MAX_LEN, TORRENT_TITLE_MIN_LEN};
 use laguna_backend_model::speedlevel::SpeedLevel;
 use laguna_backend_model::torrent::Torrent;
-use laguna_backend_tracker_common::info_hash::InfoHash;
+
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 
@@ -41,9 +43,9 @@ pub struct TorrentPutDTO {
   pub comment: Option<String>,
   // encoding is set by torrent client, we deny all except UTF-8
   pub encoding: Option<String>,
-  // creation date is set by torrent client
-  #[serde(rename = "creation date")]
-  pub creation_date: i32,
+  // this is a timestamp, creation date is set by torrent client
+  #[serde(rename = "creation date", with = "ts_seconds")]
+  pub creation_date: DateTime<Utc>,
   // created by is set by torrent client
   #[serde(rename = "created by")]
   pub created_by: Option<String>,
@@ -103,10 +105,7 @@ pub struct TorrentPutInfoProfileDTO {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Validate)]
 pub struct TorrentPatchDTO {
-  pub info_hash: InfoHash,
   #[validate(length(min = "TORRENT_TITLE_MIN_LEN", max = "TORRENT_TITLE_MAX_LEN"))]
   pub title: String,
-  #[validate(length(min = "TORRENT_FILENAME_MIN_LEN", max = "TORRENT_FILENAME_MAX_LEN"))]
-  pub file_name: String,
   pub nfo: Option<String>,
 }

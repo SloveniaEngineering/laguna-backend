@@ -2,7 +2,7 @@ use std::net::IpAddr;
 
 use laguna_backend_tracker_common::{
   announce::{AnnounceEvent, Announcement, AnnouncementResponse},
-  info_hash::InfoHash,
+  info_hash::{InfoHash, SHA1_LENGTH},
   peer::{PeerId, PeerStream},
 };
 
@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AnnounceRequest {
-  pub info_hash: InfoHash,
+  pub info_hash: InfoHash<SHA1_LENGTH>,
   pub peer_id: PeerId,
   pub ip: Option<IpAddr>,
   pub port: u16,
@@ -32,7 +32,7 @@ impl Announcement for AnnounceRequest {
   }
 
   #[inline]
-  fn info_hash(&self) -> &InfoHash {
+  fn info_hash(&self) -> &InfoHash<SHA1_LENGTH> {
     &self.info_hash
   }
 

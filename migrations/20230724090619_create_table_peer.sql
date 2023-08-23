@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS "Peer" (
     id BYTEA PRIMARY KEY NOT NULL CHECK (length(id) = 20),
     md5_hash VARCHAR(60),
-    info_hash BYTEA NOT NULL CHECK (length(info_hash) = 40),
+    info_hash BYTEA NOT NULL CHECK (length(info_hash) = 20),
     ip INET,
     port INTEGER NOT NULL CHECK (port >= 0 AND port <= 65535),
     agent TEXT,

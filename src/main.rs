@@ -6,6 +6,8 @@
 use actix_settings::ApplySettings;
 
 use actix_web::middleware::Logger;
+use actix_web::middleware::NormalizePath;
+use actix_web::middleware::TrailingSlash;
 use actix_web::web;
 use actix_web::HttpServer;
 use laguna::dto::meta::AppInfoDTO;
@@ -34,6 +36,8 @@ async fn main() -> Result<(), sqlx::Error> {
         description: env::var("CARGO_PKG_DESCRIPTION").expect("CARGO_PKG_DESCRIPTION not set"),
         repository: env::var("CARGO_PKG_REPOSITORY").expect("CARGO_PKG_REPOSITORY not set"),
       }))
+      // FIXME: This shit is so annoying and doesn't work w/FE
+      .wrap(NormalizePath::new(TrailingSlash::MergeOnly))
   })
   .apply_settings(&get_settings())
   .run()

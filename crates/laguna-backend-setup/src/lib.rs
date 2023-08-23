@@ -11,7 +11,7 @@ use actix_web::http::header;
 
 use actix_web::web::ServiceConfig;
 
-use actix_web::{web, App, HttpResponse};
+use actix_web::{guard, web, App, HttpResponse};
 use argon2::Argon2;
 use argon2::{Algorithm, ParamsBuilder, Version};
 use cached::proc_macro::once;
@@ -20,10 +20,15 @@ use jwt_compact::{alg::Hs256, alg::Hs256Key, TimeOptions};
 use laguna_backend_api::login::login;
 use laguna_backend_api::misc::{get_app_info, healthcheck};
 use laguna_backend_api::register::register;
-use laguna_backend_api::torrent::{torrent_get, torrent_patch, torrent_put};
-use laguna_backend_api::user::{user_get, user_me_delete, user_me_get, user_patch, user_peers_get};
+use laguna_backend_api::torrent::{
+  torrent_delete, torrent_get, torrent_patch, torrent_put, torrent_swarm,
+};
+use laguna_backend_api::user::{
+  user_get, user_me_delete, user_me_get, user_patch, user_peers_get, user_torrents_get,
+};
 
 use laguna_backend_dto::user::UserDTO;
+use laguna_backend_middleware::mime::APPLICATION_XBITTORRENT;
 use laguna_config::make_overridable_with_env_vars;
 use laguna_config::{Settings, LAGUNA_CONFIG};
 use secrecy::ExposeSecret;
@@ -97,13 +102,22 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
               .route("/me", web::get().to(user_me_get))
               .route("/{id}", web::get().to(user_get))
               .route("/me", web::delete().to(user_me_delete))
-              .route("/{id}/peers", web::get().to(user_peers_get)),
+              .route("/{id}/peers", web::get().to(user_peers_get))
+              .route("/{id}/torrents", web::get().to(user_torrents_get)),
           )
           .service(
             web::scope("/torrent")
-              .route("/", web::get().to(torrent_get))
-              .route("/", web::put().to(torrent_put))
-              .route("/", web::patch().to(torrent_patch)),
+              .route("/{info_hash}", web::get().to(torrent_get))
+              .route(
+                "/",
+                web::put().to(torrent_put).guard(guard::Header(
+                  header::CONTENT_TYPE.as_str(),
+                  APPLICATION_XBITTORRENT,
+                )),
+              )
+              .route("/{info_hash}", web::patch().to(torrent_patch))
+              .route("/{info_hash}", web::delete().to(torrent_delete))
+              .route("/{info_hash}/swarm", web::get().to(torrent_swarm)),
           ),
       )
       .default_service(web::to(|| HttpResponse::NotFound()));

@@ -131,7 +131,7 @@ jobs:
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Generate coverage data
         run: |
-          RUST_LOG=warn cargo tarpaulin --workspace --timeout 120 --out Xml --features testx
+          RUST_LOG=warn cargo tarpaulin --workspace --timeout 120 --out Xml --features testx --skip-clean --target-dir=target/coverage
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v3 # Make sure to use v3 because it allows tokenless upload
         with:

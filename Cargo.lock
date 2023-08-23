@@ -1548,6 +1548,7 @@ dependencies = [
  "env_logger",
  "fake",
  "futures",
+ "hex",
  "jwt-compact",
  "laguna-backend-config",
  "laguna-backend-dto",
@@ -1563,6 +1564,7 @@ dependencies = [
  "serde",
  "serde_bencode",
  "serde_json",
+ "sha-1",
  "sha2",
  "sqlx",
  "uuid",
@@ -1594,6 +1596,7 @@ dependencies = [
  "rand",
  "serde",
  "serde_bytes",
+ "serde_with",
  "uuid",
  "validator",
 ]
@@ -2258,9 +2261,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-webpki"
-version = "0.101.3"
+version = "0.101.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "261e9e0888cba427c3316e6322805653c9425240b6fd96cee7cb671ab70ab8d0"
+checksum = "7d93931baf2d282fff8d3a532bbfd7653f734643161b87e3e01e59a04439bf0d"
 dependencies = [
  "ring",
  "untrusted",
@@ -2440,6 +2443,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.28",
+]
+
+[[package]]
+name = "sha-1"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5058ada175748e33390e40e872bd0fe59a19f265d0158daa551c5a88a76009c"
+dependencies = [
+ "cfg-if",
+ "cpufeatures",
+ "digest",
 ]
 
 [[package]]
