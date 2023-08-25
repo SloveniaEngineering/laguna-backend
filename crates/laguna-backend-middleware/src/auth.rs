@@ -42,7 +42,7 @@ where
 
   fn new_transform(&self, service: S) -> Self::Future {
     ready(Ok(AuthorizationMiddleware {
-      min_role: self.min_role.clone(),
+      min_role: self.min_role,
       key: self.key.clone(),
       service,
     }))
@@ -124,7 +124,7 @@ where
       let access_token = UntrustedToken::new(access_token_header.to_str().unwrap()).unwrap();
       let signed_access_token = Hs256
         .validate_for_signed_token::<UserDTO>(&access_token, &self.key)
-        .map_err(|err| AuthorizationError::Invalid(err));
+        .map_err(AuthorizationError::Invalid);
       return match signed_access_token {
         Ok(signed_access_token) => {
           let min_role = self.min_role;

@@ -57,7 +57,7 @@ pub async fn peer_announce(
   user: UserDTO,
 ) -> Result<HttpResponse, APIError> {
   let maybe_peer = sqlx::query_as::<_, Peer>("SELECT * FROM peer_get($1)")
-    .bind(&announce_data.peer_id)
+    .bind(announce_data.peer_id)
     .fetch_optional(pool.get_ref())
     .await?;
 
@@ -92,7 +92,7 @@ async fn handle_peer_request(
   user_agent: Option<&str>,
   user: UserDTO,
 ) -> Result<HttpResponse, APIError> {
-  let event = announce_data.event.unwrap_or_else(|| AnnounceEvent::Empty);
+  let event = announce_data.event.unwrap_or(AnnounceEvent::Empty);
   match event {
     AnnounceEvent::Started => match maybe_peer {
       Some(peer) => {
@@ -155,7 +155,7 @@ async fn handle_peer_started(
 ) -> Result<HttpResponse, APIError> {
   let _peer =
     sqlx::query_as::<_, Peer>("SELECT * FROM peer_insert($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)")
-      .bind(&announce_data.peer_id)
+      .bind(announce_data.peer_id)
       .bind(&announce_data.info_hash)
       .bind(ip)
       .bind(announce_data.port as i32)
@@ -167,7 +167,7 @@ async fn handle_peer_started(
       .bind(user.id)
       .fetch_optional(pool.get_ref())
       .await?
-      .ok_or_else(|| PeerError::NotCreated)?;
+      .ok_or(PeerError::NotCreated)?;
   Ok(HttpResponse::Ok().finish())
 }
 
@@ -205,7 +205,7 @@ async fn handle_peer_updated(
       .bind(Utc::now())
       .fetch_optional(pool.get_ref())
       .await?
-      .ok_or_else(|| PeerError::NotUpdated)?;
+      .ok_or(PeerError::NotUpdated)?;
 
   Ok(HttpResponse::Ok().finish())
 }
