@@ -68,10 +68,13 @@ pub async fn login(
     .fetch_optional(pool.get_ref())
     .await?
     .map(UserSafe::from)
-    .ok_or_else(|| UserError::InvalidCredentials)?;
+    .ok_or(UserError::InvalidCredentials)?;
 
   let password_hash = PasswordHash::new(user.password.expose_secret()).unwrap();
-  if let Err(_) = argon_context.verify_password(login_dto.password.as_bytes(), &password_hash) {
+  if argon_context
+    .verify_password(login_dto.password.as_bytes(), &password_hash)
+    .is_err()
+  {
     // SECURITY: Don't report only "Password" or "Username" invalid to avoid brute-force attacks.
     return Err(UserError::InvalidCredentials.into());
     // return Ok(HttpResponse::Unauthorized().body("Uporabniško ime ali geslo napačno"));
@@ -86,17 +89,17 @@ pub async fn login(
     .await?
     .map(UserSafe::from)
     .map(UserDTO::from)
-    .ok_or_else(|| UserError::NotUpdated)?;
+    .ok_or(UserError::NotUpdated)?;
   Ok(
     HttpResponse::Ok()
       // TODO: get rid of clones
       .append_header((
         ACCESS_TOKEN_HEADER_NAME,
-        signer.create_access_header_value(&user.clone().into())?,
+        signer.create_access_header_value(&user.clone())?,
       ))
       .append_header((
         REFRESH_TOKEN_HEADER_NAME,
-        signer.create_refresh_header_value(&user.clone().into())?,
+        signer.create_refresh_header_value(&user.clone())?,
       ))
       .json(user),
   )

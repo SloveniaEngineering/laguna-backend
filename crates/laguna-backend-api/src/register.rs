@@ -110,7 +110,7 @@ pub async fn register(
     .bind(salt.to_string())
     .fetch_optional(pool.get_ref())
     .await?
-    .ok_or_else(|| UserError::NotCreated)?;
+    .ok_or(UserError::NotCreated)?;
 
   Ok(HttpResponse::Ok().finish())
 }
