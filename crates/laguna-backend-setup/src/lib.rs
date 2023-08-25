@@ -72,13 +72,14 @@ pub fn setup_with_settings(
   App::new().configure(get_config_fn(settings))
 }
 
-pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) -> () {
+pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
   make_overridable_with_env_vars(&mut settings);
   setup_logging(&settings);
   let secret_key = setup_secret_key(&settings);
   let (token_signer, authority) = crate::setup_authority!(secret_key, settings);
   let argon_context = setup_argon_context(&settings);
-  let config_fn = move |service_config: &mut ServiceConfig| {
+
+  move |service_config: &mut ServiceConfig| {
     service_config
       .app_data(web::Data::new(argon_context.clone()))
       // AuthenticationService by default doesnt include token_signer into app_data, hence we get it from setup_authority!() which is kinda hacky.
@@ -120,10 +121,8 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
               .route("/{info_hash}/swarm", web::get().to(torrent_swarm)),
           ),
       )
-      .default_service(web::to(|| HttpResponse::NotFound()));
-  };
-
-  config_fn
+      .default_service(web::to(HttpResponse::NotFound));
+  }
 }
 
 #[inline]
