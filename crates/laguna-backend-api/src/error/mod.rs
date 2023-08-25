@@ -45,7 +45,7 @@ impl From<user::UserError> for APIError {
 
 impl From<peer::PeerError> for APIError {
   fn from(peer_error: peer::PeerError) -> Self {
-    Self::PeerError(peer_error.into())
+    Self::PeerError(peer_error)
   }
 }
 impl From<sqlx::Error> for APIError {

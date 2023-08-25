@@ -11,7 +11,7 @@ fn main() {
       .unwrap()
       .display()
   );
-  if let Ok(_) = env::var("CARGO_FEATURE_DOX") {
+  if env::var("CARGO_FEATURE_DOX").is_ok() {
     println!("cargo:warning=Copying logos to documentation. CARGO_FEATURE_DOX is set.");
     fs::copy("assets/logo.png", "target/doc/logo.png")
       .expect("Failed to copy crate logo when building documentation.");

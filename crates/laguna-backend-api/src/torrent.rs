@@ -63,8 +63,8 @@ pub async fn torrent_get(
     .bind(info_hash)
     .fetch_optional(pool.get_ref())
     .await?
-    .ok_or_else(|| TorrentError::NotFound)?;
-  Ok(HttpResponse::Ok().json(TorrentDTO::from(torrent)))
+    .ok_or(TorrentError::NotFound)?;
+  Ok(HttpResponse::Ok().json(torrent))
 }
 
 /// `PATCH /api/torrent/`
@@ -123,7 +123,7 @@ pub async fn torrent_patch(
     .fetch_optional(pool.get_ref())
     .await?
     .map(TorrentDTO::from)
-    .ok_or_else(|| TorrentError::NotUpdated)?;
+    .ok_or(TorrentError::NotUpdated)?;
   Ok(HttpResponse::Ok().json(torrent_dto))
 }
 
@@ -159,7 +159,7 @@ pub async fn torrent_put(
     .bind(info_hash.clone())
     .fetch_optional(pool.get_ref())
     .await?;
-  if let Some(_) = maybe_torrent {
+  if maybe_torrent.is_some() {
     return Ok(HttpResponse::AlreadyReported().finish());
   }
   let torrent_dto = sqlx::query_as::<_, Torrent>(
@@ -178,9 +178,9 @@ pub async fn torrent_put(
   .fetch_optional(pool.get_ref())
   .await?
   .map(TorrentDTO::from)
-  .ok_or_else(|| TorrentError::NotCreated)?;
+  .ok_or(TorrentError::NotCreated)?;
 
-  return Ok(HttpResponse::Ok().json(torrent_dto));
+  Ok(HttpResponse::Ok().json(torrent_dto))
 }
 
 /// `DELETE /api/torrent/{info_hash}`
@@ -211,7 +211,7 @@ pub async fn torrent_delete(
     .fetch_optional(pool.get_ref())
     .await?
     .map(TorrentDTO::from)
-    .ok_or_else(|| TorrentError::NotFound)?;
+    .ok_or(TorrentError::NotFound)?;
   Ok(HttpResponse::Ok().json(torrent_dto))
 }
 
