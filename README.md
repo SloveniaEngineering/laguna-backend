@@ -8,5 +8,5 @@
     <img src="https://github.com/SloveniaEngineering/laguna-backend/actions/workflows/pages/pages-build-deployment/badge.svg" alt="Documentation status">
 </p>
 
-* For contributing see [CONTRIBUTING.md](https://github.com/SloveniaEngineering/laguna-backend/blob/master/CONTRIBUTING.md) file.
-* For API docs see [Online docs](https://sloveniaengineering.github.io/laguna-backend/index.html).
+* For general documentation see [Laguna docs](https://sloveniaegnineering.github.io/laguna-docs).
+* For internal documentation see [Dev docs](https://sloveniaengineering.github.io/laguna-backend).
