@@ -195,8 +195,9 @@ Basic types are:
 4. `M` - Special type for unsorted
 5. `N` - Needs
 6. `P` - Priority
-7. `T` - Type of issue/PR
-8. `V` - Type of SemVer version to bump after resolve
+7. `S` - Status
+8. `T` - Type of issue/PR
+9. `V` - Type of SemVer version to bump after resolve
 
 ### Versioning
 
