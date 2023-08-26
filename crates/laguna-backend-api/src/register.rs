@@ -16,26 +16,6 @@ use crate::error::{user::UserError, APIError};
 
 /// `POST /api/user/auth/register`
 /// Registers new user.
-/// For login see [`login`](crate::login::login).
-/// # Example
-/// ### Request
-/// ```bash
-/// curl -X POST \
-///      -H "Content-Type: application/json" \
-///      -i 'http://127.0.0.1:6969/api/user/auth/register' \
-///      --data '{
-///         "username": "test123",
-///         "email": "test123@laguna.io",
-///         "password": "test123"
-///      }'
-/// ```
-/// ### Response
-/// #### Status Code
-/// |Response|Description|
-/// |---|---|
-/// |200 OK|Successful register|
-/// |208 Already Reported|User already exists|
-/// |400 Bad Request|User was not created due to invalid input data|
 pub async fn register(
   register_dto: Json<RegisterDTO>,
   pool: web::Data<PgPool>,
