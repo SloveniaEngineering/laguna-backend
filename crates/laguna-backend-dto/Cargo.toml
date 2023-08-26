@@ -25,7 +25,7 @@ uuid = { version = "*", features = ["serde", "v4", "fast-rng"] }
 validator = { version = "0.16", features = ["derive", "unic"] }
 actix-web = "4"
 serde_bytes = "0.11.11"
-serde_with = "3.2.0"
+serde_with = "3.3.0"
 
 # Mark as optional when we don't use feature "testx".
 fake = { version = "2.6", features=["derive", "uuid", "chrono", "http"], optional = true }
