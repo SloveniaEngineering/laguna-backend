@@ -13,3 +13,5 @@ jobs:
       - uses: rustsec/audit-check@v1.4.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+        # Remove below line when this issue gets resolved: https://github.com/orgs/community/discussions/15452
+        continue-on-error: true
