@@ -46,17 +46,6 @@ actix-service = "*"
 secrecy = { version = "*", features = ["serde"] }
 
 [dev-dependencies]
-# fake = { version = "2.6", features=["derive"]}
-# rand = "*"
-# CLI dependency
-# cargo-watch = "8.4.0"
-
-# CLI for sqlx.
-# More: https://github.com/launchbadge/sqlx/blob/main/sqlx-cli/README.md
-# sqlx-cli = { version = "0.7.0", default-features = false, features = [
-#    "rustls",
-#    "postgres",
-# ] }
 
 [features]
 # Dummy feature until build scripts can detect cfg(doc).
