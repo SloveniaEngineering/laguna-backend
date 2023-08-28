@@ -1,9 +1,11 @@
 name: Rust Security Audit
 on:
-  push:
-    paths: 
-      - '**/Cargo.toml'
-      - '**/Cargo.lock'
+  workflow_dispatch:
+# Uncomment these when GitHub gets its shit together
+#  push:
+#    paths: 
+#      - '**/Cargo.toml'
+#      - '**/Cargo.lock'
 jobs:
   security_audit:
     continue-on-error: true
