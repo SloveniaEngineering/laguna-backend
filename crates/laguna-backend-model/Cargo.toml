@@ -52,3 +52,4 @@ rand = { version = "*", optional = true }
 # cfg_attr(test, ...) is broken with workspaces.
 # See: https://github.com/cksac/fake-rs/issues/53
 testx = ["dep:fake", "dep:rand"]
+

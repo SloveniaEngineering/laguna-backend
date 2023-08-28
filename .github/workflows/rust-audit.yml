@@ -1,0 +1,19 @@
+name: Rust Security Audit
+on:
+  workflow_dispatch:
+# Uncomment these when GitHub gets its shit together
+#  push:
+#    paths: 
+#      - '**/Cargo.toml'
+#      - '**/Cargo.lock'
+jobs:
+  security_audit:
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: rustsec/audit-check@v1.4.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+        # Remove below line when this issue gets resolved: https://github.com/orgs/community/discussions/15452
+        continue-on-error: true

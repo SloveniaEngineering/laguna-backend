@@ -4,6 +4,8 @@
 #![doc = include_str!("../README.md")]
 #![forbid(unsafe_code)]
 
+#![forbid(unsafe_code)]
+
 use actix_settings::ApplySettings;
 
 use actix_web::middleware::Logger;
