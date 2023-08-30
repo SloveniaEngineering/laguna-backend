@@ -22,7 +22,6 @@ pub enum APIError {
   MultipartError(MultipartError),
   TorrentError(torrent::TorrentError),
   PeerError(peer::PeerError),
-  HexError(hex::FromHexError),
 }
 
 impl From<io::Error> for APIError {
@@ -72,12 +71,6 @@ impl From<BencodeError> for APIError {
   }
 }
 
-impl From<hex::FromHexError> for APIError {
-  fn from(value: hex::FromHexError) -> Self {
-    Self::HexError(value)
-  }
-}
-
 impl fmt::Display for APIError {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
@@ -89,7 +82,6 @@ impl fmt::Display for APIError {
       Self::SqlxError(sqlx_error) => f.write_fmt(format_args!("{}", sqlx_error)),
       Self::MultipartError(multipart_error) => f.write_fmt(format_args!("{}", multipart_error)),
       Self::BencodeError(bencode_error) => f.write_fmt(format_args!("{}", bencode_error)),
-      Self::HexError(hex_error) => f.write_fmt(format_args!("{}", hex_error)),
     }
   }
 }
@@ -105,7 +97,6 @@ impl ResponseError for APIError {
       Self::SqlxError(_) => StatusCode::INTERNAL_SERVER_ERROR,
       Self::MultipartError(_) => StatusCode::UNPROCESSABLE_ENTITY,
       Self::BencodeError(_) => StatusCode::UNPROCESSABLE_ENTITY,
-      Self::HexError(_) => StatusCode::UNPROCESSABLE_ENTITY,
     }
   }
 
@@ -127,9 +118,6 @@ impl ResponseError for APIError {
       Self::BencodeError(bencode_error) => HttpResponse::build(self.status_code())
         .content_type(ContentType::plaintext())
         .body(bencode_error.to_string()),
-      Self::HexError(hex_error) => {
-        HttpResponse::build(self.status_code()).body(hex_error.to_string())
-      },
     }
   }
 }

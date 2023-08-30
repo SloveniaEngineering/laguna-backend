@@ -5,6 +5,7 @@
 extern crate core;
 
 pub mod error;
+pub mod helpers;
 pub mod login;
 pub mod misc;
 pub mod peer;

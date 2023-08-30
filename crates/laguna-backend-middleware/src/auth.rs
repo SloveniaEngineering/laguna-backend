@@ -4,7 +4,8 @@ use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse};
 
 use actix_web::http::StatusCode;
 
-use actix_web::{Error, HttpResponse, ResponseError};
+use actix_web::{Error, HttpMessage, HttpResponse, ResponseError};
+
 use std::fmt;
 
 use futures_util::future::LocalBoxFuture;

@@ -6,6 +6,7 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
+use serde_with::hex::Hex;
 use serde_with::serde_as;
 
 pub const PEER_ID_LENGTH: usize = 20;
@@ -19,7 +20,7 @@ pub const PEER_BIN_DICT_LENGTH: usize = 6;
 pub struct PeerId(
   // OLD: See: https://github.com/serde-rs/bytes/pull/28
   // #[serde(with = "serde_byte_array")]
-  #[serde_as(as = "[_; PEER_ID_LENGTH]")] pub [u8; PEER_ID_LENGTH],
+  #[serde_as(as = "Hex")] pub [u8; PEER_ID_LENGTH],
 );
 
 impl From<Vec<u8>> for PeerId {

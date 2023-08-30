@@ -9,6 +9,7 @@ use actix_web::dev::ServiceResponse;
 use actix_web::dev::{ServiceFactory, ServiceRequest};
 use actix_web::http::header;
 
+use actix_web::middleware::DefaultHeaders;
 use actix_web::web::ServiceConfig;
 
 use actix_web::{guard, web, App, HttpResponse};
@@ -19,6 +20,7 @@ use chrono::Duration;
 use jwt_compact::{alg::Hs256, alg::Hs256Key, TimeOptions};
 use laguna_backend_api::login::login;
 use laguna_backend_api::misc::{get_app_info, healthcheck};
+use laguna_backend_api::peer::peer_announce;
 use laguna_backend_api::register::register;
 use laguna_backend_api::torrent::{
   torrent_delete, torrent_get, torrent_patch, torrent_put, torrent_swarm,
@@ -28,7 +30,8 @@ use laguna_backend_api::user::{
 };
 
 use laguna_backend_dto::user::UserDTO;
-use laguna_backend_middleware::mime::APPLICATION_XBITTORRENT;
+use laguna_backend_middleware::hexify::HexifyMiddlewareFactory;
+use laguna_backend_middleware::mime::{APPLICATION_LAGUNA_JSON_VERSIONED, APPLICATION_XBITTORRENT};
 use laguna_config::make_overridable_with_env_vars;
 use laguna_config::{Settings, LAGUNA_CONFIG};
 use secrecy::ExposeSecret;
@@ -95,7 +98,15 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
           .route("/healthcheck", web::get().to(healthcheck)),
       )
       .service(
+        web::scope("peer")
+          .wrap(HexifyMiddlewareFactory::new())
+          .route("/announce", web::get().to(peer_announce)),
+      )
+      .service(
         web::scope("/api")
+          .wrap(
+            DefaultHeaders::new().add((header::CONTENT_TYPE, APPLICATION_LAGUNA_JSON_VERSIONED)),
+          )
           .wrap(AuthenticationService::new(authority))
           .service(
             web::scope("/user")
@@ -163,6 +174,7 @@ macro_rules! setup_authority {
       Authority::<UserDTO, Hs256, _, _>::new()
         .refresh_authorizer(|| async move { Ok(()) })
         .enable_header_tokens(true)
+        .enable_cookie_tokens(true)
         .time_options(TimeOptions::from_leeway(Duration::seconds(5)))
         .algorithm(Hs256)
         .access_token_name(ACCESS_TOKEN_HEADER_NAME)

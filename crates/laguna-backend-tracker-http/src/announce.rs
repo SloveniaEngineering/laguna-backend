@@ -8,6 +8,8 @@ use laguna_backend_tracker_common::{
 
 use serde::{Deserialize, Serialize};
 
+use laguna_backend_tracker_common::helpers::bool_from_int;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AnnounceRequest {
   pub info_hash: InfoHash<SHA1_LENGTH>,
@@ -19,10 +21,16 @@ pub struct AnnounceRequest {
   pub left: i64,
   pub event: Option<AnnounceEvent>,
   pub numwant: Option<i64>,
+  #[serde(deserialize_with = "bool_from_int")]
   pub compact: Option<bool>,
+  #[serde(deserialize_with = "bool_from_int")]
   pub no_peer_id: Option<bool>,
   pub key: Option<String>,
   pub trackerid: Option<String>,
+  #[serde(deserialize_with = "bool_from_int")]
+  pub supportcrypto: Option<bool>,
+  #[serde(deserialize_with = "bool_from_int")]
+  pub redundant: Option<bool>,
 }
 
 impl Announcement for AnnounceRequest {

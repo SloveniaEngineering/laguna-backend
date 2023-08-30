@@ -7,7 +7,10 @@ use chrono::Utc;
 use jwt_compact::alg::Hs256;
 use laguna_backend_dto::login::LoginDTO;
 use laguna_backend_dto::user::UserDTO;
-use laguna_backend_middleware::consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME};
+use laguna_backend_middleware::{
+  consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME},
+  mime::APPLICATION_LAGUNA_JSON_VERSIONED,
+};
 use laguna_backend_model::user::{User, UserSafe};
 
 use secrecy::ExposeSecret;
@@ -50,6 +53,7 @@ pub async fn login(
     .map(UserSafe::from)
     .map(UserDTO::from)
     .ok_or(UserError::NotUpdated)?;
+
   Ok(
     HttpResponse::Ok()
       // TODO: get rid of clones
@@ -61,6 +65,7 @@ pub async fn login(
         REFRESH_TOKEN_HEADER_NAME,
         signer.create_refresh_header_value(&user.clone())?,
       ))
+      .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
       .json(user),
   )
 }

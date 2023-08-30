@@ -19,7 +19,8 @@ serde = { version = "*", features = ["derive"] }
 actix-web = "4"
 serde_bytes = "*"
 serde-byte-array = "0.1.2"
-serde_with = "3.3.0"
+serde_urlencoded_field = "*"
+serde_with = { version = "3.3.0", features = ["hex"] }
 actix = "*"
 sqlx = { version="0.7.1", features = [
     "runtime-tokio",
@@ -32,3 +33,5 @@ sqlx = { version="0.7.1", features = [
     "chrono",
     "json",
 ] }
+serde_urlencoded = "*"
+url = { version = "*", features = ["serde"] }

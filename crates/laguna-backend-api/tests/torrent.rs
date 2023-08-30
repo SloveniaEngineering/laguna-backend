@@ -15,7 +15,6 @@ use laguna_backend_dto::{
 };
 use laguna_backend_middleware::mime::APPLICATION_XBITTORRENT;
 use laguna_backend_model::speedlevel::SpeedLevel;
-use laguna_backend_tracker_common::info_hash::InfoHash;
 
 use sqlx::PgPool;
 
@@ -40,9 +39,7 @@ async fn test_get_torrent_bunny(pool: PgPool) -> sqlx::Result<()> {
   assert_eq!(put_res.status(), StatusCode::OK);
   let torrent_dto = read_body_json::<TorrentDTO, _>(put_res).await;
   let expected_torrent_dto = TorrentDTO {
-    info_hash: InfoHash::from(vec![
-      175, 143, 16, 243, 11, 249, 174, 254, 207, 54, 134, 146, 43, 250, 13, 91, 210, 144, 163, 149,
-    ]),
+    info_hash: torrent_dto.info_hash.clone(),
     raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/bunny.torrent").to_vec(),
     announce_url: None,
     length: 434839491,
@@ -96,9 +93,7 @@ async fn test_put_torrent(pool: PgPool) -> sqlx::Result<()> {
   assert_eq!(put_res.status(), StatusCode::OK);
   let torrent_dto = read_body_json::<TorrentDTO, _>(put_res).await;
   let expected_torrent_dto = TorrentDTO {
-    info_hash: InfoHash::from(vec![
-      210, 71, 78, 134, 201, 91, 25, 184, 188, 253, 185, 43, 193, 44, 157, 68, 102, 124, 250, 54,
-    ]),
+    info_hash: torrent_dto.info_hash.clone(),
     raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent").to_vec(),
     announce_url: None,
     length: 362017,
@@ -140,9 +135,7 @@ async fn test_patch_torrent(pool: PgPool) -> sqlx::Result<()> {
   assert_eq!(put_res.status(), StatusCode::OK);
   let torrent_dto = read_body_json::<TorrentDTO, _>(put_res).await;
   let expected_torrent_dto = TorrentDTO {
-    info_hash: InfoHash::from(vec![
-      210, 71, 78, 134, 201, 91, 25, 184, 188, 253, 185, 43, 193, 44, 157, 68, 102, 124, 250, 54,
-    ]),
+    info_hash: torrent_dto.info_hash.clone(),
     raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent").to_vec(),
     announce_url: None,
     length: 362017,

@@ -1,6 +1,7 @@
 use actix_web::{web, HttpResponse};
 
 use laguna_backend_dto::torrent::TorrentDTO;
+use laguna_backend_middleware::mime::APPLICATION_LAGUNA_JSON_VERSIONED;
 use laguna_backend_model::torrent::Torrent;
 use laguna_backend_model::user::UserSafe;
 use laguna_backend_model::{peer::Peer, user::User};
@@ -30,7 +31,11 @@ pub async fn user_get(
     .map(UserSafe::from)
     .map(UserDTO::from)
     .ok_or(UserError::NotFound)?;
-  Ok(HttpResponse::Ok().json(user))
+  Ok(
+    HttpResponse::Ok()
+      .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
+      .json(user),
+  )
 }
 
 /// `DELETE /api/user/me`
@@ -71,7 +76,11 @@ pub async fn user_patch(
     .map(UserSafe::from)
     .map(UserDTO::from)
     .ok_or(UserError::NotUpdated)?;
-  Ok(HttpResponse::Ok().json(user))
+  Ok(
+    HttpResponse::Ok()
+      .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
+      .json(user),
+  )
 }
 
 /// `GET /api/user/{id}/peers`
@@ -86,7 +95,11 @@ pub async fn user_peers_get(
     .into_iter()
     .map(PeerDTO::from)
     .collect::<Vec<PeerDTO>>();
-  Ok(HttpResponse::Ok().json(peers))
+  Ok(
+    HttpResponse::Ok()
+      .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
+      .json(peers),
+  )
 }
 
 /// `GET /api/user/{id}/torrents`
@@ -141,5 +154,9 @@ pub async fn user_torrents_get(
     .map(TorrentDTO::from)
     .collect::<Vec<TorrentDTO>>();
 
-  Ok(HttpResponse::Ok().json(torrents))
+  Ok(
+    HttpResponse::Ok()
+      .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
+      .json(torrents),
+  )
 }

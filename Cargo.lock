@@ -1549,7 +1549,6 @@ dependencies = [
  "env_logger",
  "fake",
  "futures",
- "hex",
  "jwt-compact",
  "laguna-backend-config",
  "laguna-backend-dto",
@@ -1623,6 +1622,7 @@ dependencies = [
  "actix-web",
  "argon2",
  "chrono",
+ "const_format",
  "derive_more",
  "digest",
  "env_logger",
@@ -1631,8 +1631,11 @@ dependencies = [
  "laguna-backend-dto",
  "laguna-backend-model",
  "log",
+ "percent-encoding",
+ "qstring",
  "serde",
  "serde_json",
+ "serde_urlencoded",
  "sha2",
  "sql-builder",
  "sqlx",
@@ -1709,8 +1712,11 @@ dependencies = [
  "serde",
  "serde-byte-array",
  "serde_bytes",
+ "serde_urlencoded",
+ "serde_urlencoded_field",
  "serde_with",
  "sqlx",
+ "url",
 ]
 
 [[package]]
@@ -2099,6 +2105,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "qstring"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d464fae65fff2680baf48019211ce37aaec0c78e9264c84a3e484717f965104e"
+dependencies = [
+ "percent-encoding",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2415,6 +2430,18 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "serde_urlencoded_field"
+version = "1.117.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0141d5cc70280735c5ff4c33bd7858b4662db0b3dd92e1a0eb88610ea8cc5449"
+dependencies = [
+ "percent-encoding",
+ "serde",
+ "serde_derive",
+ "serde_json",
 ]
 
 [[package]]
@@ -3136,6 +3163,7 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]

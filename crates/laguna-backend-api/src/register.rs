@@ -8,11 +8,13 @@ use argon2::{
 use laguna_backend_dto::{already_exists::AlreadyExistsDTO, register::RegisterDTO};
 use laguna_backend_model::user::{User, UserSafe};
 
-use rand::Rng;
 use secrecy::ExposeSecret;
 use sqlx::PgPool;
 
-use crate::error::{user::UserError, APIError};
+use crate::{
+  error::{user::UserError, APIError},
+  helpers::register::generate_username_recommendations,
+};
 
 /// `POST /api/user/auth/register`
 /// Registers new user.
@@ -24,56 +26,24 @@ pub async fn register(
   // In own scope for faster drop of fetched_user, because we don't need it much.
   let register_dto = register_dto.into_inner();
 
-  {
-    let fetched_user = sqlx::query_as::<_, User>("SELECT * FROM user_lookup($1, $2)")
-      .bind(&register_dto.username)
-      .bind(&register_dto.email)
-      .fetch_optional(pool.get_ref())
-      .await?
-      .map(UserSafe::from);
+  let fetched_user = sqlx::query_as::<_, User>("SELECT * FROM user_lookup($1, $2)")
+    .bind(&register_dto.username)
+    .bind(&register_dto.email)
+    .fetch_optional(pool.get_ref())
+    .await?
+    .map(UserSafe::from);
 
-    if let Some(user) = fetched_user {
-      return Ok(HttpResponse::AlreadyReported().json(AlreadyExistsDTO {
-        message: String::from(
-          "Uporabnik s tem uporabniškim imenom, elektronskim naslovom že obstaja.",
-        ),
-        recommended_usernames: if user.email.expose_secret() == &register_dto.email {
-          Vec::new()
-        } else {
-          // generate 3 random integers in range of [0, 10000]
-          let recommendations = vec![
-            format!(
-              "{}{}",
-              user.username,
-              rand::thread_rng().gen_range(0..10000)
-            ),
-            format!(
-              "{}{}",
-              user.username,
-              rand::thread_rng().gen_range(0..10000)
-            ),
-            format!(
-              "{}{}",
-              user.username,
-              rand::thread_rng().gen_range(0..10000)
-            ),
-          ];
-          let mut recommendations_filtered = Vec::with_capacity(recommendations.capacity());
-          // filter out usernames that already exist
-          for recomm in recommendations.into_iter() {
-            if sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM "User" WHERE username = $1"#)
-              .bind(&recomm)
-              .fetch_one(pool.get_ref())
-              .await?
-              == 0
-            {
-              recommendations_filtered.push(recomm)
-            }
-          }
-          recommendations_filtered
-        },
-      }));
-    }
+  if let Some(user) = fetched_user {
+    return Ok(HttpResponse::AlreadyReported().json(AlreadyExistsDTO {
+      message: String::from(
+        "Uporabnik s tem uporabniškim imenom, elektronskim naslovom že obstaja.",
+      ),
+      recommended_usernames: if user.email.expose_secret() == &register_dto.email {
+        Vec::new()
+      } else {
+        generate_username_recommendations(user, &pool).await?
+      },
+    }));
   }
 
   let salt = SaltString::generate(&mut OsRng);
