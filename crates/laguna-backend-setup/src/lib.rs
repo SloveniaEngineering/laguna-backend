@@ -32,6 +32,7 @@ use laguna_backend_api::user::{
 use laguna_backend_dto::user::UserDTO;
 use laguna_backend_middleware::hexify::HexifyMiddlewareFactory;
 use laguna_backend_middleware::mime::{APPLICATION_LAGUNA_JSON_VERSIONED, APPLICATION_XBITTORRENT};
+use laguna_backend_tracker_common::info_hash::SHA1_LENGTH;
 use laguna_config::make_overridable_with_env_vars;
 use laguna_config::{Settings, LAGUNA_CONFIG};
 use secrecy::ExposeSecret;
@@ -100,7 +101,7 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
       .service(
         web::scope("peer")
           .wrap(HexifyMiddlewareFactory::new())
-          .route("/announce", web::get().to(peer_announce)),
+          .route("/announce", web::get().to(peer_announce::<SHA1_LENGTH>)),
       )
       .service(
         web::scope("/api")
@@ -119,17 +120,26 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
           )
           .service(
             web::scope("/torrent")
-              .route("/{info_hash}", web::get().to(torrent_get))
+              .route("/{info_hash}", web::get().to(torrent_get::<SHA1_LENGTH>))
               .route(
                 "/",
-                web::put().to(torrent_put).guard(guard::Header(
+                web::put().to(torrent_put::<20>).guard(guard::Header(
                   header::CONTENT_TYPE.as_str(),
                   APPLICATION_XBITTORRENT,
                 )),
               )
-              .route("/{info_hash}", web::patch().to(torrent_patch))
-              .route("/{info_hash}", web::delete().to(torrent_delete))
-              .route("/{info_hash}/swarm", web::get().to(torrent_swarm)),
+              .route(
+                "/{info_hash}",
+                web::patch().to(torrent_patch::<SHA1_LENGTH>),
+              )
+              .route(
+                "/{info_hash}",
+                web::delete().to(torrent_delete::<SHA1_LENGTH>),
+              )
+              .route(
+                "/{info_hash}/swarm",
+                web::get().to(torrent_swarm::<SHA1_LENGTH>),
+              ),
           ),
       )
       .default_service(web::to(HttpResponse::NotFound));

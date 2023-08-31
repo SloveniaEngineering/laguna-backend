@@ -2,7 +2,7 @@ use std::net::IpAddr;
 
 use laguna_backend_tracker_common::{
   announce::{AnnounceEvent, Announcement, AnnouncementResponse},
-  info_hash::{InfoHash, SHA1_LENGTH},
+  info_hash::InfoHash,
   peer::{PeerId, PeerStream},
 };
 
@@ -11,8 +11,8 @@ use serde::{Deserialize, Serialize};
 use laguna_backend_tracker_common::helpers::bool_from_int;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct AnnounceRequest {
-  pub info_hash: InfoHash<SHA1_LENGTH>,
+pub struct Announce<const N: usize> {
+  pub info_hash: InfoHash<N>,
   pub peer_id: PeerId,
   pub ip: Option<IpAddr>,
   pub port: u16,
@@ -21,26 +21,30 @@ pub struct AnnounceRequest {
   pub left: i64,
   pub event: Option<AnnounceEvent>,
   pub numwant: Option<i64>,
+  #[serde(default)]
   #[serde(deserialize_with = "bool_from_int")]
   pub compact: Option<bool>,
+  #[serde(default)]
   #[serde(deserialize_with = "bool_from_int")]
   pub no_peer_id: Option<bool>,
   pub key: Option<String>,
   pub trackerid: Option<String>,
+  #[serde(default)]
   #[serde(deserialize_with = "bool_from_int")]
   pub supportcrypto: Option<bool>,
+  #[serde(default)]
   #[serde(deserialize_with = "bool_from_int")]
   pub redundant: Option<bool>,
 }
 
-impl Announcement for AnnounceRequest {
+impl<const N: usize> Announcement<N> for Announce<N> {
   #[inline]
   fn peer_id(&self) -> &PeerId {
     &self.peer_id
   }
 
   #[inline]
-  fn info_hash(&self) -> &InfoHash<SHA1_LENGTH> {
+  fn info_hash(&self) -> &InfoHash<N> {
     &self.info_hash
   }
 
@@ -101,7 +105,7 @@ impl Announcement for AnnounceRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct AnnounceResponse {
+pub struct AnnounceReply {
   #[serde(rename = "failure reason")]
   pub failure_reason: Option<String>,
   #[serde(rename = "warning message")]
@@ -116,7 +120,7 @@ pub struct AnnounceResponse {
   pub peers: PeerStream,
 }
 
-impl AnnouncementResponse for AnnounceResponse {
+impl AnnouncementResponse for AnnounceReply {
   #[inline]
   fn failure_reason(&self) -> Option<&String> {
     self.failure_reason.as_ref()

@@ -19,8 +19,8 @@ use laguna_backend_tracker::prelude::info_hash::InfoHash;
 use crate::error::{torrent::TorrentError, APIError};
 
 /// `GET /api/torrent/{info_hash}`
-pub async fn torrent_get(
-  info_hash: web::Path<InfoHash<SHA1_LENGTH>>,
+pub async fn torrent_get<const N: usize>(
+  info_hash: web::Path<InfoHash<N>>,
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
   let torrent = sqlx::query_as::<_, Torrent>("SELECT * FROM torrent_get($1)")
@@ -36,8 +36,8 @@ pub async fn torrent_get(
 }
 
 /// `PATCH /api/torrent/`
-pub async fn torrent_patch(
-  info_hash: web::Path<InfoHash<SHA1_LENGTH>>,
+pub async fn torrent_patch<const N: usize>(
+  info_hash: web::Path<InfoHash<N>>,
   torrent_dto: Json<TorrentPatchDTO>,
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
@@ -58,7 +58,7 @@ pub async fn torrent_patch(
 }
 
 /// `PUT /api/torrent/`
-pub async fn torrent_put(
+pub async fn torrent_put<const N: usize>(
   body: Bytes,
   pool: web::Data<PgPool>,
   user: UserDTO,
@@ -101,8 +101,8 @@ pub async fn torrent_put(
 }
 
 /// `DELETE /api/torrent/{info_hash}`
-pub async fn torrent_delete(
-  info_hash: web::Path<InfoHash<SHA1_LENGTH>>,
+pub async fn torrent_delete<const N: usize>(
+  info_hash: web::Path<InfoHash<N>>,
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
   let torrent_dto = sqlx::query_as::<_, Torrent>("SELECT * FROM torrent_delete($1)")
@@ -119,8 +119,8 @@ pub async fn torrent_delete(
 }
 
 /// `GET /api/torrent/{info_hash}/swarm`
-pub async fn torrent_swarm(
-  info_hash: web::Path<InfoHash<SHA1_LENGTH>>,
+pub async fn torrent_swarm<const N: usize>(
+  info_hash: web::Path<InfoHash<N>>,
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
   let swarm = sqlx::query_as::<_, Peer>("SELECT * FROM torrent_swarm($1)")

@@ -1687,6 +1687,7 @@ dependencies = [
  "laguna-backend-dto",
  "laguna-backend-middleware",
  "laguna-backend-model",
+ "laguna-backend-tracker-common",
  "rustversion",
  "secrecy",
  "sqlx",
