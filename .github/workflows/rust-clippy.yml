@@ -49,7 +49,7 @@ jobs:
           components: clippy
 
       - name: Install required cargo
-        run: cargo install clippy-sarif sarif-fmt
+        run: cargo install --force clippy-sarif sarif-fmt
 
       - name: Run rust-clippy
         run:
