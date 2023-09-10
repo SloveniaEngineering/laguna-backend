@@ -12,7 +12,7 @@ use laguna_backend_model::torrent::Torrent;
 use laguna_backend_tracker::http::announce::{Announce, AnnounceReply};
 
 use laguna_backend_model::genre::Genre;
-use laguna_backend_tracker_common::announce::{AnnounceEvent, Announcement};
+use laguna_backend_tracker_common::announce::AnnounceEvent;
 
 use laguna_backend_model::behaviour::Behaviour;
 use laguna_backend_tracker_common::peer::{PeerBin, PeerDict, PeerStream, PEER_BIN_DICT_LENGTH};
