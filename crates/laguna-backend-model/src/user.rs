@@ -25,10 +25,11 @@ pub struct User {
   pub avatar_url: Option<String>,
   pub salt: String,
   pub role: Role,
+  pub hnr_count: i32,
   pub behaviour: Behaviour,
-  pub is_active: bool,
+  pub is_enabled: bool,
+  pub is_donator: bool,
   pub has_verified_email: bool,
-  pub is_history_private: bool,
   pub is_profile_private: bool,
 }
 
@@ -42,10 +43,11 @@ pub struct UserSafe {
   pub avatar_url: Option<String>,
   pub salt: Secret<String>,
   pub role: Role,
+  pub hnr_count: i32,
   pub behaviour: Behaviour,
-  pub is_active: bool,
+  pub is_enabled: bool,
+  pub is_donator: bool,
   pub has_verified_email: bool,
-  pub is_history_private: bool,
   pub is_profile_private: bool,
 }
 
@@ -61,10 +63,11 @@ impl From<User> for UserSafe {
       avatar_url: user.avatar_url,
       salt: Secret::new(user.salt),
       role: user.role,
+      hnr_count: user.hnr_count,
       behaviour: user.behaviour,
-      is_active: user.is_active,
+      is_enabled: user.is_enabled,
+      is_donator: user.is_donator,
       has_verified_email: user.has_verified_email,
-      is_history_private: user.is_history_private,
       is_profile_private: user.is_profile_private,
     }
   }

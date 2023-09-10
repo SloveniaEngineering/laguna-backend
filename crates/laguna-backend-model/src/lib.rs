@@ -4,9 +4,12 @@
 #![doc(issue_tracker_base_url = "https://github.com/SloveniaEngineering/laguna-backend")]
 pub mod behaviour;
 pub mod consts;
+pub mod genre;
 pub mod peer;
+pub mod rating;
 pub mod role;
 pub mod speedlevel;
 pub mod swarm;
 pub mod torrent;
+pub mod torrent_rating;
 pub mod user;

@@ -39,3 +39,6 @@ name = "laguna_dev_db"
 [application.frontend]
 host = "127.0.0.1"
 port = 4200
+
+[application.tracker]
+announce-url = "http://127.0.0.1:6969/peer/announce"

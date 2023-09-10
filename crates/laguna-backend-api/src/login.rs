@@ -11,6 +11,8 @@ use laguna_backend_middleware::{
   consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME},
   mime::APPLICATION_LAGUNA_JSON_VERSIONED,
 };
+use laguna_backend_model::behaviour::Behaviour;
+use laguna_backend_model::role::Role;
 use laguna_backend_model::user::{User, UserSafe};
 
 use secrecy::ExposeSecret;
@@ -18,20 +20,34 @@ use sqlx::PgPool;
 
 use crate::error::{user::UserError, APIError};
 
-/// `POST /api/user/auth/login`
-/// Signs in existing user.
+#[utoipa::path(
+  post,
+  path = "/api/user/auth/login",
+  responses(
+    (status = 200, description = "User logged in successfully.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json", headers(
+      ("X-Access-Token" = String, description = "Access token."),
+      ("X-Refresh-Token" = String, description = "Refresh token.")
+    )),
+    (status = 400, description = "Bad request.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 401, description = "Invalid credentials.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json")
+  ),
+)]
 pub async fn login(
   login_dto: Json<LoginDTO>,
   pool: web::Data<PgPool>,
   signer: web::Data<TokenSigner<UserDTO, Hs256>>,
   argon_context: web::Data<Argon2<'static>>,
 ) -> Result<HttpResponse, APIError> {
-  let user = sqlx::query_as::<_, User>("SELECT * FROM user_lookup($1, $1)")
-    .bind(&login_dto.username_or_email)
-    .fetch_optional(pool.get_ref())
-    .await?
-    .map(UserSafe::from)
-    .ok_or(UserError::InvalidCredentials)?;
+  let user = sqlx::query_file_as!(
+    User,
+    "queries/user_lookup.sql",
+    login_dto.username_or_email,
+    login_dto.username_or_email
+  )
+  .fetch_optional(pool.get_ref())
+  .await?
+  .map(UserSafe::from)
+  .ok_or(UserError::InvalidCredentials)?;
 
   let password_hash = PasswordHash::new(user.password.expose_secret()).unwrap();
   if argon_context
@@ -42,12 +58,9 @@ pub async fn login(
     return Err(UserError::InvalidCredentials.into());
     // return Ok(HttpResponse::Unauthorized().body("Uporabniško ime ali geslo napačno"));
   }
-  // Logged user has been updated, we need to return the updated user.
-  // TODO(kenpaicat): This is fine, UTC stamp on backend recieve is fine.
-  //                  But we probably should do this on INSERT TRIGGER or as DEFAULT on table.
-  let user = sqlx::query_as::<_, User>("SELECT * FROM user_patch_login($1, $2)")
-    .bind(user.id)
-    .bind(Utc::now())
+
+  // Update last_login
+  let user = sqlx::query_file_as!(User, "queries/user_login_update.sql", Utc::now(), user.id)
     .fetch_optional(pool.get_ref())
     .await?
     .map(UserSafe::from)

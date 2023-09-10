@@ -20,6 +20,7 @@ pub struct ApplicationSettings {
   pub database: DatabaseSettings,
   pub auth: AuthSettings,
   pub frontend: FrontendSettings,
+  pub tracker: TrackerSettings,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -97,6 +98,12 @@ impl FrontendSettings {
   }
 }
 
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "kebab-case")]
+pub struct TrackerSettings {
+  pub announce_url: String,
+}
+
 pub fn make_overridable_with_env_vars(settings: &mut Settings) {
   Settings::override_field_with_env_var(&mut settings.actix.hosts, "ACTIX_HOSTS")
     .expect("ACTIX_HOSTS not specified");
@@ -154,17 +161,17 @@ pub fn make_overridable_with_env_vars(settings: &mut Settings) {
     &mut settings.application.auth.access_token_lifetime_seconds,
     "APPLICATION_AUTH_ACCESS_TOKEN_LIFETIME_SECONDS",
   )
-  .expect("ACCESS_AUTH_TOKEN_LIFETIME_SECONDS not specified");
+  .expect("APPLICATION_ACCESS_AUTH_TOKEN_LIFETIME_SECONDS not specified");
   Settings::override_field_with_env_var(
     &mut settings.application.auth.refresh_token_lifetime_seconds,
     "APPLICATION_AUTH_REFRESH_TOKEN_LIFETIME_SECONDS",
   )
-  .expect("REFRESH_AUTH_TOKEN_LIFETIME_SECONDS not specified");
+  .expect("APPLICATION_REFRESH_AUTH_TOKEN_LIFETIME_SECONDS not specified");
   Settings::override_field_with_env_var(
     &mut settings.application.database.proto,
     "APPLICATION_DATABASE_PROTO",
   )
-  .expect("DATABASE_PROTO not specified");
+  .expect("APPLICATION_DATABASE_PROTO not specified");
   if let Ok(application_database_host) = env::var("APPLICATION_DATABASE_HOST") {
     settings.application.database.host = Secret::new(application_database_host);
   }
@@ -172,12 +179,12 @@ pub fn make_overridable_with_env_vars(settings: &mut Settings) {
     &mut settings.application.database.port,
     "APPLICATION_DATABASE_PORT",
   )
-  .expect("DATABASE_PORT not specified");
+  .expect("APPLICATION_DATABASE_PORT not specified");
   Settings::override_field_with_env_var(
     &mut settings.application.database.username,
     "APPLICATION_DATABASE_USERNAME",
   )
-  .expect("DATABASE_USERNAME not specified");
+  .expect("APPLICATION_DATABASE_USERNAME not specified");
   if let Ok(application_database_password) = env::var("APPLICATION_DATABASE_PASSWORD") {
     settings.application.database.password = Secret::new(application_database_password);
   }
@@ -185,20 +192,25 @@ pub fn make_overridable_with_env_vars(settings: &mut Settings) {
     &mut settings.application.database.name,
     "APPLICATION_DATABASE_NAME",
   )
-  .expect("DATABASE_NAME not specified");
+  .expect("APPLICATION_DATABASE_NAME not specified");
   Settings::override_field_with_env_var(
     &mut settings.application.frontend.host,
     "APPLICATION_FRONTEND_HOST",
   )
-  .expect("FRONTEND_HOST not specified");
+  .expect("APPLICATION_FRONTEND_HOST not specified");
   Settings::override_field_with_env_var(
     &mut settings.application.frontend.port,
     "APPLICATION_FRONTEND_PORT",
   )
-  .expect("FRONTEND_PORT not specified");
+  .expect("APPLICATION_FRONTEND_PORT not specified");
   if let Ok(database_url) = env::var("DATABASE_URL") {
     settings.application.database = DatabaseSettings::from_url(database_url);
   }
+  Settings::override_field_with_env_var(
+    &mut settings.application.tracker.announce_url,
+    "APPLICATION_TRACKER_ANNOUNCE_URL",
+  )
+  .expect("APPLICATION_TRACKER_ANNOUNCE_URL not specified");
 }
 
 #[cfg(test)]

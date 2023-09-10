@@ -35,3 +35,4 @@ sqlx = { version="0.7.1", features = [
 ] }
 serde_urlencoded = "*"
 url = { version = "*", features = ["serde"] }
+utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }

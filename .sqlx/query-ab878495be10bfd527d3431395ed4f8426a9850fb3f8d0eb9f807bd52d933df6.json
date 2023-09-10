@@ -1,0 +1,133 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM \"User\"\r\nWHERE id = $1\r\nRETURNING \r\n    id,\r\n    username,\r\n    email,\r\n    password,\r\n    first_login,\r\n    last_login,\r\n    avatar_url,\r\n    salt,\r\n    role AS \"role: Role\",\r\n    hnr_count,\r\n    behaviour AS \"behaviour: Behaviour\",\r\n    is_enabled,\r\n    is_donator,\r\n    has_verified_email,\r\n    is_profile_private\r\n;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "username",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "email",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "password",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "first_login",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "last_login",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "avatar_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "salt",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "role: Role",
+        "type_info": {
+          "Custom": {
+            "name": "role",
+            "kind": {
+              "Enum": [
+                "Normie",
+                "Verified",
+                "Mod",
+                "Admin"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "hnr_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 10,
+        "name": "behaviour: Behaviour",
+        "type_info": {
+          "Custom": {
+            "name": "behaviour",
+            "kind": {
+              "Enum": [
+                "Lurker",
+                "Downloader",
+                "Freeleecher",
+                "Leech",
+                "Seed",
+                "Choked",
+                "Uploader"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "is_enabled",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 12,
+        "name": "is_donator",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 13,
+        "name": "has_verified_email",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 14,
+        "name": "is_profile_private",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "ab878495be10bfd527d3431395ed4f8426a9850fb3f8d0eb9f807bd52d933df6"
+}

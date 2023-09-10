@@ -4,7 +4,7 @@ use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse};
 
 use actix_web::http::StatusCode;
 
-use actix_web::{Error, HttpMessage, HttpResponse, ResponseError};
+use actix_web::{Error, HttpResponse, ResponseError};
 
 use std::fmt;
 
@@ -142,10 +142,7 @@ where
             });
           }
           let fut = self.service.call(req);
-          Box::pin(async move {
-            let res = fut.await?;
-            Ok(res)
-          })
+          Box::pin(fut)
         },
         Err(err) => Box::pin(async move { Result::<Self::Response, Self::Error>::Err(err.into()) }),
       };

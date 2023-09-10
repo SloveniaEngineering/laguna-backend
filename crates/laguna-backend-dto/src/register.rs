@@ -7,11 +7,12 @@ use laguna_backend_model::consts::{EMAIL_MAX_LEN, EMAIL_MIN_LEN};
 use laguna_backend_model::consts::{PASSWORD_MAX_LEN, PASSWORD_MIN_LEN};
 use laguna_backend_model::consts::{USERNAME_MAX_LEN, USERNAME_MIN_LEN};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use validator::Validate;
 
 /// Data transfer object (DTO) used for registering.
 /// This object is serialized and transfered from the frontend to the backend to register a new user.
-#[derive(Serialize, Deserialize, Debug, Clone, Validate)]
+#[derive(Serialize, Deserialize, Debug, Clone, Validate, ToSchema)]
 #[cfg_attr(feature = "testx", derive(Dummy))]
 pub struct RegisterDTO {
   #[validate(

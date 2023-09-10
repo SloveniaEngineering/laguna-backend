@@ -9,8 +9,9 @@ use laguna_backend_tracker_common::{
 use serde::{Deserialize, Serialize};
 
 use laguna_backend_tracker_common::helpers::bool_from_int;
+use utoipa::ToSchema;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct Announce<const N: usize> {
   pub info_hash: InfoHash<N>,
   pub peer_id: PeerId,
@@ -104,7 +105,7 @@ impl<const N: usize> Announcement<N> for Announce<N> {
   }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AnnounceReply {
   #[serde(rename = "failure reason")]
   pub failure_reason: Option<String>,
@@ -120,7 +121,7 @@ pub struct AnnounceReply {
   pub peers: PeerStream,
 }
 
-impl AnnouncementResponse for AnnounceReply {
+impl<'a> AnnouncementResponse for AnnounceReply {
   #[inline]
   fn failure_reason(&self) -> Option<&String> {
     self.failure_reason.as_ref()

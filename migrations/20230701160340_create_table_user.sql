@@ -11,15 +11,16 @@ CREATE TABLE IF NOT EXISTS "User" (
     email VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(100) NOT NULL,
     -- AKA. date joined
-    first_login TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    first_login TIMESTAMP WITH TIME ZONE NOT NULL,
+    last_login TIMESTAMP WITH TIME ZONE NOT NULL,
     avatar_url TEXT,
     salt TEXT NOT NULL,
-    role Role NOT NULL DEFAULT 'Normie',
+    role Role NOT NULL,
+    hnr_count INTEGER NOT NULL CHECK (hnr_count >= 0),
     -- overall behaviour over all peers of this user
-    behaviour Behaviour NOT NULL DEFAULT 'Lurker',
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    has_verified_email BOOLEAN NOT NULL DEFAULT FALSE,
-    is_history_private BOOLEAN NOT NULL DEFAULT TRUE,
-    is_profile_private BOOLEAN NOT NULL DEFAULT TRUE
+    behaviour Behaviour NOT NULL,
+    is_enabled BOOLEAN NOT NULL,
+    is_donator BOOLEAN NOT NULL,
+    has_verified_email BOOLEAN NOT NULL,
+    is_profile_private BOOLEAN NOT NULL
 );

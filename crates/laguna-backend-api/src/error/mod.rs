@@ -1,4 +1,5 @@
 pub mod peer;
+pub mod rating;
 pub mod torrent;
 pub mod user;
 
@@ -13,6 +14,8 @@ use serde_bencode::Error as BencodeError;
 use std::fmt::Formatter;
 use std::io;
 
+use self::rating::RatingError;
+
 #[derive(Debug)]
 pub enum APIError {
   SqlxError(sqlx::Error),
@@ -21,6 +24,7 @@ pub enum APIError {
   UserError(user::UserError),
   BencodeError(BencodeError),
   TorrentError(torrent::TorrentError),
+  RatingError(rating::RatingError),
 }
 
 impl From<io::Error> for APIError {
@@ -59,6 +63,12 @@ impl From<BencodeError> for APIError {
   }
 }
 
+impl From<RatingError> for APIError {
+  fn from(value: RatingError) -> Self {
+    Self::RatingError(value)
+  }
+}
+
 impl fmt::Display for APIError {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
@@ -68,6 +78,7 @@ impl fmt::Display for APIError {
       Self::IOError(io_error) => f.write_fmt(format_args!("{}", io_error)),
       Self::SqlxError(sqlx_error) => f.write_fmt(format_args!("{}", sqlx_error)),
       Self::BencodeError(bencode_error) => f.write_fmt(format_args!("{}", bencode_error)),
+      Self::RatingError(rating_error) => f.write_fmt(format_args!("{}", rating_error)),
     }
   }
 }
@@ -81,6 +92,7 @@ impl ResponseError for APIError {
       Self::IOError(_) => StatusCode::INTERNAL_SERVER_ERROR,
       Self::SqlxError(_) => StatusCode::INTERNAL_SERVER_ERROR,
       Self::BencodeError(_) => StatusCode::UNPROCESSABLE_ENTITY,
+      Self::RatingError(rating_error) => rating_error.status_code(),
     }
   }
 
@@ -98,6 +110,7 @@ impl ResponseError for APIError {
       Self::BencodeError(bencode_error) => HttpResponse::build(self.status_code())
         .content_type(ContentType::plaintext())
         .body(bencode_error.to_string()),
+      Self::RatingError(rating_error) => rating_error.error_response(),
     }
   }
 }

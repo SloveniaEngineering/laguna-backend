@@ -31,6 +31,7 @@ sqlx = { version="0.7.1", features = [
     "json",
 ] }
 actix-jwt-auth-middleware = "0.3.0"
+actix-multipart-extract = "0.1.5"
 jwt-compact = "0.7.0"
 sha2 = "0.10"
 log = "*"
@@ -41,6 +42,7 @@ argon2 = { version = "*", features = ["std"] }
 derive_more = "*"
 env_logger = "*"
 actix-multipart = "*"
+const_format = "0.2.31"
 serde = { version = "1.0", features = ["derive"]}
 validator = { version = "0.16", features = ["derive"] }
 actix-web-validator = "5.0.1"
@@ -52,6 +54,7 @@ laguna-backend-tracker-common = { path = "../laguna-backend-tracker-common" }
 laguna-backend-config = { path = "../laguna-backend-config" }
 secrecy = { version = "*", features = ["serde"] }
 rand = "*"
+utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
 
 [dev-dependencies]
 actix-http = "3.3.1"

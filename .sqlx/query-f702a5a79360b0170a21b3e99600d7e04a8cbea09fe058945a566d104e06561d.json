@@ -1,0 +1,36 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO \"Rating\" (\r\n    rating,\r\n    user_id,\r\n    info_hash\r\n)\r\nVALUES (\r\n    $1,\r\n    $2,\r\n    $3\r\n)\r\nRETURNING \r\n    rating,\r\n    user_id,\r\n    info_hash\r\n;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "rating",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "info_hash",
+        "type_info": "Bytea"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Uuid",
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "f702a5a79360b0170a21b3e99600d7e04a8cbea09fe058945a566d104e06561d"
+}

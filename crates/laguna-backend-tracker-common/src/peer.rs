@@ -1,13 +1,12 @@
 use std::array::TryFromSliceError;
-use std::fmt::Formatter;
-use std::{
-  fmt,
-  net::{Ipv4Addr, SocketAddr, SocketAddrV4},
-};
+use std::fmt;
+use std::fmt::{Debug, Formatter};
+use std::net::IpAddr;
 
 use serde::{Deserialize, Serialize};
 use serde_with::hex::Hex;
 use serde_with::serde_as;
+use utoipa::ToSchema;
 
 pub const PEER_ID_LENGTH: usize = 20;
 pub const PEER_CLIENT_LENGTH: usize = 2;
@@ -15,7 +14,7 @@ pub const PEER_CLIENT_LENGTH: usize = 2;
 pub const PEER_BIN_DICT_LENGTH: usize = 6;
 
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, Eq, PartialEq, sqlx::Type)]
+#[derive(Serialize, Deserialize, Clone, Copy, Eq, PartialEq, Hash, sqlx::Type, ToSchema)]
 #[sqlx(transparent)]
 pub struct PeerId(
   // OLD: See: https://github.com/serde-rs/bytes/pull/28
@@ -23,15 +22,28 @@ pub struct PeerId(
   #[serde_as(as = "Hex")] pub [u8; PEER_ID_LENGTH],
 );
 
-impl From<Vec<u8>> for PeerId {
-  fn from(value: Vec<u8>) -> Self {
-    PeerId(<[u8; PEER_ID_LENGTH]>::try_from(value.as_slice()).unwrap())
+impl fmt::Display for PeerId {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    f.write_str(
+      self
+        .0
+        .iter()
+        .map(|b| format!("{:02x}", b))
+        .collect::<String>()
+        .as_str(),
+    )
   }
 }
 
-impl fmt::Display for PeerId {
+impl Debug for PeerId {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     f.write_fmt(format_args!("{:x?}", self.0))
+  }
+}
+
+impl From<Vec<u8>> for PeerId {
+  fn from(value: Vec<u8>) -> Self {
+    PeerId(<[u8; PEER_ID_LENGTH]>::try_from(value.as_slice()).unwrap())
   }
 }
 
@@ -390,54 +402,28 @@ impl PeerId {
   }
 }
 
-pub trait Peer {
-  fn id(&self) -> Option<PeerId>;
-  fn addr(&self) -> SocketAddr;
-}
-
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 #[serde(untagged)]
 pub enum PeerStream {
-  Dict(PeerDictStream),
-  Bin(PeerBinStream),
+  Dict(Vec<PeerDict>),
+  // TODO: Doesn't return proper shit when bencoded.
+  // Should return: bencoded string (of bytes)
+  // Actual return: bencoded list (just like PeerDict).
+  Bin(Vec<PeerBin>),
 }
 
-pub type PeerDictStream = Vec<PeerDict>;
-pub type PeerBinStream = Vec<PeerBin>;
-
-#[derive(Debug, Serialize, Deserialize)]
+/// Used when `compact=0` in announce url.
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct PeerDict {
   pub id: PeerId,
-  pub addr: SocketAddr,
+  pub ip: IpAddr,
+  pub port: u16,
 }
 
 /// Peer binary representation.
 /// First 4 bytes are IP address, last 2 bytes are port.
 /// Network byte order (big endian).
-#[derive(Debug, Serialize, Deserialize)]
+/// Used when `compact=1` in announce url or if no `compact` is present.
+/// See: <http://bittorrent.org/beps/bep_0023.html>
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct PeerBin(pub [u8; PEER_BIN_DICT_LENGTH]);
-
-impl Peer for PeerDict {
-  fn id(&self) -> Option<PeerId> {
-    Some(self.id)
-  }
-
-  fn addr(&self) -> SocketAddr {
-    self.addr
-  }
-}
-
-impl Peer for PeerBin {
-  fn id(&self) -> Option<PeerId> {
-    None
-  }
-
-  fn addr(&self) -> SocketAddr {
-    SocketAddr::V4(SocketAddrV4::new(
-      Ipv4Addr::from(u32::from_be_bytes([
-        self.0[0], self.0[1], self.0[2], self.0[3],
-      ])),
-      u16::from_be_bytes([self.0[4], self.0[5]]),
-    ))
-  }
-}

@@ -1,161 +1,213 @@
 use crate::error::peer::PeerError;
 
+use actix_web::dev::PeerAddr;
 use actix_web::http::header::USER_AGENT;
 use actix_web::{web, HttpRequest, HttpResponse};
-use chrono::Utc;
-use laguna_backend_dto::user::UserDTO;
 
-use laguna_backend_model::behaviour::Behaviour;
+use chrono::Utc;
 use laguna_backend_model::peer::Peer;
 
+use laguna_backend_model::speedlevel::SpeedLevel;
 use laguna_backend_model::torrent::Torrent;
 use laguna_backend_tracker::http::announce::{Announce, AnnounceReply};
 
-use laguna_backend_tracker_common::announce::AnnounceEvent;
+use laguna_backend_model::genre::Genre;
+use laguna_backend_tracker_common::announce::{AnnounceEvent, Announcement};
 
-use laguna_backend_tracker_common::peer::PeerStream;
+use laguna_backend_model::behaviour::Behaviour;
+use laguna_backend_tracker_common::peer::{PeerBin, PeerDict, PeerStream, PEER_BIN_DICT_LENGTH};
 use sqlx::types::ipnetwork::IpNetwork;
 use sqlx::PgPool;
 
-use std::str::FromStr;
+use std::net::{IpAddr, SocketAddr};
 
-/// GET `/peer/announce`
+#[utoipa::path(
+  get,
+  path = "/peer/announce",
+  responses((status = 200, body = String, description = "Returns bencoded `AnnounceReply`", content_type = "text/plain"))
+)]
 pub async fn peer_announce<const N: usize>(
+  peer_addr: PeerAddr,
   req: HttpRequest,
   announce_data: web::Query<Announce<N>>,
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, PeerError<N>> {
-  /*
-  let user = sqlx::query_as::<_, User>("SELECT * FROM \"User\" INNER JOIN \"Peer\" ON \"User\".id = \"Peer\".user_id WHERE \"Peer\".peer_id = $1")
-    .bind(announce_data.peer_id)
-    .fetch_optional(pool.get_ref())
-    .await?
-    .map(UserDTO::from)
-    .ok_or(PeerError::NotCreated)?;
-  */
-  let _torrent = sqlx::query_as::<_, Torrent>("SELECT * FROM torrent_get($1)")
-    .bind(&announce_data.info_hash)
-    .fetch_optional(pool.get_ref())
-    .await?
-    .ok_or(PeerError::UnknownTorrent(announce_data.info_hash.clone()))?;
+  sqlx::query_file_as!(
+    Torrent,
+    "queries/torrent_get.sql",
+    announce_data.info_hash as _
+  )
+  .fetch_optional(pool.get_ref())
+  .await?
+  .map(drop)
+  .ok_or(PeerError::UnknownTorrent(announce_data.info_hash.clone()))?;
 
-  let _maybe_peer = sqlx::query_as::<_, Peer>("SELECT * FROM peer_get($1)")
-    .bind(announce_data.peer_id)
+  let maybe_peer = sqlx::query_file_as!(Peer, "queries/peer_get.sql", announce_data.peer_id as _)
     .fetch_optional(pool.get_ref())
     .await?;
 
-  let _ip = announce_data.ip.map(IpNetwork::from).or_else(|| {
+  /*
+    let ip = announce_data.ip.map(IpNetwork::from).or_else(|| {
     req
       .connection_info()
       .realip_remote_addr() // go over proxy (if it exists)
       .and_then(|maybe_ip| IpNetwork::from_str(maybe_ip).ok())
   });
+   */
 
-  let _user_agent = req
+  let user_agent = req
     .headers()
     .get(USER_AGENT)
     .map(|hv| hv.to_str().expect("Cannot convert header value to str"));
 
-  Ok(
-    HttpResponse::Ok().body(
-      serde_bencode::to_bytes(&AnnounceReply {
-        failure_reason: Some(String::from("Not implemented")),
-        warning_message: None,
-        interval: 10,
-        min_interval: None,
-        tracker_id: None,
-        complete: 0,
-        incomplete: 1,
-        peers: PeerStream::Dict(vec![]),
-      })
-      .unwrap(),
-    ),
-  )
-  /*
   handle_peer_request(
     maybe_peer,
     announce_data.into_inner(),
     pool,
-    ip,
+    peer_addr.0,
     user_agent,
-    user,
   )
-  .await*/
+  .await
 }
 
 async fn handle_peer_request<const N: usize>(
   maybe_peer: Option<Peer>,
   announce_data: Announce<N>,
   pool: web::Data<PgPool>,
-  ip: Option<IpNetwork>,
+  peer_addr: SocketAddr,
   user_agent: Option<&str>,
-  user: UserDTO,
 ) -> Result<HttpResponse, PeerError<N>> {
   let event = announce_data.event.unwrap_or(AnnounceEvent::Empty);
-  match event {
-    AnnounceEvent::Started => match maybe_peer {
-      Some(peer) => {
-        // We already know this peer but it sent a started event.
-        // Treat it as an update.
-        handle_peer_updated(peer, announce_data, pool, ip, user_agent).await
-      },
-      None => handle_peer_started(announce_data, pool, ip, user_agent, user).await,
+  match (event, maybe_peer) {
+    (AnnounceEvent::Started, Some(_)) => {
+      // We already know this peer but it sent a started event.
+      // Treat it as an update.
+      log::info!(
+        "Peer {} sent started event, treating as update.",
+        announce_data.peer_id
+      );
+      handle_peer_updated(announce_data, pool).await
     },
-    AnnounceEvent::Completed => match maybe_peer {
-      Some(peer) => handle_peer_completed(peer, announce_data).await,
-      None => Err(PeerError::<N>::UnexpectedEvent {
-        event: AnnounceEvent::Completed,
-        message: String::from("Inexistant peer sent completion."),
-      }),
+    (AnnounceEvent::Started, None) => {
+      log::info!(
+        "Peer {} sent started event, treating as start.",
+        announce_data.peer_id
+      );
+      handle_peer_started(announce_data, pool, peer_addr, user_agent).await
     },
-    AnnounceEvent::Stopped => match maybe_peer {
-      Some(peer) => handle_peer_stopped(peer, announce_data).await,
-      None => Err(PeerError::<N>::UnexpectedEvent {
-        event: AnnounceEvent::Stopped,
-        message: String::from("Inexistant peer sent stop."),
-      }),
+    (AnnounceEvent::Completed, Some(_)) => {
+      log::info!("Peer {} sent completed event.", announce_data.peer_id);
+      handle_peer_completed(announce_data, pool).await
     },
-    AnnounceEvent::Updated => match maybe_peer {
-      Some(peer) => handle_peer_updated(peer, announce_data, pool, ip, user_agent).await,
-      None => Err(PeerError::<N>::UnexpectedEvent {
-        event: AnnounceEvent::Updated,
-        message: String::from("Inexistant peer sent update."),
-      }),
+    (AnnounceEvent::Completed, None) => Err(PeerError::<N>::UnexpectedEvent {
+      event: AnnounceEvent::Completed,
+      message: String::from("Inexistant peer sent completion."),
+    }),
+    (AnnounceEvent::Stopped, Some(peer)) => handle_peer_stopped(peer, announce_data).await,
+    (AnnounceEvent::Stopped, None) => Err(PeerError::<N>::UnexpectedEvent {
+      event: AnnounceEvent::Stopped,
+      message: String::from("Inexistant peer sent stop."),
+    }),
+    (AnnounceEvent::Updated, Some(_)) => handle_peer_updated(announce_data, pool).await,
+    (AnnounceEvent::Updated, None) => Err(PeerError::<N>::UnexpectedEvent {
+      event: AnnounceEvent::Updated,
+      message: String::from("Inexistant peer sent update."),
+    }),
+    (AnnounceEvent::Paused, Some(peer)) => handle_peer_paused(peer, announce_data).await,
+    (AnnounceEvent::Paused, None) => Err(PeerError::<N>::UnexpectedEvent {
+      event: AnnounceEvent::Paused,
+      message: String::from("Inexistant peer sent pause."),
+    }),
+    (AnnounceEvent::Empty, Some(_)) => {
+      // Empty event with a peer, assume it's an update (as per BitTorrent spec).
+      log::info!(
+        "Peer {} sent empty event, treating as update.",
+        announce_data.peer_id
+      );
+      handle_peer_updated(announce_data, pool).await
     },
-    AnnounceEvent::Paused => match maybe_peer {
-      Some(peer) => handle_peer_paused(peer, announce_data).await,
-      None => Err(PeerError::<N>::UnexpectedEvent {
-        event: AnnounceEvent::Paused,
-        message: String::from("Inexistant peer sent pause."),
-      }),
+    (AnnounceEvent::Empty, None) => {
+      // Empty event with no peer, assume it's a start.
+      log::info!(
+        "Peer {} sent empty event, treating as start.",
+        announce_data.peer_id
+      );
+      handle_peer_started(announce_data, pool, peer_addr, user_agent).await
     },
-    AnnounceEvent::Empty => Ok(HttpResponse::UnprocessableEntity().finish()),
   }
 }
 
 async fn handle_peer_started<const N: usize>(
   announce_data: Announce<N>,
   pool: web::Data<PgPool>,
-  ip: Option<IpNetwork>,
+  peer_addr: SocketAddr,
   user_agent: Option<&str>,
-  user: UserDTO,
 ) -> Result<HttpResponse, PeerError<N>> {
-  let _peer =
-    sqlx::query_as::<_, Peer>("SELECT * FROM peer_insert($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)")
-      .bind(announce_data.peer_id)
-      .bind(&announce_data.info_hash)
-      .bind(ip)
-      .bind(announce_data.port as i32)
-      .bind(user_agent)
-      .bind(announce_data.uploaded)
-      .bind(announce_data.downloaded)
-      .bind(announce_data.left)
-      .bind(Utc::now())
-      .bind(user.id)
-      .fetch_optional(pool.get_ref())
-      .await?
-      .ok_or(PeerError::<N>::NotCreated)?;
-  Ok(HttpResponse::Ok().finish())
+  // If ip was specified by client, prefer it over the one in the request.
+  let ip = IpNetwork::from(if let Some(ip) = announce_data.ip {
+    ip
+  } else {
+    peer_addr.ip()
+  });
+
+  let swarm = torrent_swarm(pool.get_ref(), &announce_data).await?;
+
+  let behaviour = if announce_data.left == 0 {
+    Behaviour::Seed
+  } else {
+    Behaviour::Downloader
+  };
+
+  sqlx::query_file_as!(
+    Peer,
+    "queries/peer_insert.sql",
+    announce_data.peer_id as _,
+    None::<String>,
+    announce_data.info_hash as _,
+    ip,
+    announce_data.port as i32,
+    swarm.is_empty(), // if we are the first peer, we are origin
+    user_agent,
+    announce_data.uploaded,
+    announce_data.downloaded,
+    announce_data.left,
+    behaviour as _,
+    Utc::now(),
+    Utc::now(),
+  )
+  .fetch_optional(pool.get_ref())
+  .await?
+  .map(drop)
+  .ok_or(PeerError::NotCreated)?;
+
+  let (complete, incomplete) = complete_incomplete_counts(&swarm).await;
+
+  eprintln!(
+    "{}",
+    serde_bencode::to_string(&AnnounceReply {
+      failure_reason: None,
+      warning_message: None,
+      complete,
+      incomplete,
+      tracker_id: None,
+      min_interval: None,
+      interval: 1,
+      peers: peer_stream(announce_data.compact.unwrap_or(true), swarm.clone()).await,
+    })?
+  );
+
+  Ok(
+    HttpResponse::Ok().body(serde_bencode::to_bytes(&AnnounceReply {
+      failure_reason: None,
+      warning_message: None,
+      complete,
+      incomplete,
+      tracker_id: None,
+      min_interval: None,
+      interval: 1,
+      peers: peer_stream(announce_data.compact.unwrap_or(true), swarm).await,
+    })?),
+  )
 }
 
 async fn handle_peer_stopped<const N: usize>(
@@ -166,35 +218,79 @@ async fn handle_peer_stopped<const N: usize>(
 }
 
 async fn handle_peer_completed<const N: usize>(
-  _peer: Peer,
-  _announce_data: Announce<N>,
+  announce_data: Announce<N>,
+  pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, PeerError<N>> {
-  Ok(HttpResponse::Ok().finish())
+  let swarm = torrent_swarm(pool.get_ref(), &announce_data).await?;
+  Ok(
+    HttpResponse::Ok().body(serde_bencode::to_bytes(&AnnounceReply {
+      failure_reason: None,
+      warning_message: None,
+      complete: 0,
+      incomplete: 0,
+      tracker_id: None,
+      min_interval: None,
+      interval: 1,
+      peers: peer_stream(announce_data.compact.unwrap_or(true), swarm).await,
+    })?),
+  )
 }
 
 async fn handle_peer_updated<const N: usize>(
-  peer: Peer,
   announce_data: Announce<N>,
   pool: web::Data<PgPool>,
-  ip: Option<IpNetwork>,
-  user_agent: Option<&str>,
 ) -> Result<HttpResponse, PeerError<N>> {
-  let _peer =
-    sqlx::query_as::<_, Peer>("SELECT * FROM peer_update($1, $2, $3, $4, $5, $6, $7, $8)")
-      .bind(peer.id)
-      .bind(ip)
-      .bind(announce_data.port as i32)
-      .bind(user_agent)
-      .bind(announce_data.uploaded)
-      .bind(announce_data.downloaded)
-      .bind(announce_data.left)
-      .bind(Behaviour::Lurker)
-      .bind(Utc::now())
-      .fetch_optional(pool.get_ref())
-      .await?
-      .ok_or(PeerError::<N>::NotUpdated)?;
+  let swarm = torrent_swarm(pool.get_ref(), &announce_data).await?;
 
-  Ok(HttpResponse::Ok().finish())
+  let behaviour = if announce_data.left == 0 {
+    Behaviour::Seed
+  } else {
+    Behaviour::Downloader
+  };
+
+  sqlx::query_file_as!(
+    Peer,
+    "queries/peer_update.sql",
+    announce_data.uploaded,
+    announce_data.downloaded,
+    announce_data.left,
+    behaviour as _,
+    Utc::now(),
+    announce_data.peer_id as _
+  )
+  .fetch_optional(pool.get_ref())
+  .await?
+  .map(drop)
+  .ok_or(PeerError::NotUpdated)?;
+
+  let (complete, incomplete) = complete_incomplete_counts(&swarm).await;
+
+  eprintln!(
+    "{}",
+    serde_bencode::to_string(&AnnounceReply {
+      failure_reason: None,
+      warning_message: None,
+      complete,
+      incomplete,
+      tracker_id: None,
+      min_interval: None,
+      interval: 1,
+      peers: peer_stream(announce_data.compact.unwrap_or(true), swarm.clone()).await,
+    })?
+  );
+
+  Ok(
+    HttpResponse::Ok().body(serde_bencode::to_bytes(&AnnounceReply {
+      failure_reason: None,
+      warning_message: None,
+      complete,
+      incomplete,
+      tracker_id: None,
+      min_interval: None,
+      interval: 1,
+      peers: peer_stream(announce_data.compact.unwrap_or(true), swarm).await,
+    })?),
+  )
 }
 
 async fn handle_peer_paused<const N: usize>(
@@ -202,4 +298,63 @@ async fn handle_peer_paused<const N: usize>(
   _announce_data: Announce<N>,
 ) -> Result<HttpResponse, PeerError<N>> {
   Ok(HttpResponse::Ok().finish())
+}
+
+async fn torrent_swarm<const N: usize>(
+  pool: &PgPool,
+  announce_data: &Announce<N>,
+) -> Result<Vec<Peer>, PeerError<N>> {
+  Ok(
+    sqlx::query_file_as!(
+      Peer,
+      "queries/torrent_swarm_noself.sql",
+      &announce_data.info_hash as _,
+      &announce_data.peer_id as _
+    )
+    .fetch_all(pool)
+    .await?,
+  )
+}
+
+async fn complete_incomplete_counts(torrent_swarm: &Vec<Peer>) -> (u64, u64) {
+  torrent_swarm
+    .iter()
+    .fold((0, 0), |(complete, incomplete), peer| {
+      match peer.left_bytes {
+        0 => (complete + 1, incomplete),
+        _ => (complete, incomplete + 1),
+      }
+    })
+}
+
+async fn peer_stream(compact: bool, torrent_swarm: Vec<Peer>) -> PeerStream {
+  if !compact || torrent_swarm.iter().any(|peer| peer.ip.is_ipv6()) {
+    PeerStream::Dict(
+      torrent_swarm
+        .into_iter()
+        .map(|peer| PeerDict {
+          id: peer.id,
+          ip: peer.ip.ip(),
+          port: peer.port as u16,
+        })
+        .collect::<Vec<PeerDict>>(),
+    )
+  } else {
+    PeerStream::Bin(
+      torrent_swarm
+        .into_iter()
+        .map(|peer| {
+          let mut buf = [0u8; PEER_BIN_DICT_LENGTH];
+          let ip = peer.ip.ip();
+          let octets = match ip {
+            IpAddr::V4(ip) => ip.octets(),
+            _ => unreachable!(),
+          };
+          buf[..4].copy_from_slice(&octets);
+          buf[4..].copy_from_slice(&(peer.port as u16).to_be_bytes());
+          PeerBin(buf)
+        })
+        .collect::<Vec<PeerBin>>(),
+    )
+  }
 }

@@ -1,9 +1,6 @@
 use std::str::FromStr;
 
-use actix_http::{
-  header::{self},
-  StatusCode,
-};
+use actix_http::StatusCode;
 
 use actix_web::test::{read_body_json, TestRequest};
 
@@ -14,7 +11,7 @@ use laguna_backend_dto::{
   torrent::{TorrentDTO, TorrentPatchDTO},
 };
 use laguna_backend_middleware::mime::APPLICATION_XBITTORRENT;
-use laguna_backend_model::speedlevel::SpeedLevel;
+use laguna_backend_model::{genre::Genre, speedlevel::SpeedLevel};
 
 use sqlx::PgPool;
 
@@ -27,10 +24,16 @@ async fn test_get_torrent_bunny(pool: PgPool) -> sqlx::Result<()> {
   let put_res = common::as_logged_in(
     access_token.clone(),
     refresh_token.clone(),
-    TestRequest::put()
-      .uri("/api/torrent/")
-      .insert_header((header::CONTENT_TYPE.as_str(), APPLICATION_XBITTORRENT))
-      .set_payload(include_bytes!("fixtures/webtorrent-fixtures/fixtures/bunny.torrent") as &[u8]),
+    common::make_multipart(
+      TestRequest::put().uri("/api/torrent/"),
+      vec![common::MultipartField {
+        name: b"torrent",
+        filename: b"bunny.torrent",
+        content: include_bytes!("fixtures/webtorrent-fixtures/fixtures/bunny.torrent"),
+        content_type: APPLICATION_XBITTORRENT,
+        boundary: b"abbc761f78ff4d7cb7573b5a23f96ef0",
+      }],
+    ),
     &app,
   )
   .await
@@ -43,14 +46,16 @@ async fn test_get_torrent_bunny(pool: PgPool) -> sqlx::Result<()> {
     raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/bunny.torrent").to_vec(),
     announce_url: None,
     length: 434839491,
-    title: String::from("bbb_sunflower_1080p_30fps_stereo_abl.mp4"),
     file_name: String::from("bbb_sunflower_1080p_30fps_stereo_abl.mp4"),
     nfo: None,
+    genre: None,
     leech_count: 0,
     seed_count: 0,
     completed_count: 0,
     speedlevel: SpeedLevel::Lowspeed,
+    is_freeleech: false,
     creation_date: DateTime::<Utc>::from_str("2013-12-17T19:48:21Z").unwrap(),
+    created_by: Some(String::from("uTorrent/3320")),
     uploaded_at: torrent_dto.uploaded_at,
     uploaded_by: user_dto.id,
     modded_at: None,
@@ -81,10 +86,16 @@ async fn test_put_torrent(pool: PgPool) -> sqlx::Result<()> {
   let put_res = common::as_logged_in(
     access_token.clone(),
     refresh_token.clone(),
-    TestRequest::put()
-      .uri("/api/torrent/")
-      .insert_header((header::CONTENT_TYPE.as_str(), APPLICATION_XBITTORRENT))
-      .set_payload(include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent") as &[u8]),
+    common::make_multipart(
+      TestRequest::put().uri("/api/torrent/"),
+      vec![common::MultipartField {
+        name: b"torrent",
+        filename: b"leaves.torrent",
+        content: include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent"),
+        content_type: APPLICATION_XBITTORRENT,
+        boundary: b"abbc761f78ff4d7cb7573b5a23f96ef0",
+      }],
+    ),
     &app,
   )
   .await
@@ -97,14 +108,16 @@ async fn test_put_torrent(pool: PgPool) -> sqlx::Result<()> {
     raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent").to_vec(),
     announce_url: None,
     length: 362017,
-    title: String::from("Leaves of Grass by Walt Whitman.epub"),
     file_name: String::from("Leaves of Grass by Walt Whitman.epub"),
     nfo: None,
+    genre: None,
     leech_count: 0,
     seed_count: 0,
     completed_count: 0,
     speedlevel: SpeedLevel::Lowspeed,
+    is_freeleech: false,
     creation_date: DateTime::<Utc>::from_str("2013-08-01T13:27:46Z").unwrap(),
+    created_by: Some(String::from("uTorrent/3300")),
     uploaded_at: torrent_dto.uploaded_at,
     uploaded_by: user_dto.id,
     modded_at: None,
@@ -123,10 +136,16 @@ async fn test_patch_torrent(pool: PgPool) -> sqlx::Result<()> {
   let put_res = common::as_logged_in(
     access_token.clone(),
     refresh_token.clone(),
-    TestRequest::put()
-      .uri("/api/torrent/")
-      .insert_header((header::CONTENT_TYPE.as_str(), APPLICATION_XBITTORRENT))
-      .set_payload(include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent") as &[u8]),
+    common::make_multipart(
+      TestRequest::put().uri("/api/torrent/"),
+      vec![common::MultipartField {
+        name: b"torrent",
+        filename: b"leaves.torrent",
+        content: include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent"),
+        content_type: APPLICATION_XBITTORRENT,
+        boundary: b"abbc761f78ff4d7cb7573b5a23f96ef0",
+      }],
+    ),
     &app,
   )
   .await
@@ -139,14 +158,16 @@ async fn test_patch_torrent(pool: PgPool) -> sqlx::Result<()> {
     raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent").to_vec(),
     announce_url: None,
     length: 362017,
-    title: String::from("Leaves of Grass by Walt Whitman.epub"),
     file_name: String::from("Leaves of Grass by Walt Whitman.epub"),
     nfo: None,
+    genre: None,
     leech_count: 0,
     seed_count: 0,
     completed_count: 0,
     speedlevel: SpeedLevel::Lowspeed,
+    is_freeleech: false,
     creation_date: DateTime::<Utc>::from_str("2013-08-01T13:27:46Z").unwrap(),
+    created_by: Some(String::from("uTorrent/3300")),
     uploaded_at: torrent_dto.uploaded_at,
     uploaded_by: user_dto.id,
     modded_at: None,
@@ -161,8 +182,8 @@ async fn test_patch_torrent(pool: PgPool) -> sqlx::Result<()> {
     TestRequest::patch()
       .uri(&format!("/api/torrent/{}", torrent_dto.info_hash))
       .set_json(TorrentPatchDTO {
-        title: String::from("New Title"),
         nfo: Some(String::from("New NFO")),
+        genre: Some(Genre::Action),
       }),
     &app,
   )
@@ -171,10 +192,9 @@ async fn test_patch_torrent(pool: PgPool) -> sqlx::Result<()> {
 
   assert_eq!(patch_res.status(), StatusCode::OK);
   let torrent_dto = read_body_json::<TorrentDTO, _>(patch_res).await;
-
   let expected_torrent_dto = TorrentDTO {
-    title: String::from("New Title"),
     nfo: Some(String::from("New NFO")),
+    genre: Some(Genre::Action),
     ..expected_torrent_dto
   };
 
@@ -190,10 +210,16 @@ async fn test_delete_torrent(pool: PgPool) -> sqlx::Result<()> {
   let put_res = common::as_logged_in(
     access_token.clone(),
     refresh_token.clone(),
-    TestRequest::put()
-      .uri("/api/torrent/")
-      .insert_header((header::CONTENT_TYPE.as_str(), APPLICATION_XBITTORRENT))
-      .set_payload(include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent") as &[u8]),
+    common::make_multipart(
+      TestRequest::put().uri("/api/torrent/"),
+      vec![common::MultipartField {
+        name: b"torrent",
+        filename: b"leaves.torrent",
+        content: include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent"),
+        content_type: APPLICATION_XBITTORRENT,
+        boundary: b"abbc761f78ff4d7cb7573b5a23f96ef0",
+      }],
+    ),
     &app,
   )
   .await
@@ -219,10 +245,16 @@ async fn test_get_torrent_swarm(pool: PgPool) -> sqlx::Result<()> {
   let put_res = common::as_logged_in(
     access_token.clone(),
     refresh_token.clone(),
-    TestRequest::put()
-      .uri("/api/torrent/")
-      .insert_header((header::CONTENT_TYPE.as_str(), APPLICATION_XBITTORRENT))
-      .set_payload(include_bytes!("fixtures/webtorrent-fixtures/fixtures/bunny.torrent") as &[u8]),
+    common::make_multipart(
+      TestRequest::put().uri("/api/torrent/"),
+      vec![common::MultipartField {
+        name: b"torrent",
+        filename: b"bunny.torrent",
+        content: include_bytes!("fixtures/webtorrent-fixtures/fixtures/bunny.torrent"),
+        content_type: APPLICATION_XBITTORRENT,
+        boundary: b"abbc761f78ff4d7cb7573b5a23f96ef0",
+      }],
+    ),
     &app,
   )
   .await

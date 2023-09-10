@@ -5,7 +5,10 @@ use argon2::{
   Argon2, PasswordHasher,
 };
 
+use chrono::Utc;
 use laguna_backend_dto::{already_exists::AlreadyExistsDTO, register::RegisterDTO};
+use laguna_backend_model::behaviour::Behaviour;
+use laguna_backend_model::role::Role;
 use laguna_backend_model::user::{User, UserSafe};
 
 use secrecy::ExposeSecret;
@@ -16,22 +19,31 @@ use crate::{
   helpers::register::generate_username_recommendations,
 };
 
-/// `POST /api/user/auth/register`
-/// Registers new user.
+#[utoipa::path(
+  post,
+  path = "/api/user/auth/register",
+  responses(
+    (status = 200, description = "User registered successfully."),
+    (status = 208, description = "User already exists.", body = AlreadyExistsDTO, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 400, description = "Bad request.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+  ),
+)]
 pub async fn register(
   register_dto: Json<RegisterDTO>,
   pool: web::Data<PgPool>,
   argon_context: web::Data<Argon2<'static>>,
 ) -> Result<HttpResponse, APIError> {
-  // In own scope for faster drop of fetched_user, because we don't need it much.
   let register_dto = register_dto.into_inner();
 
-  let fetched_user = sqlx::query_as::<_, User>("SELECT * FROM user_lookup($1, $2)")
-    .bind(&register_dto.username)
-    .bind(&register_dto.email)
-    .fetch_optional(pool.get_ref())
-    .await?
-    .map(UserSafe::from);
+  let fetched_user = sqlx::query_file_as!(
+    User,
+    "queries/user_lookup.sql",
+    register_dto.username,
+    register_dto.email
+  )
+  .fetch_optional(pool.get_ref())
+  .await?
+  .map(UserSafe::from);
 
   if let Some(user) = fetched_user {
     return Ok(HttpResponse::AlreadyReported().json(AlreadyExistsDTO {
@@ -53,14 +65,28 @@ pub async fn register(
     .to_string();
 
   // TODO: Verify email
-  sqlx::query_as::<_, User>("SELECT * FROM user_insert($1, $2, $3, $4)")
-    .bind(register_dto.username)
-    .bind(register_dto.email)
-    .bind(password_hash)
-    .bind(salt.to_string())
-    .fetch_optional(pool.get_ref())
-    .await?
-    .ok_or(UserError::NotCreated)?;
+  sqlx::query_file_as!(
+    User,
+    "queries/user_insert.sql",
+    register_dto.username,
+    register_dto.email,
+    password_hash,
+    Utc::now(),
+    Utc::now(),
+    None::<String>,
+    salt.to_string(),
+    Role::Normie as _,
+    0,
+    Behaviour::Lurker as _,
+    true,
+    false,
+    false,
+    false,
+  )
+  .fetch_optional(pool.get_ref())
+  .await?
+  .map(drop)
+  .ok_or(UserError::NotCreated)?;
 
   Ok(HttpResponse::Ok().finish())
 }

@@ -379,9 +379,9 @@ async fn test_sql_username_injection_attempt_on_register(pool: PgPool) -> sqlx::
                avatar_url,
                role,
                behaviour,
-               is_active,
+               is_enabled,
+               is_donator,
                has_verified_email,
-               is_history_private,
                is_profile_private
         FROM "User"
         "#,
@@ -415,9 +415,9 @@ async fn test_sql_username_injection_attempt_on_login(pool: PgPool) -> sqlx::Res
                avatar_url,
                role,
                behaviour,
-               is_active,
+               is_enabled,
+               is_donator,
                has_verified_email,
-               is_history_private,
                is_profile_private
         FROM "User"
         "#,

@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\r\n    AVG(rating)::FLOAT AS average,\r\n    COUNT(*) AS count\r\nFROM \"Rating\"\r\nWHERE info_hash = $1;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "average",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 1,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "6971cf4a5166086f936abb1fc339dcce54cff7a031f3bc0b6cd645944e83f7d1"
+}

@@ -42,6 +42,8 @@ actix-web-validator = "5.0.1"
 laguna-backend-tracker-common = { path = "../laguna-backend-tracker-common" }
 serde_bencode = "0.2.3"
 secrecy = { version = "*", features = ["serde"] }
+derivative = "2.2.0"
+utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
 
 # Mark as optional when we don't use feature "testx".
 fake = { version = "2.8", features=["derive", "uuid", "chrono", "http"], optional = true }

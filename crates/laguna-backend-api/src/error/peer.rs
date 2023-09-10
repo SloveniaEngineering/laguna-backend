@@ -21,6 +21,7 @@ pub enum PeerError<const N: usize> {
   NotCreated,
   NotUpdated,
   SqlxError(sqlx::Error),
+  BencodeError(serde_bencode::Error),
 }
 
 impl<const N: usize> From<sqlx::Error> for PeerError<N> {
@@ -29,20 +30,27 @@ impl<const N: usize> From<sqlx::Error> for PeerError<N> {
   }
 }
 
+impl<const N: usize> From<serde_bencode::Error> for PeerError<N> {
+  fn from(value: serde_bencode::Error) -> Self {
+    Self::BencodeError(value)
+  }
+}
+
 impl<const N: usize> fmt::Display for PeerError<N> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
       Self::UnexpectedEvent { event, message } => f.write_fmt(format_args!(
-        "Nepričakovan dogodek {:?}. {}",
+        "Nepričakovan dogodek {:?}. {}.",
         event, message
       )),
       Self::NotCreated => f.write_str("Peer ni bil ustvarjen."),
       Self::UnknownTorrent(info_hash) => f.write_fmt(format_args!(
-        "Torrent z info_hash {} ne obstaja.",
+        "Torrent z info_hash {} ne obstaja na strežniku. Za dodajanje torrenta uporabite `api/torrent/put`.",
         info_hash
       )),
       // NOTE: Don't output this.
       Self::SqlxError(_) => f.write_str("Napaka v PB."),
+      Self::BencodeError(_) => f.write_str("Napaka v benkodiranju."),
       Self::NotFound(peer_id) => {
         f.write_fmt(format_args!("Peer z peer_id {} ne obstaja.", peer_id))
       },
@@ -53,14 +61,8 @@ impl<const N: usize> fmt::Display for PeerError<N> {
 
 impl<const N: usize> ResponseError for PeerError<N> {
   fn status_code(&self) -> StatusCode {
-    match self {
-      Self::NotFound(_) => StatusCode::BAD_REQUEST,
-      Self::UnknownTorrent(_) => StatusCode::BAD_REQUEST,
-      Self::UnexpectedEvent { .. } => StatusCode::BAD_REQUEST,
-      Self::SqlxError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-      Self::NotCreated => StatusCode::BAD_REQUEST,
-      Self::NotUpdated => StatusCode::BAD_REQUEST,
-    }
+    // We can send 200 status codes back.
+    StatusCode::OK
   }
 
   /// Peer error responses have to be send back as bencoded responses with "failure reason" set.

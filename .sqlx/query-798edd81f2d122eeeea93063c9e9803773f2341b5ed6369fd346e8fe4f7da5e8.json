@@ -1,0 +1,136 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO \"Peer\" (\r\n    id,\r\n    md5_hash,\r\n    info_hash,\r\n    ip,\r\n    port,\r\n    is_origin,\r\n    agent,\r\n    uploaded_bytes,\r\n    downloaded_bytes,\r\n    left_bytes,\r\n    behaviour,\r\n    created_at,\r\n    updated_at\r\n) VALUES (\r\n    $1,\r\n    $2,\r\n    $3,\r\n    $4,\r\n    $5,\r\n    $6,\r\n    $7,\r\n    $8,\r\n    $9,\r\n    $10,\r\n    $11,\r\n    $12,\r\n    $13\r\n)\r\nRETURNING\r\n    id,\r\n    md5_hash,\r\n    info_hash,\r\n    ip,\r\n    port,\r\n    is_origin,\r\n    agent,\r\n    uploaded_bytes,\r\n    downloaded_bytes,\r\n    left_bytes,\r\n    behaviour AS \"behaviour: Behaviour\",\r\n    created_at,\r\n    updated_at\r\n;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Bytea"
+      },
+      {
+        "ordinal": 1,
+        "name": "md5_hash",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "info_hash",
+        "type_info": "Bytea"
+      },
+      {
+        "ordinal": 3,
+        "name": "ip",
+        "type_info": "Inet"
+      },
+      {
+        "ordinal": 4,
+        "name": "port",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "is_origin",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 6,
+        "name": "agent",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "uploaded_bytes",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 8,
+        "name": "downloaded_bytes",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 9,
+        "name": "left_bytes",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 10,
+        "name": "behaviour: Behaviour",
+        "type_info": {
+          "Custom": {
+            "name": "behaviour",
+            "kind": {
+              "Enum": [
+                "Lurker",
+                "Downloader",
+                "Freeleecher",
+                "Leech",
+                "Seed",
+                "Choked",
+                "Uploader"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 12,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea",
+        "Varchar",
+        "Bytea",
+        "Inet",
+        "Int4",
+        "Bool",
+        "Text",
+        "Int8",
+        "Int8",
+        "Int8",
+        {
+          "Custom": {
+            "name": "behaviour",
+            "kind": {
+              "Enum": [
+                "Lurker",
+                "Downloader",
+                "Freeleecher",
+                "Leech",
+                "Seed",
+                "Choked",
+                "Uploader"
+              ]
+            }
+          }
+        },
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "798edd81f2d122eeeea93063c9e9803773f2341b5ed6369fd346e8fe4f7da5e8"
+}

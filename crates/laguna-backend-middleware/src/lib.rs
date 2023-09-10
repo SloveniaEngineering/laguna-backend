@@ -5,5 +5,6 @@
 pub mod auth;
 pub mod auth_helper;
 pub mod consts;
+pub mod exclusive;
 pub mod hexify;
 pub mod mime;
