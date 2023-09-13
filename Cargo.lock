@@ -1778,10 +1778,8 @@ dependencies = [
  "actix",
  "actix-web",
  "serde",
- "serde-byte-array",
+ "serde_bencode",
  "serde_bytes",
- "serde_urlencoded",
- "serde_urlencoded_field",
  "serde_with",
  "sqlx",
  "url",
@@ -2484,15 +2482,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde-byte-array"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63213ee4ed648dbd87db6fa993d4275b46bfb4ddfd95b3756045007c2b28f742"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "serde_bencode"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2575,18 +2564,6 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
-]
-
-[[package]]
-name = "serde_urlencoded_field"
-version = "1.117.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0141d5cc70280735c5ff4c33bd7858b4662db0b3dd92e1a0eb88610ea8cc5449"
-dependencies = [
- "percent-encoding",
- "serde",
- "serde_derive",
- "serde_json",
 ]
 
 [[package]]

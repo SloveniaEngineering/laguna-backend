@@ -30,7 +30,7 @@ impl<const N: usize> fmt::Display for InfoHash<N> {
 
 impl<const N: usize> Debug for InfoHash<N> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    f.write_fmt(format_args!("{:02x?}", self.0))
+    f.write_fmt(format_args!("{}", self))
   }
 }
 

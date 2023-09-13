@@ -105,7 +105,7 @@ impl<const N: usize> Announcement<N> for Announce<N> {
   }
 }
 
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct AnnounceReply {
   #[serde(rename = "failure reason")]
   pub failure_reason: Option<String>,
@@ -121,7 +121,7 @@ pub struct AnnounceReply {
   pub peers: PeerStream,
 }
 
-impl<'a> AnnouncementResponse for AnnounceReply {
+impl AnnouncementResponse for AnnounceReply {
   #[inline]
   fn failure_reason(&self) -> Option<&String> {
     self.failure_reason.as_ref()

@@ -67,7 +67,8 @@
                 "Leech",
                 "Seed",
                 "Choked",
-                "Uploader"
+                "Uploader",
+                "Stopped"
               ]
             }
           }
@@ -100,7 +101,8 @@
                 "Leech",
                 "Seed",
                 "Choked",
-                "Uploader"
+                "Uploader",
+                "Stopped"
               ]
             }
           }

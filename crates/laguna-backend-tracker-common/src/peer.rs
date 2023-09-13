@@ -37,7 +37,7 @@ impl fmt::Display for PeerId {
 
 impl Debug for PeerId {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    f.write_fmt(format_args!("{:x?}", self.0))
+    f.write_fmt(format_args!("{}", self))
   }
 }
 
@@ -409,7 +409,7 @@ pub enum PeerStream {
   // TODO: Doesn't return proper shit when bencoded.
   // Should return: bencoded string (of bytes)
   // Actual return: bencoded list (just like PeerDict).
-  Bin(Vec<PeerBin>),
+  Bin(Vec<u8>),
 }
 
 /// Used when `compact=0` in announce url.
@@ -427,3 +427,16 @@ pub struct PeerDict {
 /// See: <http://bittorrent.org/beps/bep_0023.html>
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct PeerBin(pub [u8; PEER_BIN_DICT_LENGTH]);
+
+impl PeerBin {
+  pub fn from_socket(ip_addr: IpAddr, port: u16) -> Self {
+    let mut buf = [0; PEER_BIN_DICT_LENGTH];
+    let octets = match ip_addr {
+      IpAddr::V4(ip) => ip.octets(),
+      _ => unreachable!(),
+    };
+    buf[..4].copy_from_slice(&octets);
+    buf[4..].copy_from_slice(&port.to_be_bytes());
+    Self(buf)
+  }
+}

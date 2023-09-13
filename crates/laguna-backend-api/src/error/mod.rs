@@ -10,7 +10,6 @@ use actix_web::{body::BoxBody, http::StatusCode};
 use actix_web::{error::ResponseError, HttpResponse};
 use core::fmt;
 
-use serde_bencode::Error as BencodeError;
 use std::fmt::Formatter;
 use std::io;
 
@@ -22,7 +21,7 @@ pub enum APIError {
   IOError(io::Error),
   AuthError(AuthError),
   UserError(user::UserError),
-  BencodeError(BencodeError),
+  BencodeError(serde_bencode::Error),
   TorrentError(torrent::TorrentError),
   RatingError(rating::RatingError),
 }
@@ -57,8 +56,8 @@ impl From<AuthError> for APIError {
   }
 }
 
-impl From<BencodeError> for APIError {
-  fn from(value: BencodeError) -> Self {
+impl From<serde_bencode::Error> for APIError {
+  fn from(value: serde_bencode::Error) -> Self {
     Self::BencodeError(value)
   }
 }

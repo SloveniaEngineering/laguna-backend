@@ -10,4 +10,5 @@ pub enum Behaviour {
   Seed,
   Choked,
   Uploader,
+  Stopped,
 }

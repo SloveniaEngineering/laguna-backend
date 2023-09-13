@@ -25,3 +25,5 @@ target/
 # Editors
 .vscode
 .idea
+
+scripts/upload.sh
