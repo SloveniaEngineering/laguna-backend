@@ -294,7 +294,7 @@ async fn handle_peer_updated<const N: usize>(
 }
 
 async fn handle_peer_paused<const N: usize>(
-  peer: Peer,
+  _peer: Peer,
   announce_data: Announce<N>,
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, PeerError<N>> {
