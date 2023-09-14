@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO \"Rating\" (\r\n    rating,\r\n    user_id,\r\n    info_hash\r\n)\r\nVALUES (\r\n    $1,\r\n    $2,\r\n    $3\r\n)\r\nRETURNING \r\n    rating,\r\n    user_id,\r\n    info_hash\r\n;",
+  "query": "DELETE FROM \"Rating\"\nWHERE \n    user_id = $1 AND info_hash = $2\nRETURNING\n    rating,\n    user_id,\n    info_hash\n;",
   "describe": {
     "columns": [
       {
@@ -21,7 +21,6 @@
     ],
     "parameters": {
       "Left": [
-        "Int4",
         "Uuid",
         "Bytea"
       ]
@@ -32,5 +31,5 @@
       false
     ]
   },
-  "hash": "f702a5a79360b0170a21b3e99600d7e04a8cbea09fe058945a566d104e06561d"
+  "hash": "6c55aaa02dcfb0bbd794a471a59fcd02d8dc84143f1adf613771509f647a33b1"
 }

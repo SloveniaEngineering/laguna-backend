@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT\r\n    AVG(rating)::FLOAT AS average,\r\n    COUNT(*) AS count\r\nFROM \"Rating\"\r\nWHERE info_hash = $1;",
+  "query": "SELECT\n    AVG(rating)::FLOAT AS average,\n    COUNT(*) AS count\nFROM \"Rating\"\nWHERE info_hash = $1;\n",
   "describe": {
     "columns": [
       {
@@ -24,5 +24,5 @@
       null
     ]
   },
-  "hash": "6971cf4a5166086f936abb1fc339dcce54cff7a031f3bc0b6cd645944e83f7d1"
+  "hash": "beca660135148d81b3ccb16882c656efa8921aedad13a2bab7cb25b0e27094ce"
 }

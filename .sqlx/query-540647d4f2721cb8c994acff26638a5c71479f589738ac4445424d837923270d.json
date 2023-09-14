@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT \r\n    info_hash,\r\n    raw,\r\n    announce_url,\r\n    length,\r\n    file_name,\r\n    nfo,\r\n    genre AS \"genre: Genre\",\r\n    leech_count,\r\n    seed_count,\r\n    completed_count,\r\n    speedlevel AS \"speedlevel: SpeedLevel\",\r\n    is_freeleech,\r\n    creation_date,\r\n    created_by,\r\n    uploaded_at,\r\n    uploaded_by,\r\n    modded_at,\r\n    modded_by\r\nFROM \"Torrent\"\r\nWHERE uploaded_by = $1;",
+  "query": "INSERT INTO \"Torrent\" (\n    info_hash,\n    raw,\n    announce_url,\n    length,\n    file_name,\n    nfo,\n    genre,\n    leech_count,\n    seed_count,\n    completed_count,\n    speedlevel,\n    is_freeleech,\n    creation_date,\n    created_by,\n    uploaded_at,\n    uploaded_by,\n    modded_at,\n    modded_by\n) VALUES (\n    $1,\n    $2,\n    $3,\n    $4,\n    $5,\n    $6,\n    $7,\n    $8,\n    $9,\n    $10,\n    $11,\n    $12,\n    $13,\n    $14,\n    $15,\n    $16,\n    $17,\n    $18\n)\nRETURNING \n    info_hash,\n    raw,\n    announce_url,\n    length,\n    file_name,\n    nfo,\n    genre AS \"genre: Genre\",\n    leech_count,\n    seed_count,\n    completed_count,\n    speedlevel AS \"speedlevel: SpeedLevel\",\n    is_freeleech,\n    creation_date,\n    created_by,\n    uploaded_at,\n    uploaded_by,\n    modded_at,\n    modded_by\n;",
   "describe": {
     "columns": [
       {
@@ -141,6 +141,68 @@
     ],
     "parameters": {
       "Left": [
+        "Bytea",
+        "Bytea",
+        "Varchar",
+        "Int8",
+        "Varchar",
+        "Text",
+        {
+          "Custom": {
+            "name": "genre",
+            "kind": {
+              "Enum": [
+                "Action",
+                "Adventure",
+                "Animation",
+                "Biography",
+                "Comedy",
+                "Crime",
+                "Documentary",
+                "Drama",
+                "Family",
+                "Fantasy",
+                "FilmNoir",
+                "GameShow",
+                "History",
+                "Horror",
+                "Musical",
+                "Mystery",
+                "News",
+                "RealityTV",
+                "Romance",
+                "SciFi",
+                "Short",
+                "Sport",
+                "TalkShow",
+                "Thriller",
+                "War",
+                "Western"
+              ]
+            }
+          }
+        },
+        "Int4",
+        "Int4",
+        "Int4",
+        {
+          "Custom": {
+            "name": "speedlevel",
+            "kind": {
+              "Enum": [
+                "Lowspeed",
+                "Mediumspeed",
+                "Highspeed"
+              ]
+            }
+          }
+        },
+        "Bool",
+        "Timestamptz",
+        "Text",
+        "Timestamptz",
+        "Uuid",
+        "Timestamptz",
         "Uuid"
       ]
     },
@@ -165,5 +227,5 @@
       true
     ]
   },
-  "hash": "5f5888016882405999a6b93f4e43f2c542ddf34b3887032e605633e9fd0a23e7"
+  "hash": "540647d4f2721cb8c994acff26638a5c71479f589738ac4445424d837923270d"
 }

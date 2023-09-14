@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE \"Torrent\"\r\nSET\r\n    nfo = $1,\r\n    genre = $2\r\nWHERE info_hash = $3\r\nRETURNING\r\n    info_hash,\r\n    raw,\r\n    announce_url,\r\n    length,\r\n    file_name,\r\n    nfo,\r\n    genre AS \"genre: Genre\",\r\n    leech_count,\r\n    seed_count,\r\n    completed_count,\r\n    speedlevel AS \"speedlevel: SpeedLevel\",\r\n    is_freeleech,\r\n    creation_date,\r\n    created_by,\r\n    uploaded_at,\r\n    uploaded_by,\r\n    modded_at,\r\n    modded_by\r\n;",
+  "query": "SELECT\n    info_hash,\n    raw,\n    announce_url,\n    length,\n    file_name,\n    nfo,\n    genre AS \"genre: Genre\",\n    leech_count,\n    seed_count,\n    completed_count,\n    speedlevel AS \"speedlevel: SpeedLevel\",\n    is_freeleech,\n    creation_date,\n    created_by,\n    uploaded_at,\n    uploaded_by,\n    modded_at,\n    modded_by\nFROM \"Torrent\"\nWHERE info_hash = $1;\n",
   "describe": {
     "columns": [
       {
@@ -141,42 +141,6 @@
     ],
     "parameters": {
       "Left": [
-        "Text",
-        {
-          "Custom": {
-            "name": "genre",
-            "kind": {
-              "Enum": [
-                "Action",
-                "Adventure",
-                "Animation",
-                "Biography",
-                "Comedy",
-                "Crime",
-                "Documentary",
-                "Drama",
-                "Family",
-                "Fantasy",
-                "FilmNoir",
-                "GameShow",
-                "History",
-                "Horror",
-                "Musical",
-                "Mystery",
-                "News",
-                "RealityTV",
-                "Romance",
-                "SciFi",
-                "Short",
-                "Sport",
-                "TalkShow",
-                "Thriller",
-                "War",
-                "Western"
-              ]
-            }
-          }
-        },
         "Bytea"
       ]
     },
@@ -201,5 +165,5 @@
       true
     ]
   },
-  "hash": "fd3e198ba276e3bc1021ae24accc1ab33bd219184acaee74c5221ee9d93e488e"
+  "hash": "3d997ddec8976ff122efd8341822931a3b44dc2cfd0f530cfba95d2a34bcd2bf"
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE \"User\"\r\nSET\r\n    last_login = $1\r\nWHERE id = $2\r\nRETURNING\r\n    id,\r\n    username,\r\n    email,\r\n    password,\r\n    first_login,\r\n    last_login,\r\n    avatar_url,\r\n    salt,\r\n    role AS \"role: Role\",\r\n    hnr_count,\r\n    behaviour AS \"behaviour: Behaviour\",\r\n    is_enabled,\r\n    is_donator,\r\n    has_verified_email,\r\n    is_profile_private\r\n;",
+  "query": "SELECT \n    id,\n    username,\n    email,\n    password,\n    first_login,\n    last_login,\n    avatar_url,\n    salt,\n    role AS \"role: Role\",\n    hnr_count,\n    behaviour AS \"behaviour: Behaviour\",\n    is_enabled,\n    is_donator,\n    has_verified_email,\n    is_profile_private\nFROM \"User\"\nWHERE username = $1 OR email = $2;",
   "describe": {
     "columns": [
       {
@@ -109,8 +109,8 @@
     ],
     "parameters": {
       "Left": [
-        "Timestamptz",
-        "Uuid"
+        "Text",
+        "Text"
       ]
     },
     "nullable": [
@@ -131,5 +131,5 @@
       false
     ]
   },
-  "hash": "03a97613bef328b0e923794b94c988c8c7e9731d5645215392668ca79951f990"
+  "hash": "262f34a64beb603f521b0f2b8089c44816aed411d63c030c0605571fff9c8dbe"
 }

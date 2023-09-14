@@ -5,7 +5,7 @@ use fake::Dummy;
 use laguna_backend_model::consts::{TORRENT_FILENAME_MAX_LEN, TORRENT_FILENAME_MIN_LEN};
 use laguna_backend_model::consts::{TORRENT_TITLE_MAX_LEN, TORRENT_TITLE_MIN_LEN};
 use laguna_backend_model::genre::Genre;
-use laguna_backend_model::speedlevel::SpeedLevel;
+
 use laguna_backend_model::torrent::Torrent;
 
 use actix_multipart_extract::File as ActixFile;

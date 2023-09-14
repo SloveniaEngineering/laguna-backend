@@ -1,2 +1,0 @@
-* @kozabrada123
-* @kenpaicat

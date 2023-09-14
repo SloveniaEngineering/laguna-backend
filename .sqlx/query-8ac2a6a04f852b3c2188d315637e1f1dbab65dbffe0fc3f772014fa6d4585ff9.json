@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO \"Peer\" (\r\n    id,\r\n    md5_hash,\r\n    info_hash,\r\n    ip,\r\n    port,\r\n    is_origin,\r\n    agent,\r\n    uploaded_bytes,\r\n    downloaded_bytes,\r\n    left_bytes,\r\n    behaviour,\r\n    created_at,\r\n    updated_at\r\n) VALUES (\r\n    $1,\r\n    $2,\r\n    $3,\r\n    $4,\r\n    $5,\r\n    $6,\r\n    $7,\r\n    $8,\r\n    $9,\r\n    $10,\r\n    $11,\r\n    $12,\r\n    $13\r\n)\r\nRETURNING\r\n    id,\r\n    md5_hash,\r\n    info_hash,\r\n    ip,\r\n    port,\r\n    is_origin,\r\n    agent,\r\n    uploaded_bytes,\r\n    downloaded_bytes,\r\n    left_bytes,\r\n    behaviour AS \"behaviour: Behaviour\",\r\n    created_at,\r\n    updated_at\r\n;",
+  "query": "INSERT INTO \"Peer\" (\n    id,\n    md5_hash,\n    info_hash,\n    ip,\n    port,\n    is_origin,\n    agent,\n    uploaded_bytes,\n    downloaded_bytes,\n    left_bytes,\n    behaviour,\n    created_at,\n    updated_at\n) VALUES (\n    $1,\n    $2,\n    $3,\n    $4,\n    $5,\n    $6,\n    $7,\n    $8,\n    $9,\n    $10,\n    $11,\n    $12,\n    $13\n)\nRETURNING\n    id,\n    md5_hash,\n    info_hash,\n    ip,\n    port,\n    is_origin,\n    agent,\n    uploaded_bytes,\n    downloaded_bytes,\n    left_bytes,\n    behaviour AS \"behaviour: Behaviour\",\n    created_at,\n    updated_at\n;",
   "describe": {
     "columns": [
       {
@@ -134,5 +134,5 @@
       true
     ]
   },
-  "hash": "798edd81f2d122eeeea93063c9e9803773f2341b5ed6369fd346e8fe4f7da5e8"
+  "hash": "8ac2a6a04f852b3c2188d315637e1f1dbab65dbffe0fc3f772014fa6d4585ff9"
 }

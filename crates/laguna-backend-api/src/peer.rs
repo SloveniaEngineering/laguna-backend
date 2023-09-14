@@ -2,7 +2,7 @@ use crate::error::peer::PeerError;
 
 use actix_web::dev::PeerAddr;
 use actix_web::http::header::USER_AGENT;
-use actix_web::{web, Either, HttpRequest, HttpResponse};
+use actix_web::{web, HttpRequest, HttpResponse};
 
 use chrono::Utc;
 use laguna_backend_model::peer::Peer;
@@ -15,7 +15,7 @@ use laguna_backend_model::genre::Genre;
 use laguna_backend_tracker_common::announce::{AnnounceEvent, Announcement};
 
 use laguna_backend_model::behaviour::Behaviour;
-use laguna_backend_tracker_common::peer::{PeerBin, PeerDict, PeerStream, PEER_BIN_DICT_LENGTH};
+use laguna_backend_tracker_common::peer::{PeerBin, PeerDict, PeerStream};
 use sqlx::types::ipnetwork::IpNetwork;
 use sqlx::PgPool;
 
@@ -310,7 +310,7 @@ async fn handle_peer_paused<const N: usize>(
       tracker_id: None,
       min_interval: None,
       interval: 1,
-      peers: peer_stream(announce_data.compact.unwrap_or(true), vec![peer]),
+      peers: peer_stream(announce_data.compact.unwrap_or(true), swarm),
     })?),
   )
 }
@@ -344,6 +344,7 @@ async fn complete_incomplete_counts(torrent_swarm: &Vec<Peer>) -> (u64, u64) {
 }
 
 fn peer_stream<'a>(compact: bool, torrent_swarm: Vec<Peer>) -> PeerStream {
+  if !compact || torrent_swarm.iter().any(|peer| peer.ip.is_ipv6()) {
     PeerStream::Dict(
       torrent_swarm
         .into_iter()
@@ -354,17 +355,13 @@ fn peer_stream<'a>(compact: bool, torrent_swarm: Vec<Peer>) -> PeerStream {
         })
         .collect::<Vec<PeerDict>>(),
     )
-    /* 
-  if !compact || torrent_swarm.iter().any(|peer| peer.ip.is_ipv6()) {
-
   } else {
     PeerStream::Bin(
       torrent_swarm
         .into_iter()
         .map(|peer| PeerBin::from_socket(peer.ip.ip(), peer.port as u16).0)
         .flatten()
-        .collect::<Vec<u8>>()
+        .collect::<Vec<u8>>(),
     )
   }
-  */
 }
