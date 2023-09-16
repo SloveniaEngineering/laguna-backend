@@ -1,5 +1,6 @@
 use std::net::IpAddr;
 
+use bendy::encoding::{SingleItemEncoder, ToBencode, self};
 use laguna_backend_tracker_common::{
   announce::{AnnounceEvent, Announcement, AnnouncementResponse},
   info_hash::InfoHash,
