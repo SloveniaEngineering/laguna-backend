@@ -7,6 +7,7 @@ pub mod meta;
 pub mod peer;
 pub mod rating;
 pub mod register;
+pub mod role;
 pub mod torrent;
 pub mod torrent_rating;
 pub mod user;

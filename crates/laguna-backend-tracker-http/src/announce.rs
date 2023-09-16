@@ -121,44 +121,28 @@ pub struct AnnounceReply {
   pub peers: PeerStream,
 }
 
-impl AnnouncementResponse for AnnounceReply {
-  #[inline]
-  fn failure_reason(&self) -> Option<&String> {
-    self.failure_reason.as_ref()
-  }
-
-  #[inline]
-  fn warning_message(&self) -> Option<&String> {
-    self.warning_message.as_ref()
-  }
-
-  #[inline]
-  fn interval(&self) -> u64 {
-    self.interval
-  }
-
-  #[inline]
-  fn min_interval(&self) -> Option<u64> {
-    self.min_interval
-  }
-
-  #[inline]
-  fn tracker_id(&self) -> Option<&String> {
-    self.tracker_id.as_ref()
-  }
-
-  #[inline]
-  fn complete(&self) -> u64 {
-    self.complete
-  }
-
-  #[inline]
-  fn incomplete(&self) -> u64 {
-    self.incomplete
-  }
-
-  #[inline]
-  fn peers(&self) -> &PeerStream {
-    &self.peers
+impl ToBencode for AnnounceReply {
+  const MAX_DEPTH: usize = 10;
+  fn encode(&self, encoder: SingleItemEncoder) -> Result<(), encoding::Error> {
+    if let Some(ref failure_reason) = self.failure_reason {
+      return encoder.emit_dict(|mut d| d.emit_pair(b"failure reason", failure_reason));
+    }
+    encoder.emit_unsorted_dict(|d| {
+      d.emit_pair(
+        b"failure reason",
+        self.failure_reason.clone().unwrap_or_default(),
+      )?;
+      d.emit_pair(
+        b"warning message",
+        &self.warning_message.clone().unwrap_or_default(),
+      )?;
+      d.emit_pair(b"interval", self.interval)?;
+      d.emit_pair(b"min interval", self.min_interval.unwrap_or(self.interval))?;
+      d.emit_pair(b"tracker id", &self.tracker_id.clone().unwrap_or_default())?;
+      d.emit_pair(b"complete", self.complete)?;
+      d.emit_pair(b"incomplete", self.incomplete)?;
+      d.emit_pair(b"peers", &self.peers)?;
+      Ok(())
+    })
   }
 }
