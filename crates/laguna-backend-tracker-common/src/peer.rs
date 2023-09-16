@@ -55,6 +55,12 @@ impl From<Vec<u8>> for PeerId {
 /// - <https://github.com/kenpaicat/aquatic/blob/master/aquatic_peer_id/src/lib.rs>
 #[derive(Debug)]
 pub enum PeerClient {
+  ABC,
+  OspreyPermaseed,
+  BTQueue,
+  ShadowsClient,
+  BitTornado,
+  UPnPNATBitTorrent,
   AnyEventBitTorrent,
   Arctic,
   Ares,
@@ -282,6 +288,12 @@ impl TryFrom<[u8; PEER_CLIENT_LENGTH]> for PeerClient {
 impl fmt::Display for PeerClient {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
+      PeerClient::ABC => write!(f, "ABC"),
+      PeerClient::OspreyPermaseed => write!(f, "Osprey Permaseed"),
+      PeerClient::BTQueue => write!(f, "BTQueue"),
+      PeerClient::ShadowsClient => write!(f, "Shadows Client"),
+      PeerClient::BitTornado => write!(f, "BitTornado"),
+      PeerClient::UPnPNATBitTorrent => write!(f, "UPnP NAT BitTorrent"),
       PeerClient::AnyEventBitTorrent => write!(f, "AnyEvent::BitTorrent"),
       PeerClient::Arctic => write!(f, "Arctic"),
       PeerClient::Ares => write!(f, "Ares"),
@@ -389,17 +401,71 @@ impl fmt::Display for PeerClient {
 
 impl PeerId {
   pub fn client(&self) -> Result<PeerClient, PeerIdError> {
-    if self.0[0] == b'M' {
-      return Ok(PeerClient::Mainline);
+    match self.0[0] {
+      b'-' => PeerClient::try_from([self.0[1], self.0[2]]),
+      b'A' => Ok(PeerClient::ABC),
+      b'M' => Ok(PeerClient::Mainline),
+      b'O' => Ok(PeerClient::OspreyPermaseed),
+      b'Q' => Ok(PeerClient::BTQueue),
+      b'R' => Ok(PeerClient::Tribler), // older versions of tribler
+      b'S' => Ok(PeerClient::ShadowsClient),
+      b'T' => Ok(PeerClient::BitTornado),
+      b'U' => Ok(PeerClient::UPnPNATBitTorrent),
+      _ => Err(PeerIdError::UnknownClient),
     }
-    if self.0[0] == b'-' {
-      return PeerClient::try_from([self.0[1], self.0[2]]);
-    }
-    Err(PeerIdError::UnknownClient)
   }
 
+  /// Returns peer/torrent client version string.
+  /// Returns empty string if client is unknown.
   pub fn version(&self) -> String {
-    todo!()
+    if self.0[0] == b'-' {
+      // Azureus style of version
+      // Bytes: ['-', <client id>, <client id>, <ver>, <ver>, <ver>, <ver>, '-', <random..>]
+      // <ver> is ascii digit
+      return self.0[3..7]
+        .iter()
+        .take_while(|b| b.is_ascii_digit())
+        .map(|b| format!("{}", b - 48))
+        .collect::<Vec<String>>()
+        .join(".");
+    }
+    if self.0[0].is_ascii_alphabetic() {
+      // Shadow's style of version
+      // http://forums.degreez.net/viewtopic.php?t=7070
+      // https://wiki.theory.org/BitTorrentSpecification#peer_id
+      // '0' = 48 (-48 = 0)
+      // '1' = 49 (-48 = 1)
+      // ...
+      // '9' = 57 (-48 = 9)
+      // 'A' = 65 (-55 = 10)
+      // 'B' = 66 (-55 = 11)
+      // ...
+      // 'Z' = 90 (-55 = 35)
+      // 'a' = 97 (-61 = 36)
+      // 'b' = 98 (-61 = 37)
+      // ...
+      // 'z' = 122 (-61 = 61)
+      return self
+        .0
+        .into_iter()
+        .take(6)
+        .take_while(|b| *b != b'-')
+        .map(|b| {
+          if b.is_ascii_digit() {
+            return format!("{}", b - 48);
+          }
+          if b >= b'A' && b <= b'Z' {
+            return format!("{}", b - 55);
+          }
+          if b >= b'a' && b <= b'z' {
+            return format!("{}", b - 61);
+          }
+          return String::new();
+        })
+        .collect::<Vec<String>>()
+        .join(".");
+    }
+    return String::new();
   }
 }
 
@@ -407,9 +473,6 @@ impl PeerId {
 #[serde(untagged)]
 pub enum PeerStream {
   Dict(Vec<PeerDict>),
-  // TODO: Doesn't return proper shit when bencoded.
-  // Should return: bencoded string (of bytes)
-  // Actual return: bencoded list (just like PeerDict).
   Bin(Vec<u8>),
 }
 

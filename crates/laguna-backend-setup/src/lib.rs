@@ -34,7 +34,8 @@ use laguna_backend_api::torrent::{
 };
 use laguna_backend_api::user;
 use laguna_backend_api::user::{
-  user_get, user_me_delete, user_me_get, user_patch, user_patch_me, user_torrents_get,
+  user_get, user_me_delete, user_me_get, user_patch, user_patch_me, user_role_change,
+  user_torrents_get,
 };
 use laguna_backend_dto::already_exists::AlreadyExistsDTO;
 use laguna_backend_dto::login::LoginDTO;
@@ -42,6 +43,7 @@ use laguna_backend_dto::meta::AppInfoDTO;
 use laguna_backend_dto::peer::PeerDTO;
 use laguna_backend_dto::rating::RatingDTO;
 use laguna_backend_dto::register::RegisterDTO;
+use laguna_backend_dto::role::RoleChangeDTO;
 use laguna_backend_dto::torrent::{TorrentDTO, TorrentPatchDTO, TorrentPutDTO};
 use laguna_backend_dto::torrent_rating::TorrentRatingDTO;
 use laguna_backend_dto::user::{UserDTO, UserPatchDTO};
@@ -160,6 +162,7 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
                   ))
                   .to(user_patch),
               )
+              .route("/{id}/role_change", web::patch().to(user_role_change))
               .route("/me", web::get().to(user_me_get))
               .route("/{id}", web::get().to(user_get))
               .route("/me", web::delete().to(user_me_delete))
@@ -239,6 +242,7 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
       Announce<SHA1_LENGTH>,
       AnnounceEvent,
       AnnounceReply,
+      RoleChangeDTO,
       Peer,
       PeerStream,
       PeerDict,

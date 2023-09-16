@@ -91,7 +91,7 @@ async fn handle_peer_request<const N: usize>(
       event: AnnounceEvent::Completed,
       message: String::from("Inexistant peer sent completion."),
     }),
-    (AnnounceEvent::Stopped, Some(peer)) => handle_peer_stopped(peer, announce_data, pool).await,
+    (AnnounceEvent::Stopped, Some(_peer)) => handle_peer_stopped(announce_data, pool).await,
     (AnnounceEvent::Stopped, None) => Err(PeerError::<N>::UnexpectedEvent {
       event: AnnounceEvent::Stopped,
       message: String::from("Inexistant peer sent stop."),
@@ -201,7 +201,6 @@ async fn handle_peer_started<const N: usize>(
 }
 
 async fn handle_peer_stopped<const N: usize>(
-  peer: Peer,
   announce_data: Announce<N>,
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, PeerError<N>> {
@@ -346,7 +345,7 @@ async fn torrent_swarm<const N: usize>(
   )
 }
 
-async fn complete_incomplete_counts(torrent_swarm: &Vec<Peer>) -> (u64, u64) {
+async fn complete_incomplete_counts(torrent_swarm: &[Peer]) -> (u64, u64) {
   torrent_swarm
     .iter()
     .fold((0, 0), |(complete, incomplete), peer| {

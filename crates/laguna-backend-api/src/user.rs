@@ -2,6 +2,7 @@ use actix_jwt_auth_middleware::TokenSigner;
 use actix_web::{web, HttpResponse};
 
 use jwt_compact::alg::Hs256;
+use laguna_backend_dto::role::RoleChangeDTO;
 use laguna_backend_dto::torrent::TorrentDTO;
 use laguna_backend_dto::user::UserDTO;
 use laguna_backend_dto::user::UserPatchDTO;
@@ -151,6 +152,58 @@ pub async fn user_patch(
   _pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
   Ok(HttpResponse::Ok().finish())
+}
+
+#[utoipa::path(
+  patch,
+  path = "/api/user/{id}/role_change",
+  responses(
+    (status = 200, description = "Returns updated user.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 400, description = "User not found or role not changed due to DB related reasons.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 403, description = "Not allowed to change role.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+  ),
+)]
+pub async fn user_role_change(
+  user_id: web::Path<Uuid>,
+  role_change_dto: web::Json<RoleChangeDTO>,
+  current_user: UserDTO,
+  pool: web::Data<PgPool>,
+) -> Result<HttpResponse, APIError> {
+  let changee = sqlx::query_file_as!(User, "queries/user_get.sql", user_id.into_inner())
+    .fetch_optional(pool.get_ref())
+    .await?
+    .map(UserSafe::from)
+    .ok_or(UserError::NotFound)?;
+  // TODO: Can user change its own role? Currently yes but only according to the formula below, which is safe.
+  match (current_user.role, changee.role, role_change_dto.to) {
+    (Role::Admin, _, _)
+    | (Role::Mod, Role::Verified | Role::Normie, Role::Verified | Role::Normie) => {
+      let changed = sqlx::query_file_as!(
+        User,
+        "queries/user_role_change.sql",
+        role_change_dto.to as _,
+        changee.id
+      )
+      .fetch_optional(pool.get_ref())
+      .await?
+      .map(UserSafe::from)
+      .ok_or(UserError::NotUpdated)?;
+      Ok(
+        HttpResponse::Ok()
+          .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
+          .json(UserDTO::from(changed)),
+      )
+    },
+    (changer, changee_from, changee_to) => Err(
+      UserError::RoleChangeNotAllowed {
+        changer,
+        changee_from,
+        changee_to,
+      }
+      .into(),
+    ),
+  }
 }
 
 /*

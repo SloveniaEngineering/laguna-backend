@@ -61,18 +61,17 @@ impl ToBencode for AnnounceReply {
     if let Some(ref failure_reason) = self.failure_reason {
       return encoder.emit_dict(|mut d| d.emit_pair(b"failure reason", failure_reason));
     }
-    encoder.emit_unsorted_dict(|mut d| {
-      d.emit_pair(
-        b"failure reason",
-        self.failure_reason.clone().unwrap_or_default(),
-      )?;
-      d.emit_pair(
-        b"warning message",
-        &self.warning_message.clone().unwrap_or_default(),
-      )?;
+    encoder.emit_unsorted_dict(|d| {
+      if let Some(ref warning_message) = self.warning_message {
+        d.emit_pair(b"warning message", warning_message)?;
+      }
       d.emit_pair(b"interval", self.interval)?;
-      d.emit_pair(b"min interval", self.min_interval.unwrap_or(self.interval))?;
-      d.emit_pair(b"tracker id", &self.tracker_id.clone().unwrap_or_default())?;
+      if let Some(ref min_interval) = self.min_interval {
+        d.emit_pair(b"min interval", min_interval)?;
+      }
+      if let Some(ref tracker_id) = self.tracker_id {
+        d.emit_pair(b"tracker id", tracker_id)?;
+      }
       d.emit_pair(b"complete", self.complete)?;
       d.emit_pair(b"incomplete", self.incomplete)?;
       d.emit_pair(b"peers", &self.peers)?;
