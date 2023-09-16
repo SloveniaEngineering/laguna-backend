@@ -156,7 +156,7 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
           )
           .wrap(AuthenticationService::new(authority))
           .service(
-            web::scope("stats")
+            web::scope("/stats")
               .route("/", web::get().to(stats_joint_get))
               .route("/user", web::get().to(stats_user_get))
               .route("/torrent", web::get().to(stats_torrent_get))
