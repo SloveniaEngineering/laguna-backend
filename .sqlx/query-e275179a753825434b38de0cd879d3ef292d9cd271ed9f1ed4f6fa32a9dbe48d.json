@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT bytes_total, torrents_total\r\nFROM \"TorrentStats\";",
+  "query": "SELECT bytes_total, torrents_total\nFROM \"TorrentStats\";",
   "describe": {
     "columns": [
       {
@@ -22,5 +22,5 @@
       true
     ]
   },
-  "hash": "3583650964b48f0a47dd70a138482a43f61b85ae4c0f2826cf8e8dc38540c9b4"
+  "hash": "e275179a753825434b38de0cd879d3ef292d9cd271ed9f1ed4f6fa32a9dbe48d"
 }

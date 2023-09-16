@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT role AS \"role: Role\", users_total\r\nFROM \"UserStats\";",
+  "query": "SELECT role AS \"role: Role\", users_total\nFROM \"UserStats\";",
   "describe": {
     "columns": [
       {
@@ -34,5 +34,5 @@
       true
     ]
   },
-  "hash": "6561d8714009bf0d412a1f833759251d00fd555c54be577c9b83f3045b07b3f2"
+  "hash": "daf29899cf7e2bb399dd773f9a94aff14a64d86489829de302c95b570297ffd3"
 }

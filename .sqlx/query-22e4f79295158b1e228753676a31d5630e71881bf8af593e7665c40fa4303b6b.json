@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT downloaded_total, uploaded_total, left_total, peers_total\r\nFROM \"PeerStats\";",
+  "query": "SELECT downloaded_total, uploaded_total, left_total, peers_total\nFROM \"PeerStats\";",
   "describe": {
     "columns": [
       {
@@ -34,5 +34,5 @@
       true
     ]
   },
-  "hash": "9b3348ddfcc85fdeefe218b52dae07df666e6c0651b6f2d7b65915a5e5bc3ca1"
+  "hash": "22e4f79295158b1e228753676a31d5630e71881bf8af593e7665c40fa4303b6b"
 }
