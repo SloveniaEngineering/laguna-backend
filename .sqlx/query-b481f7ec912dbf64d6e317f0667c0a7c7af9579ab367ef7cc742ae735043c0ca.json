@@ -1,27 +1,26 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO \"Rating\" (\n    rating,\n    user_id,\n    info_hash\n)\nVALUES (\n    $1,\n    $2,\n    $3\n)\nRETURNING \n    rating,\n    user_id,\n    info_hash\n;",
+  "query": "SELECT *\nFROM \"Rating\"\nWHERE user_id = $1\n  AND info_hash = $2;",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "rating",
-        "type_info": "Int4"
-      },
-      {
-        "ordinal": 1,
         "name": "user_id",
         "type_info": "Uuid"
       },
       {
-        "ordinal": 2,
+        "ordinal": 1,
         "name": "info_hash",
         "type_info": "Bytea"
+      },
+      {
+        "ordinal": 2,
+        "name": "rating",
+        "type_info": "Int4"
       }
     ],
     "parameters": {
       "Left": [
-        "Int4",
         "Uuid",
         "Bytea"
       ]
@@ -32,5 +31,5 @@
       false
     ]
   },
-  "hash": "5976bec6ac2db7819b5587c2b3dca78a85d2f42cbb97862645d4e4f6cf07bcde"
+  "hash": "b481f7ec912dbf64d6e317f0667c0a7c7af9579ab367ef7cc742ae735043c0ca"
 }

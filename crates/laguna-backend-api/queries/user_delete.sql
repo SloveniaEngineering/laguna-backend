@@ -1,6 +1,6 @@
-DELETE FROM "User"
-WHERE id = $1
-RETURNING 
+DELETE
+FROM "User"
+WHERE id = $1 RETURNING
     id,
     username,
     email,

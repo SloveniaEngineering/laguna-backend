@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT \n    id,\n    md5_hash,\n    info_hash,\n    ip,\n    port,\n    is_origin,\n    agent,\n    uploaded_bytes,\n    downloaded_bytes,\n    left_bytes,\n    behaviour AS \"behaviour: Behaviour\",\n    created_at,\n    updated_at\nFROM \"Peer\"\nWHERE info_hash = $1 AND id != $2;",
+  "query": "SELECT id,\n       md5_hash,\n       info_hash,\n       ip,\n       port,\n       is_origin,\n       agent,\n       uploaded_bytes,\n       downloaded_bytes,\n       left_bytes,\n       behaviour AS \"behaviour: Behaviour\",\n       created_at,\n       updated_at\nFROM \"Peer\"\nWHERE id = $1;",
   "describe": {
     "columns": [
       {
@@ -87,7 +87,6 @@
     ],
     "parameters": {
       "Left": [
-        "Bytea",
         "Bytea"
       ]
     },
@@ -107,5 +106,5 @@
       true
     ]
   },
-  "hash": "730ffd08b633646878bd3f5b3d4c059ab46f55e3aed89f7e2c43bc7b89b51495"
+  "hash": "c073c78d4555fd1bb35098e5fe39e228a71294690f04f6993e4e2b90c3cd74af"
 }

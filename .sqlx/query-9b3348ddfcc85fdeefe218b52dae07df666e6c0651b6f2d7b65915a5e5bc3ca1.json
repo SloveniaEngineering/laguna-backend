@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT downloaded_total, uploaded_total, left_total, peers_total\r\nFROM \"PeerStats\";",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "downloaded_total",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "uploaded_total",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "left_total",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "peers_total",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "9b3348ddfcc85fdeefe218b52dae07df666e6c0651b6f2d7b65915a5e5bc3ca1"
+}

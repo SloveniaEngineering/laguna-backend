@@ -1,9 +1,7 @@
 UPDATE "Torrent"
-SET
-    nfo = $1,
+SET nfo   = $1,
     genre = $2
-WHERE info_hash = $3
-RETURNING
+WHERE info_hash = $3 RETURNING
     info_hash,
     raw,
     announce_url,

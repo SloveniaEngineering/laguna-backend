@@ -1,8 +1,6 @@
 UPDATE "User"
-SET
-    last_login = $1
-WHERE id = $2
-RETURNING
+SET last_login = $1
+WHERE id = $2 RETURNING
     id,
     username,
     email,

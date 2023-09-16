@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "DELETE FROM \"User\"\nWHERE id = $1\nRETURNING \n    id,\n    username,\n    email,\n    password,\n    first_login,\n    last_login,\n    avatar_url,\n    salt,\n    role AS \"role: Role\",\n    hnr_count,\n    behaviour AS \"behaviour: Behaviour\",\n    is_enabled,\n    is_donator,\n    has_verified_email,\n    is_profile_private\n;",
+  "query": "SELECT id,\n       username,\n       email,\n       password,\n       first_login,\n       last_login,\n       avatar_url,\n       salt,\n       role      AS \"role: Role\",\n       hnr_count,\n       behaviour AS \"behaviour: Behaviour\",\n       is_enabled,\n       is_donator,\n       has_verified_email,\n       is_profile_private\nFROM \"User\"\nWHERE username = $1\n   OR email = $2;",
   "describe": {
     "columns": [
       {
@@ -109,7 +109,8 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "Text",
+        "Text"
       ]
     },
     "nullable": [
@@ -130,5 +131,5 @@
       false
     ]
   },
-  "hash": "357c700bfe26c875f7d0938a67ff209c08eb142e62a6f76acd8094377ad35d3c"
+  "hash": "18148d22095ceb5d5e2a94f88c8eeb39bc74b1270e3670fe1b63da792c1cb4b8"
 }

@@ -1,7 +1,6 @@
 DELETE
 FROM "Torrent"
-WHERE info_hash = $1
-RETURNING 
+WHERE info_hash = $1 RETURNING
     info_hash,
     raw,
     announce_url,

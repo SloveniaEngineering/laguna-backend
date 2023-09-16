@@ -11,5 +11,6 @@ pub mod meta;
 pub mod peer;
 pub mod rating;
 pub mod register;
+pub mod stats;
 pub mod torrent;
 pub mod user;

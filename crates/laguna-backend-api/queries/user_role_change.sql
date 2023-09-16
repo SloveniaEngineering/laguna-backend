@@ -1,8 +1,6 @@
 UPDATE "User"
-SET
-  role = $1
-WHERE id = $2
-RETURNING
+SET role = $1
+WHERE id = $2 RETURNING
   id,
   username,
   email,

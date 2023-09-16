@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT\n    info_hash,\n    raw,\n    announce_url,\n    length,\n    file_name,\n    nfo,\n    genre AS \"genre: Genre\",\n    leech_count,\n    seed_count,\n    completed_count,\n    speedlevel AS \"speedlevel: SpeedLevel\",\n    is_freeleech,\n    creation_date,\n    created_by,\n    uploaded_at,\n    uploaded_by,\n    modded_at,\n    modded_by\nFROM \"Torrent\"\nWHERE info_hash = $1;\n",
+  "query": "INSERT INTO \"Torrent\" (info_hash,\n                       raw,\n                       announce_url,\n                       length,\n                       file_name,\n                       nfo,\n                       genre,\n                       leech_count,\n                       seed_count,\n                       completed_count,\n                       speedlevel,\n                       is_freeleech,\n                       creation_date,\n                       created_by,\n                       uploaded_at,\n                       uploaded_by,\n                       modded_at,\n                       modded_by)\nVALUES ($1,\n        $2,\n        $3,\n        $4,\n        $5,\n        $6,\n        $7,\n        $8,\n        $9,\n        $10,\n        $11,\n        $12,\n        $13,\n        $14,\n        $15,\n        $16,\n        $17,\n        $18) RETURNING\n    info_hash,\n    raw,\n    announce_url,\n    length,\n    file_name,\n    nfo,\n    genre AS \"genre: Genre\",\n    leech_count,\n    seed_count,\n    completed_count,\n    speedlevel AS \"speedlevel: SpeedLevel\",\n    is_freeleech,\n    creation_date,\n    created_by,\n    uploaded_at,\n    uploaded_by,\n    modded_at,\n    modded_by\n;",
   "describe": {
     "columns": [
       {
@@ -141,7 +141,69 @@
     ],
     "parameters": {
       "Left": [
-        "Bytea"
+        "Bytea",
+        "Bytea",
+        "Varchar",
+        "Int8",
+        "Varchar",
+        "Text",
+        {
+          "Custom": {
+            "name": "genre",
+            "kind": {
+              "Enum": [
+                "Action",
+                "Adventure",
+                "Animation",
+                "Biography",
+                "Comedy",
+                "Crime",
+                "Documentary",
+                "Drama",
+                "Family",
+                "Fantasy",
+                "FilmNoir",
+                "GameShow",
+                "History",
+                "Horror",
+                "Musical",
+                "Mystery",
+                "News",
+                "RealityTV",
+                "Romance",
+                "SciFi",
+                "Short",
+                "Sport",
+                "TalkShow",
+                "Thriller",
+                "War",
+                "Western"
+              ]
+            }
+          }
+        },
+        "Int4",
+        "Int4",
+        "Int4",
+        {
+          "Custom": {
+            "name": "speedlevel",
+            "kind": {
+              "Enum": [
+                "Lowspeed",
+                "Mediumspeed",
+                "Highspeed"
+              ]
+            }
+          }
+        },
+        "Bool",
+        "Timestamptz",
+        "Text",
+        "Timestamptz",
+        "Uuid",
+        "Timestamptz",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -165,5 +227,5 @@
       true
     ]
   },
-  "hash": "3d997ddec8976ff122efd8341822931a3b44dc2cfd0f530cfba95d2a34bcd2bf"
+  "hash": "38e2ce8598c88d975341196dc67773d61dd0accc1000027cff351195e580fb2f"
 }

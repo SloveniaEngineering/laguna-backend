@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO \"Peer\" (\n    id,\n    md5_hash,\n    info_hash,\n    ip,\n    port,\n    is_origin,\n    agent,\n    uploaded_bytes,\n    downloaded_bytes,\n    left_bytes,\n    behaviour,\n    created_at,\n    updated_at\n) VALUES (\n    $1,\n    $2,\n    $3,\n    $4,\n    $5,\n    $6,\n    $7,\n    $8,\n    $9,\n    $10,\n    $11,\n    $12,\n    $13\n)\nRETURNING\n    id,\n    md5_hash,\n    info_hash,\n    ip,\n    port,\n    is_origin,\n    agent,\n    uploaded_bytes,\n    downloaded_bytes,\n    left_bytes,\n    behaviour AS \"behaviour: Behaviour\",\n    created_at,\n    updated_at\n;",
+  "query": "SELECT id,\n       md5_hash,\n       info_hash,\n       ip,\n       port,\n       is_origin,\n       agent,\n       uploaded_bytes,\n       downloaded_bytes,\n       left_bytes,\n       behaviour AS \"behaviour: Behaviour\",\n       created_at,\n       updated_at\nFROM \"Peer\"\nWHERE info_hash = $1;",
   "describe": {
     "columns": [
       {
@@ -87,35 +87,7 @@
     ],
     "parameters": {
       "Left": [
-        "Bytea",
-        "Varchar",
-        "Bytea",
-        "Inet",
-        "Int4",
-        "Bool",
-        "Text",
-        "Int8",
-        "Int8",
-        "Int8",
-        {
-          "Custom": {
-            "name": "behaviour",
-            "kind": {
-              "Enum": [
-                "Lurker",
-                "Downloader",
-                "Freeleecher",
-                "Leech",
-                "Seed",
-                "Choked",
-                "Uploader",
-                "Stopped"
-              ]
-            }
-          }
-        },
-        "Timestamptz",
-        "Timestamptz"
+        "Bytea"
       ]
     },
     "nullable": [
@@ -134,5 +106,5 @@
       true
     ]
   },
-  "hash": "8ac2a6a04f852b3c2188d315637e1f1dbab65dbffe0fc3f772014fa6d4585ff9"
+  "hash": "1a89036d83f6fe1da1103c6f9acf3310f768f040edbd51248e30eb8e3aec66aa"
 }

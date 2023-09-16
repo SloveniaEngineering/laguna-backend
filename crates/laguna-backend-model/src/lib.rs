@@ -13,3 +13,4 @@ pub mod swarm;
 pub mod torrent;
 pub mod torrent_rating;
 pub mod user;
+pub mod views;

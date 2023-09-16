@@ -1,12 +1,10 @@
-UPDATE "Peer" 
-SET
-    uploaded_bytes = $1,
+UPDATE "Peer"
+SET uploaded_bytes   = $1,
     downloaded_bytes = $2,
-    left_bytes = $3,
-    behaviour = $4,
-    updated_at = $5
-WHERE id = $6
-RETURNING
+    left_bytes       = $3,
+    behaviour        = $4,
+    updated_at       = $5
+WHERE id = $6 RETURNING
     id,
     md5_hash,
     info_hash,

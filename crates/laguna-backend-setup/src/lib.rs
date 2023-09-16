@@ -28,6 +28,10 @@ use laguna_backend_api::rating;
 use laguna_backend_api::rating::{rating_create, rating_delete, rating_torrent_average};
 use laguna_backend_api::register;
 use laguna_backend_api::register::register;
+use laguna_backend_api::stats;
+use laguna_backend_api::stats::{
+  stats_joint_get, stats_peer_get, stats_torrent_get, stats_user_get,
+};
 use laguna_backend_api::torrent;
 use laguna_backend_api::torrent::{
   torrent_delete, torrent_get, torrent_patch, torrent_put, torrent_swarm,
@@ -47,6 +51,7 @@ use laguna_backend_dto::role::RoleChangeDTO;
 use laguna_backend_dto::torrent::{TorrentDTO, TorrentPatchDTO, TorrentPutDTO};
 use laguna_backend_dto::torrent_rating::TorrentRatingDTO;
 use laguna_backend_dto::user::{UserDTO, UserPatchDTO};
+use laguna_backend_model::views::stats::{JointStats, PeerStats, TorrentStats, UserStats};
 
 use laguna_backend_middleware::auth::AuthorizationMiddlewareFactory;
 use laguna_backend_middleware::hexify::HexifyMiddlewareFactory;
@@ -151,6 +156,13 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
           )
           .wrap(AuthenticationService::new(authority))
           .service(
+            web::scope("stats")
+              .route("/", web::get().to(stats_joint_get))
+              .route("/user", web::get().to(stats_user_get))
+              .route("/torrent", web::get().to(stats_torrent_get))
+              .route("/peer", web::get().to(stats_peer_get)),
+          )
+          .service(
             web::scope("/user")
               .route("/me", web::patch().to(user_patch_me))
               .route(
@@ -247,6 +259,10 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
       PeerStream,
       PeerDict,
       PeerBin,
+      JointStats,
+      PeerStats,
+      UserStats,
+      TorrentStats,
     )
   ),
   paths(
@@ -268,7 +284,11 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
     register::register,
     login::login,
     meta::get_app_info,
-    meta::healthcheck
+    meta::healthcheck,
+    stats::stats_joint_get,
+    stats::stats_user_get,
+    stats::stats_torrent_get,
+    stats::stats_peer_get,
   )
 )]
 struct ApiDoc;
