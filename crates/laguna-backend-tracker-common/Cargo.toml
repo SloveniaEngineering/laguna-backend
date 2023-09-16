@@ -33,5 +33,4 @@ sqlx = { version="0.7.1", features = [
 ] }
 url = { version = "*", features = ["serde"] }
 utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
-# This crate is so gay: bendy = { version = "^0.3", features = ["std", "serde"] }
-serde_bencode = "*"
+bendy = { version = "^0.3", features = ["std", "serde"] }

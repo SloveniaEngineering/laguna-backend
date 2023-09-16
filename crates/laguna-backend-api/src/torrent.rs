@@ -1,5 +1,7 @@
 use actix_web::{web, HttpResponse};
 use actix_web_validator::Json;
+use bendy::decoding::FromBencode;
+use bendy::encoding::ToBencode;
 use laguna_backend_tracker_common::info_hash::SHA1_LENGTH;
 use sha1::Sha1;
 
@@ -105,13 +107,13 @@ pub async fn torrent_put<const N: usize>(
   if form.torrent.content_type != APPLICATION_XBITTORRENT {
     return Ok(HttpResponse::UnsupportedMediaType().finish());
   }
-  let torrent_file = TorrentFile::try_from(&form.torrent)?;
+  let torrent_file = TorrentFile::from_bencode(&form.torrent.bytes)?;
   // Deny torrents with announce list present
   if torrent_file.announce_list.is_some() {
     return Err(TorrentError::Invalid.into());
   }
-  // Deny torrents with foreign announce url
 
+  // Deny torrents with foreign announce url
   let domestic_announce_url = domestic_announce_url.into_inner();
   match torrent_file.announce_url {
     Some(announce_url_inner) if announce_url_inner != *domestic_announce_url => {
@@ -128,7 +130,7 @@ pub async fn torrent_put<const N: usize>(
     Some(_) | None => (),
   }
 
-  let info_hash = Sha1::digest(serde_bencode::to_bytes(&torrent_file.info)?);
+  let info_hash = Sha1::digest(torrent_file.info.to_bencode()?);
   // TODO: BitTorrent v2 needs SHA256_LENGTH
   let info_hash = InfoHash::<SHA1_LENGTH>(info_hash.try_into().unwrap());
   let maybe_torrent =
@@ -143,7 +145,7 @@ pub async fn torrent_put<const N: usize>(
     Torrent,
     "queries/torrent_insert.sql",
     info_hash as _,
-    serde_bencode::to_bytes(&torrent_file)?,
+    form.torrent.bytes, // torrent is already bencoded so we can just insert it
     torrent_file.announce_url,
     torrent_file.info.length,
     torrent_file.info.name.clone(),

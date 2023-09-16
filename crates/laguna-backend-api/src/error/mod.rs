@@ -8,6 +8,7 @@ use actix_jwt_auth_middleware::AuthError;
 use actix_web::http::header::ContentType;
 use actix_web::{body::BoxBody, http::StatusCode};
 use actix_web::{error::ResponseError, HttpResponse};
+use bendy::{decoding, encoding};
 use core::fmt;
 
 use std::fmt::Formatter;
@@ -21,7 +22,8 @@ pub enum APIError {
   IOError(io::Error),
   AuthError(AuthError),
   UserError(user::UserError),
-  BencodeError(serde_bencode::Error),
+  BencodeDecodeError(decoding::Error),
+  BencodeEncodeError(encoding::Error),
   TorrentError(torrent::TorrentError),
   RatingError(rating::RatingError),
 }
@@ -56,9 +58,15 @@ impl From<AuthError> for APIError {
   }
 }
 
-impl From<serde_bencode::Error> for APIError {
-  fn from(value: serde_bencode::Error) -> Self {
-    Self::BencodeError(value)
+impl From<decoding::Error> for APIError {
+  fn from(value: decoding::Error) -> Self {
+    Self::BencodeDecodeError(value)
+  }
+}
+
+impl From<encoding::Error> for APIError {
+  fn from(value: encoding::Error) -> Self {
+    Self::BencodeEncodeError(value)
   }
 }
 
@@ -76,7 +84,12 @@ impl fmt::Display for APIError {
       Self::AuthError(auth_error) => f.write_fmt(format_args!("{}", auth_error)),
       Self::IOError(io_error) => f.write_fmt(format_args!("{}", io_error)),
       Self::SqlxError(sqlx_error) => f.write_fmt(format_args!("{}", sqlx_error)),
-      Self::BencodeError(bencode_error) => f.write_fmt(format_args!("{}", bencode_error)),
+      Self::BencodeDecodeError(bencode_decode_error) => {
+        f.write_fmt(format_args!("{}", bencode_decode_error))
+      },
+      Self::BencodeEncodeError(bencode_encode_error) => {
+        f.write_fmt(format_args!("{}", bencode_encode_error))
+      },
       Self::RatingError(rating_error) => f.write_fmt(format_args!("{}", rating_error)),
     }
   }
@@ -90,7 +103,8 @@ impl ResponseError for APIError {
       Self::AuthError(auth_error) => auth_error.status_code(),
       Self::IOError(_) => StatusCode::INTERNAL_SERVER_ERROR,
       Self::SqlxError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-      Self::BencodeError(_) => StatusCode::UNPROCESSABLE_ENTITY,
+      Self::BencodeDecodeError(_) => StatusCode::UNPROCESSABLE_ENTITY,
+      Self::BencodeEncodeError(_) => StatusCode::UNPROCESSABLE_ENTITY,
       Self::RatingError(rating_error) => rating_error.status_code(),
     }
   }
@@ -106,9 +120,12 @@ impl ResponseError for APIError {
       Self::SqlxError(sqlx_error) => HttpResponse::build(self.status_code())
         .content_type(ContentType::plaintext())
         .body(sqlx_error.to_string()),
-      Self::BencodeError(bencode_error) => HttpResponse::build(self.status_code())
+      Self::BencodeDecodeError(bencode_decode_error) => HttpResponse::build(self.status_code())
         .content_type(ContentType::plaintext())
-        .body(bencode_error.to_string()),
+        .body(bencode_decode_error.to_string()),
+      Self::BencodeEncodeError(bencode_encode_error) => HttpResponse::build(self.status_code())
+        .content_type(ContentType::plaintext())
+        .body(bencode_encode_error.to_string()),
       Self::RatingError(rating_error) => rating_error.error_response(),
     }
   }

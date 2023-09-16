@@ -4,6 +4,7 @@ use actix_web::dev::PeerAddr;
 use actix_web::http::header::USER_AGENT;
 use actix_web::{web, HttpRequest, HttpResponse};
 
+use bendy::encoding::ToBencode;
 use chrono::Utc;
 use laguna_backend_model::peer::Peer;
 
@@ -12,7 +13,7 @@ use laguna_backend_model::torrent::Torrent;
 use laguna_backend_tracker::http::announce::{Announce, AnnounceReply};
 
 use laguna_backend_model::genre::Genre;
-use laguna_backend_tracker_common::announce::{AnnounceEvent, Announcement};
+use laguna_backend_tracker_common::announce::AnnounceEvent;
 
 use laguna_backend_model::behaviour::Behaviour;
 use laguna_backend_tracker_common::peer::{PeerBin, PeerDict, PeerStream};
@@ -134,17 +135,15 @@ async fn handle_peer_started<const N: usize>(
   // If proxy is used, prefer the original ip.
   let ip = IpNetwork::from(if let Some(ip) = announce_data.ip {
     ip
-  } else {
-    if let Some(ip) = req.connection_info().realip_remote_addr() {
-      // Forwarded by proxy
-      if let Ok(ip) = IpAddr::from_str(ip) {
-        ip
-      } else {
-        peer_addr.ip()
-      }
+  } else if let Some(ip) = req.connection_info().realip_remote_addr() {
+    // Forwarded by proxy
+    if let Ok(ip) = IpAddr::from_str(ip) {
+      ip
     } else {
       peer_addr.ip()
     }
+  } else {
+    peer_addr.ip()
   });
 
   let user_agent = req
@@ -185,16 +184,19 @@ async fn handle_peer_started<const N: usize>(
   let (complete, incomplete) = complete_incomplete_counts(&swarm).await;
 
   Ok(
-    HttpResponse::Ok().body(serde_bencode::to_bytes(&AnnounceReply {
-      failure_reason: None,
-      warning_message: None,
-      complete,
-      incomplete,
-      tracker_id: None,
-      min_interval: None,
-      interval: 1,
-      peers: peer_stream(announce_data.compact.unwrap_or(true), swarm),
-    })?),
+    HttpResponse::Ok().body(
+      AnnounceReply {
+        failure_reason: None,
+        warning_message: None,
+        complete,
+        incomplete,
+        tracker_id: None,
+        min_interval: None,
+        interval: 1,
+        peers: peer_stream(announce_data.compact.unwrap_or(true), swarm),
+      }
+      .to_bencode()?,
+    ),
   )
 }
 
@@ -217,16 +219,19 @@ async fn handle_peer_stopped<const N: usize>(
   .await?
   .ok_or(PeerError::NotUpdated)?;
   Ok(
-    HttpResponse::Ok().body(serde_bencode::to_bytes(&AnnounceReply {
-      failure_reason: None,
-      warning_message: None,
-      complete: 0,
-      incomplete: 0,
-      tracker_id: None,
-      min_interval: None,
-      interval: 1,
-      peers: peer_stream(announce_data.compact.unwrap_or(true), vec![peer]),
-    })?),
+    HttpResponse::Ok().body(
+      AnnounceReply {
+        failure_reason: None,
+        warning_message: None,
+        complete: 0,
+        incomplete: 0,
+        tracker_id: None,
+        min_interval: None,
+        interval: 1,
+        peers: peer_stream(announce_data.compact.unwrap_or(true), vec![]),
+      }
+      .to_bencode()?,
+    ),
   )
 }
 
@@ -237,16 +242,19 @@ async fn handle_peer_completed<const N: usize>(
   let swarm = torrent_swarm(pool.get_ref(), &announce_data).await?;
   let (complete, incomplete) = complete_incomplete_counts(&swarm).await;
   Ok(
-    HttpResponse::Ok().body(serde_bencode::to_bytes(&AnnounceReply {
-      failure_reason: None,
-      warning_message: None,
-      complete,
-      incomplete,
-      tracker_id: None,
-      min_interval: None,
-      interval: 1,
-      peers: peer_stream(announce_data.compact.unwrap_or(true), swarm),
-    })?),
+    HttpResponse::Ok().body(
+      AnnounceReply {
+        failure_reason: None,
+        warning_message: None,
+        complete,
+        incomplete,
+        tracker_id: None,
+        min_interval: None,
+        interval: 1,
+        peers: peer_stream(announce_data.compact.unwrap_or(true), swarm),
+      }
+      .to_bencode()?,
+    ),
   )
 }
 
@@ -280,16 +288,19 @@ async fn handle_peer_updated<const N: usize>(
   let (complete, incomplete) = complete_incomplete_counts(&swarm).await;
 
   Ok(
-    HttpResponse::Ok().body(serde_bencode::to_bytes(&AnnounceReply {
-      failure_reason: None,
-      warning_message: None,
-      complete,
-      incomplete,
-      tracker_id: None,
-      min_interval: None,
-      interval: 1,
-      peers: peer_stream(announce_data.compact.unwrap_or(true), swarm),
-    })?),
+    HttpResponse::Ok().body(
+      AnnounceReply {
+        failure_reason: None,
+        warning_message: None,
+        complete,
+        incomplete,
+        tracker_id: None,
+        min_interval: None,
+        interval: 1,
+        peers: peer_stream(announce_data.compact.unwrap_or(true), swarm),
+      }
+      .to_bencode()?,
+    ),
   )
 }
 
@@ -302,16 +313,19 @@ async fn handle_peer_paused<const N: usize>(
   let (complete, incomplete) = complete_incomplete_counts(&swarm).await;
 
   Ok(
-    HttpResponse::Ok().body(serde_bencode::to_bytes(&AnnounceReply {
-      failure_reason: None,
-      warning_message: None,
-      complete,
-      incomplete,
-      tracker_id: None,
-      min_interval: None,
-      interval: 1,
-      peers: peer_stream(announce_data.compact.unwrap_or(true), swarm),
-    })?),
+    HttpResponse::Ok().body(
+      AnnounceReply {
+        failure_reason: None,
+        warning_message: None,
+        complete,
+        incomplete,
+        tracker_id: None,
+        min_interval: None,
+        interval: 1,
+        peers: peer_stream(announce_data.compact.unwrap_or(true), swarm),
+      }
+      .to_bencode()?,
+    ),
   )
 }
 
@@ -349,7 +363,7 @@ fn peer_stream<'a>(compact: bool, torrent_swarm: Vec<Peer>) -> PeerStream {
       torrent_swarm
         .into_iter()
         .map(|peer| PeerDict {
-          id: peer.id,
+          peer_id: peer.id,
           ip: peer.ip.ip(),
           port: peer.port as u16,
         })
@@ -359,8 +373,7 @@ fn peer_stream<'a>(compact: bool, torrent_swarm: Vec<Peer>) -> PeerStream {
     PeerStream::Bin(
       torrent_swarm
         .into_iter()
-        .map(|peer| PeerBin::from_socket(peer.ip.ip(), peer.port as u16).0)
-        .flatten()
+        .flat_map(|peer| PeerBin::from_socket(peer.ip.ip(), peer.port as u16).0)
         .collect::<Vec<u8>>(),
     )
   }

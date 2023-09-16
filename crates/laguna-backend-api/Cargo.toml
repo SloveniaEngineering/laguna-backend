@@ -54,8 +54,8 @@ laguna-backend-config = { path = "../laguna-backend-config" }
 secrecy = { version = "*", features = ["serde"] }
 rand = "*"
 utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
-# bendy = { version = "^0.3", features = ["std", "serde"] }
-serde_bencode = "*"
+bendy = { version = "^0.3", features = ["std", "serde"] }
+# serde_bencode = "*"
 
 [dev-dependencies]
 actix-http = "3.4.0"

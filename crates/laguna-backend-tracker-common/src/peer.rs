@@ -3,6 +3,7 @@ use std::fmt;
 use std::fmt::{Debug, Formatter};
 use std::net::IpAddr;
 
+use bendy::encoding::{AsString, ToBencode};
 use serde::{Deserialize, Serialize};
 use serde_with::hex::Hex;
 use serde_with::serde_as;
@@ -415,7 +416,7 @@ pub enum PeerStream {
 /// Used when `compact=0` in announce url.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct PeerDict {
-  pub id: PeerId,
+  pub peer_id: PeerId,
   pub ip: IpAddr,
   pub port: u16,
 }
@@ -438,5 +439,48 @@ impl PeerBin {
     buf[..4].copy_from_slice(&octets);
     buf[4..].copy_from_slice(&port.to_be_bytes());
     Self(buf)
+  }
+}
+
+impl ToBencode for PeerDict {
+  const MAX_DEPTH: usize = 10;
+  fn encode(
+    &self,
+    encoder: bendy::encoding::SingleItemEncoder,
+  ) -> Result<(), bendy::encoding::Error> {
+    encoder.emit_dict(|mut d| {
+      d.emit_pair(b"peer id", AsString(self.peer_id.0))?;
+      d.emit_pair(b"ip", self.ip.to_string())?;
+      d.emit_pair(b"port", self.port)?;
+      Ok(())
+    })
+  }
+}
+
+impl ToBencode for PeerBin {
+  const MAX_DEPTH: usize = 10;
+  fn encode(
+    &self,
+    encoder: bendy::encoding::SingleItemEncoder,
+  ) -> Result<(), bendy::encoding::Error> {
+    encoder.emit(&AsString(self.0))
+  }
+}
+
+impl ToBencode for PeerStream {
+  const MAX_DEPTH: usize = 10;
+  fn encode(
+    &self,
+    encoder: bendy::encoding::SingleItemEncoder,
+  ) -> Result<(), bendy::encoding::Error> {
+    match self {
+      PeerStream::Dict(many_dict) => encoder.emit_list(|l| {
+        for dict in many_dict {
+          l.emit(dict)?;
+        }
+        Ok(())
+      }),
+      PeerStream::Bin(bin) => encoder.emit(&AsString(bin)),
+    }
   }
 }

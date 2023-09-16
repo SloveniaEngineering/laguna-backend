@@ -40,7 +40,8 @@ chrono = { version = "*", features = ["serde"] }
 validator = { version = "0.16", features = ["derive", "unic"] }
 actix-web-validator = "5.0.1"
 laguna-backend-tracker-common = { path = "../laguna-backend-tracker-common" }
-serde_bencode = "0.2.3"
+# serde_bencode = "0.2.3"
+bendy = { version = "*", features = ["std", "serde"] }
 secrecy = { version = "*", features = ["serde"] }
 derivative = "2.2.0"
 utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
