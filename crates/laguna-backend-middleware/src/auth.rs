@@ -4,7 +4,7 @@ use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse};
 
 use actix_web::http::StatusCode;
 
-use actix_web::{Error, HttpResponse, ResponseError};
+use actix_web::{Error, HttpMessage, HttpResponse, ResponseError};
 
 use std::fmt;
 
@@ -117,6 +117,7 @@ where
   forward_ready!(service);
 
   fn call(&self, req: ServiceRequest) -> Self::Future {
+    log::info!("{:?}", req.extensions());
     // Token has already been validated & verified by AuthenticationService by the time it reaches this middleware.
     let access_token_header = req.headers().get(ACCESS_TOKEN_HEADER_NAME);
     if let Some(access_token_header) = access_token_header {

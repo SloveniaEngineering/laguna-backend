@@ -120,11 +120,11 @@ pub async fn user_patch_me(
     HttpResponse::Ok()
       .append_header((
         ACCESS_TOKEN_HEADER_NAME,
-        signer.create_access_header_value(&user.clone())?,
+        signer.create_access_header_value(&user)?,
       ))
       .append_header((
         REFRESH_TOKEN_HEADER_NAME,
-        signer.create_refresh_header_value(&user.clone())?,
+        signer.create_refresh_header_value(&user)?,
       ))
       .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
       .json(user),
@@ -188,11 +188,12 @@ pub async fn user_role_change(
       .fetch_optional(pool.get_ref())
       .await?
       .map(UserSafe::from)
+      .map(UserDTO::from)
       .ok_or(UserError::NotUpdated)?;
       Ok(
         HttpResponse::Ok()
           .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
-          .json(UserDTO::from(changed)),
+          .json(changed),
       )
     },
     (changer, changee_from, changee_to) => Err(

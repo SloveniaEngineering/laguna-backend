@@ -6,11 +6,12 @@ use actix_web::test::{read_body_json, TestRequest};
 use chrono::{DateTime, Utc};
 
 use laguna_backend_dto::{
+  role::RoleChangeDTO,
   torrent::TorrentDTO,
   user::{UserDTO, UserPatchDTO},
 };
 use laguna_backend_middleware::mime::APPLICATION_XBITTORRENT;
-use laguna_backend_model::speedlevel::SpeedLevel;
+use laguna_backend_model::{role::Role, speedlevel::SpeedLevel};
 use sqlx::PgPool;
 
 mod common;
@@ -70,8 +71,8 @@ async fn test_user_patch(pool: PgPool) -> sqlx::Result<()> {
   let app = common::setup_test(&pool).await;
   let (_, user_dto, access_token, refresh_token) = common::new_user(&app).await;
   let patch_res = common::as_logged_in(
-    access_token,
-    refresh_token,
+    access_token.clone(),
+    refresh_token.clone(),
     TestRequest::patch()
       .uri("/api/user/me")
       .set_json(UserPatchDTO {
@@ -83,6 +84,16 @@ async fn test_user_patch(pool: PgPool) -> sqlx::Result<()> {
   )
   .await
   .unwrap();
+  let new_access_token = patch_res
+    .headers()
+    .get("x-access-token")
+    .unwrap()
+    .to_owned();
+  let new_refresh_token = patch_res
+    .headers()
+    .get("x-refresh-token")
+    .unwrap()
+    .to_owned();
   assert_eq!(patch_res.status(), StatusCode::OK);
   assert_eq!(
     read_body_json::<UserDTO, _>(patch_res).await,
@@ -92,6 +103,8 @@ async fn test_user_patch(pool: PgPool) -> sqlx::Result<()> {
       ..user_dto
     }
   );
+  assert_ne!(access_token, new_access_token);
+  assert_ne!(refresh_token, new_refresh_token);
   Ok(())
 }
 
@@ -275,5 +288,215 @@ async fn test_user_torrents_get(pool: PgPool) -> sqlx::Result<()> {
     torrents,
     vec![expected_torrent_dto_1, expected_torrent_dto_2]
   );
+  Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_user_role_change_normie_to_verified_by_admin(pool: PgPool) -> sqlx::Result<()> {
+  let app = common::setup_test(&pool).await;
+  let (_, _, admin_access_token, admin_refresh_token) = common::new_admin_user(&app, &pool).await;
+  let (user_dto, normie_dto, normie_access_token, normie_refresh_token) =
+    common::new_user(&app).await;
+  let role_change_res = common::as_logged_in(
+    admin_access_token.clone(),
+    admin_refresh_token.clone(),
+    TestRequest::patch()
+      .uri(&format!("/api/user/{}/role_change", normie_dto.id))
+      .set_json(RoleChangeDTO { to: Role::Verified }),
+    &app,
+  )
+  .await
+  .unwrap();
+
+  assert_eq!(role_change_res.status(), StatusCode::OK);
+
+  // Changed user logs in and looks at their role
+  let (verified_dto, verified_access_token, verified_refresh_token) =
+    common::login_user_safe(user_dto.into(), &app).await;
+
+  assert_eq!(verified_dto.role, Role::Verified);
+  assert_ne!(verified_access_token, normie_access_token);
+  assert_ne!(verified_refresh_token, normie_refresh_token);
+
+  Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_user_role_change_verified_to_normie_by_admin(pool: PgPool) -> sqlx::Result<()> {
+  let app = common::setup_test(&pool).await;
+  let (_, _, admin_access_token, admin_refresh_token) = common::new_admin_user(&app, &pool).await;
+  let (user_dto, verified_dto, verified_access_token, verified_refresh_token) =
+    common::new_verified_user(&app, &pool).await;
+  let role_change_res = common::as_logged_in(
+    admin_access_token.clone(),
+    admin_refresh_token.clone(),
+    TestRequest::patch()
+      .uri(&format!("/api/user/{}/role_change", verified_dto.id))
+      .set_json(RoleChangeDTO { to: Role::Normie }),
+    &app,
+  )
+  .await
+  .unwrap();
+
+  assert_eq!(role_change_res.status(), StatusCode::OK);
+
+  // Changed user logs in and looks at their role
+  let (normie_dto, normie_access_token, normie_refresh_token) =
+    common::login_user_safe(user_dto.into(), &app).await;
+
+  assert_eq!(normie_dto.role, Role::Normie);
+  assert_ne!(normie_access_token, verified_access_token);
+  assert_ne!(normie_refresh_token, verified_refresh_token);
+
+  Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_user_role_change_normie_to_verified_by_mod(pool: PgPool) -> sqlx::Result<()> {
+  let app = common::setup_test(&pool).await;
+  let (_, _, mod_access_token, mod_refresh_token) = common::new_mod_user(&app, &pool).await;
+  let (user_dto, normie_dto, normie_access_token, normie_refresh_token) =
+    common::new_user(&app).await;
+  let role_change_res = common::as_logged_in(
+    mod_access_token.clone(),
+    mod_refresh_token.clone(),
+    TestRequest::patch()
+      .uri(&format!("/api/user/{}/role_change", normie_dto.id))
+      .set_json(RoleChangeDTO { to: Role::Verified }),
+    &app,
+  )
+  .await
+  .unwrap();
+
+  assert_eq!(role_change_res.status(), StatusCode::OK);
+
+  // Changed user logs in and looks at their role
+  let (verified_dto, verified_access_token, verified_refresh_token) =
+    common::login_user_safe(user_dto.into(), &app).await;
+
+  assert_eq!(verified_dto.role, Role::Verified);
+  assert_ne!(verified_access_token, normie_access_token);
+  assert_ne!(verified_refresh_token, normie_refresh_token);
+
+  Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_user_role_change_verified_to_normie_by_mod(pool: PgPool) -> sqlx::Result<()> {
+  let app = common::setup_test(&pool).await;
+  let (_, _, mod_access_token, mod_refresh_token) = common::new_mod_user(&app, &pool).await;
+  let (user_dto, verified_dto, verified_access_token, verified_refresh_token) =
+    common::new_verified_user(&app, &pool).await;
+  let role_change_res = common::as_logged_in(
+    mod_access_token.clone(),
+    mod_refresh_token.clone(),
+    TestRequest::patch()
+      .uri(&format!("/api/user/{}/role_change", verified_dto.id))
+      .set_json(RoleChangeDTO { to: Role::Normie }),
+    &app,
+  )
+  .await
+  .unwrap();
+
+  assert_eq!(role_change_res.status(), StatusCode::OK);
+
+  // Changed user logs in and looks at their role
+  let (normie_dto, normie_access_token, normie_refresh_token) =
+    common::login_user_safe(user_dto.into(), &app).await;
+
+  assert_eq!(normie_dto.role, Role::Normie);
+  assert_ne!(normie_access_token, verified_access_token);
+  assert_ne!(normie_refresh_token, verified_refresh_token);
+
+  Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_user_role_change_verified_to_mod_by_admin(pool: PgPool) -> sqlx::Result<()> {
+  let app = common::setup_test(&pool).await;
+  let (_, _, admin_access_token, admin_refresh_token) = common::new_admin_user(&app, &pool).await;
+  let (user_dto, verified_dto, verified_access_token, verified_refresh_token) =
+    common::new_verified_user(&app, &pool).await;
+  let role_change_res = common::as_logged_in(
+    admin_access_token.clone(),
+    admin_refresh_token.clone(),
+    TestRequest::patch()
+      .uri(&format!("/api/user/{}/role_change", verified_dto.id))
+      .set_json(RoleChangeDTO { to: Role::Mod }),
+    &app,
+  )
+  .await
+  .unwrap();
+
+  assert_eq!(role_change_res.status(), StatusCode::OK);
+
+  // Changed user logs in and looks at their role
+  let (mod_dto, mod_access_token, mod_refresh_token) =
+    common::login_user_safe(user_dto.into(), &app).await;
+
+  assert_eq!(mod_dto.role, Role::Mod);
+  assert_ne!(mod_access_token, verified_access_token);
+  assert_ne!(mod_refresh_token, verified_refresh_token);
+
+  Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_user_role_change_mod_to_verified_by_admin(pool: PgPool) -> sqlx::Result<()> {
+  let app = common::setup_test(&pool).await;
+  let (_, _, admin_access_token, admin_refresh_token) = common::new_admin_user(&app, &pool).await;
+  let (user_dto, mod_dto, mod_access_token, mod_refresh_token) =
+    common::new_mod_user(&app, &pool).await;
+  let role_change_res = common::as_logged_in(
+    admin_access_token.clone(),
+    admin_refresh_token.clone(),
+    TestRequest::patch()
+      .uri(&format!("/api/user/{}/role_change", mod_dto.id))
+      .set_json(RoleChangeDTO { to: Role::Verified }),
+    &app,
+  )
+  .await
+  .unwrap();
+
+  assert_eq!(role_change_res.status(), StatusCode::OK);
+
+  // Changed user logs in and looks at their role
+  let (verified_dto, verified_access_token, verified_refresh_token) =
+    common::login_user_safe(user_dto.into(), &app).await;
+
+  assert_eq!(verified_dto.role, Role::Verified);
+  assert_ne!(verified_access_token, mod_access_token);
+  assert_ne!(verified_refresh_token, mod_refresh_token);
+
+  Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_user_role_change_admin_to_mod_by_admin(pool: PgPool) -> sqlx::Result<()> {
+  let app = common::setup_test(&pool).await;
+  let (_, _, admin_access_token, admin_refresh_token) = common::new_admin_user(&app, &pool).await;
+  let (admin_register_dto, admin_dto, admin_2_access_token, admin_2_refresh_token) =
+    common::new_admin_user(&app, &pool).await;
+  let role_change_res = common::as_logged_in(
+    admin_access_token.clone(),
+    admin_refresh_token.clone(),
+    TestRequest::patch()
+      .uri(&format!("/api/user/{}/role_change", admin_dto.id))
+      .set_json(RoleChangeDTO { to: Role::Mod }),
+    &app,
+  )
+  .await
+  .unwrap();
+
+  assert_eq!(role_change_res.status(), StatusCode::OK);
+
+  // Changed user logs in and looks at their role
+  let (mod_dto, mod_access_token, mod_refresh_token) =
+    common::login_user_safe(admin_register_dto.into(), &app).await;
+
+  assert_eq!(mod_dto.role, Role::Mod);
+  assert_ne!(mod_access_token, admin_2_access_token);
+  assert_ne!(mod_refresh_token, admin_2_refresh_token);
+
   Ok(())
 }
