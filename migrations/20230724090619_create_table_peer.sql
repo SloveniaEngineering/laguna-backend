@@ -1,7 +1,8 @@
 -- Peer is essentially a M2M between User and Torrent.
 CREATE TABLE IF NOT EXISTS "Peer"
 (
-    id               BYTEA PRIMARY KEY        NOT NULL CHECK (length(id) = 20),
+    uuid             UUID PRIMARY KEY         NOT NULL DEFAULT uuid_generate_v4(),
+    id               BYTEA                    NOT NULL CHECK (length(id) = 20), -- not necessarily unique
     md5_hash         VARCHAR(60),
     info_hash        BYTEA                    NOT NULL CHECK (length(info_hash) = 20 OR length(info_hash) = 40),
     ip               INET                     NOT NULL,

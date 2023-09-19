@@ -171,7 +171,7 @@ async fn test_user_patch_remove_avatar_url(pool: PgPool) -> sqlx::Result<()> {
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_user_torrents_get(pool: PgPool) -> sqlx::Result<()> {
   let app = common::setup_test(&pool).await;
-  let (_, user_dto, access_token, refresh_token) = common::new_user(&app).await;
+  let (_, user_dto, access_token, refresh_token) = common::new_verified_user(&app, &pool).await;
   let put_res = common::as_logged_in(
     access_token.clone(),
     refresh_token.clone(),

@@ -2,6 +2,7 @@ use actix_web::{web, HttpResponse};
 use actix_web_validator::Json;
 use bendy::decoding::FromBencode;
 use bendy::encoding::ToBencode;
+
 use laguna_backend_tracker_common::info_hash::SHA1_LENGTH;
 use sha1::Sha1;
 
@@ -103,6 +104,9 @@ pub async fn torrent_put<const N: usize>(
   domestic_announce_url: web::Data<String>,
   user: UserDTO,
 ) -> Result<HttpResponse, APIError> {
+  /*if user.role < Role::Verified {
+    return Err(UserError::InvalidCredentials.into());
+  }*/
   // TODO: Bytes scanning middleware
   if form.torrent.content_type != APPLICATION_XBITTORRENT {
     return Ok(HttpResponse::UnsupportedMediaType().finish());

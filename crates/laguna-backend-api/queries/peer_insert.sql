@@ -24,6 +24,7 @@ VALUES ($1,
         $11,
         $12,
         $13) RETURNING
+    uuid,
     id,
     md5_hash,
     info_hash,
