@@ -10,7 +10,7 @@ mod common;
 #[sqlx::test(migrations = "../../migrations")]
 fn test_rating_create(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
   let app = common::setup_test(&pool).await;
-  let (_, _, access_token, refresh_token) = common::new_user(&app).await;
+  let (_, _, access_token, refresh_token) = common::new_verified_user(&app, &pool).await;
   let put_res = common::as_logged_in(
     access_token.clone(),
     refresh_token.clone(),
@@ -54,7 +54,7 @@ fn test_rating_create(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
 #[sqlx::test(migrations = "../../migrations")]
 fn test_rating_create_twice(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
   let app = common::setup_test(&pool).await;
-  let (_, _, access_token, refresh_token) = common::new_user(&app).await;
+  let (_, _, access_token, refresh_token) = common::new_verified_user(&app, &pool).await;
   let put_res = common::as_logged_in(
     access_token.clone(),
     refresh_token.clone(),
@@ -114,7 +114,7 @@ fn test_rating_create_twice(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
 #[sqlx::test(migrations = "../../migrations")]
 fn test_rating_delete(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
   let app = common::setup_test(&pool).await;
-  let (_, _, access_token, refresh_token) = common::new_user(&app).await;
+  let (_, _, access_token, refresh_token) = common::new_verified_user(&app, &pool).await;
   let put_res = common::as_logged_in(
     access_token.clone(),
     refresh_token.clone(),
@@ -169,7 +169,7 @@ fn test_rating_delete(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
 #[sqlx::test(migrations = "../../migrations")]
 fn test_rating_delete_twice(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
   let app = common::setup_test(&pool).await;
-  let (_, _, access_token, refresh_token) = common::new_user(&app).await;
+  let (_, _, access_token, refresh_token) = common::new_verified_user(&app, &pool).await;
   let put_res = common::as_logged_in(
     access_token.clone(),
     refresh_token.clone(),
@@ -235,7 +235,7 @@ fn test_rating_delete_twice(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
 #[sqlx::test(migrations = "../../migrations")]
 fn test_rating_torrent_average(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
   let app = common::setup_test(&pool).await;
-  let (_, _, access_token, refresh_token) = common::new_user(&app).await;
+  let (_, _, access_token, refresh_token) = common::new_verified_user(&app, &pool).await;
   let (_, _, access_token_2, refresh_token_2) = common::new_user(&app).await;
   let put_res = common::as_logged_in(
     access_token.clone(),
@@ -339,7 +339,7 @@ fn test_rating_torrent_average(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
 #[sqlx::test(migrations = "../../migrations")]
 fn test_rating_torrent_average_out_of_range(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
   let app = common::setup_test(&pool).await;
-  let (_, _, access_token, refresh_token) = common::new_user(&app).await;
+  let (_, _, access_token, refresh_token) = common::new_verified_user(&app, &pool).await;
   let (_, _, access_token_2, refresh_token_2) = common::new_user(&app).await;
   let put_res = common::as_logged_in(
     access_token.clone(),

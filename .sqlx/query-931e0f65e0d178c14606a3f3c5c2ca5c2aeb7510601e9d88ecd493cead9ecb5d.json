@@ -1,0 +1,144 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO \"Peer\" (id,\n                    md5_hash,\n                    info_hash,\n                    ip,\n                    port,\n                    is_origin,\n                    agent,\n                    uploaded_bytes,\n                    downloaded_bytes,\n                    left_bytes,\n                    behaviour,\n                    created_at,\n                    updated_at)\nVALUES ($1,\n        $2,\n        $3,\n        $4,\n        $5,\n        $6,\n        $7,\n        $8,\n        $9,\n        $10,\n        $11,\n        $12,\n        $13) RETURNING\n    uuid,\n    id,\n    md5_hash,\n    info_hash,\n    ip,\n    port,\n    is_origin,\n    agent,\n    uploaded_bytes,\n    downloaded_bytes,\n    left_bytes,\n    behaviour AS \"behaviour: Behaviour\",\n    created_at,\n    updated_at\n;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "uuid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "id",
+        "type_info": "Bytea"
+      },
+      {
+        "ordinal": 2,
+        "name": "md5_hash",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "info_hash",
+        "type_info": "Bytea"
+      },
+      {
+        "ordinal": 4,
+        "name": "ip",
+        "type_info": "Inet"
+      },
+      {
+        "ordinal": 5,
+        "name": "port",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "is_origin",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "agent",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "uploaded_bytes",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 9,
+        "name": "downloaded_bytes",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 10,
+        "name": "left_bytes",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 11,
+        "name": "behaviour: Behaviour",
+        "type_info": {
+          "Custom": {
+            "name": "behaviour",
+            "kind": {
+              "Enum": [
+                "Lurker",
+                "Downloader",
+                "Freeleecher",
+                "Leech",
+                "Seed",
+                "Choked",
+                "Uploader",
+                "Stopped"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 13,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea",
+        "Varchar",
+        "Bytea",
+        "Inet",
+        "Int4",
+        "Bool",
+        "Text",
+        "Int8",
+        "Int8",
+        "Int8",
+        {
+          "Custom": {
+            "name": "behaviour",
+            "kind": {
+              "Enum": [
+                "Lurker",
+                "Downloader",
+                "Freeleecher",
+                "Leech",
+                "Seed",
+                "Choked",
+                "Uploader",
+                "Stopped"
+              ]
+            }
+          }
+        },
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "931e0f65e0d178c14606a3f3c5c2ca5c2aeb7510601e9d88ecd493cead9ecb5d"
+}

@@ -17,6 +17,12 @@ impl HexifyMiddlewareFactory {
   }
 }
 
+impl Default for HexifyMiddlewareFactory {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 impl<S, B> Transform<S, ServiceRequest> for HexifyMiddlewareFactory
 where
   S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,

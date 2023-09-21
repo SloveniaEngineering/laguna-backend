@@ -1,4 +1,5 @@
-SELECT id,
+SELECT uuid,
+       id,
        md5_hash,
        info_hash,
        ip,

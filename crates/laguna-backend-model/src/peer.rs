@@ -5,11 +5,13 @@ use utoipa::ToSchema;
 
 use laguna_backend_tracker_common::info_hash::{InfoHash, SHA1_LENGTH};
 use laguna_backend_tracker_common::peer::PeerId;
+use uuid::Uuid;
 
 use crate::behaviour::Behaviour;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Hash, sqlx::FromRow, ToSchema)]
 pub struct Peer {
+  pub uuid: Uuid,
   pub id: PeerId,
   pub md5_hash: Option<String>,
   pub info_hash: InfoHash<SHA1_LENGTH>,

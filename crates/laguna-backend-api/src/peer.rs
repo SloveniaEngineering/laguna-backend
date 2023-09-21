@@ -34,6 +34,7 @@ pub async fn peer_announce<const N: usize>(
   announce_data: web::Query<Announce<N>>,
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, PeerError<N>> {
+  // Check if torrent exists on tracker
   sqlx::query_file_as!(
     Torrent,
     "queries/torrent_get.sql",
@@ -356,7 +357,7 @@ async fn complete_incomplete_counts(torrent_swarm: &[Peer]) -> (u64, u64) {
     })
 }
 
-fn peer_stream<'a>(compact: bool, torrent_swarm: Vec<Peer>) -> PeerStream {
+fn peer_stream(compact: bool, torrent_swarm: Vec<Peer>) -> PeerStream {
   if !compact || torrent_swarm.iter().any(|peer| peer.ip.is_ipv6()) {
     PeerStream::Dict(
       torrent_swarm

@@ -20,7 +20,7 @@ mod common;
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_get_torrent_bunny(pool: PgPool) -> sqlx::Result<()> {
   let app = common::setup_test(&pool).await;
-  let (_, user_dto, access_token, refresh_token) = common::new_user(&app).await;
+  let (_, user_dto, access_token, refresh_token) = common::new_verified_user(&app, &pool).await;
   let put_res = common::as_logged_in(
     access_token.clone(),
     refresh_token.clone(),
@@ -82,7 +82,7 @@ async fn test_get_torrent_bunny(pool: PgPool) -> sqlx::Result<()> {
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_put_torrent(pool: PgPool) -> sqlx::Result<()> {
   let app = common::setup_test(&pool).await;
-  let (_, user_dto, access_token, refresh_token) = common::new_user(&app).await;
+  let (_, user_dto, access_token, refresh_token) = common::new_verified_user(&app, &pool).await;
   let put_res = common::as_logged_in(
     access_token.clone(),
     refresh_token.clone(),
@@ -130,9 +130,35 @@ async fn test_put_torrent(pool: PgPool) -> sqlx::Result<()> {
 }
 
 #[sqlx::test(migrations = "../../migrations")]
+async fn test_put_torrent_unverified(pool: PgPool) -> sqlx::Result<()> {
+  let app = common::setup_test(&pool).await;
+  let (_, _, access_token, refresh_token) = common::new_user(&app).await;
+  let put_res = common::as_logged_in(
+    access_token.clone(),
+    refresh_token.clone(),
+    common::make_multipart(
+      TestRequest::put().uri("/api/torrent/"),
+      vec![common::MultipartField {
+        name: b"torrent",
+        filename: b"leaves.torrent",
+        content: include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent"),
+        content_type: APPLICATION_XBITTORRENT,
+        boundary: b"abbc761f78ff4d7cb7573b5a23f96ef0",
+      }],
+    ),
+    &app,
+  )
+  .await;
+
+  assert!(put_res.is_err());
+
+  Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
 async fn test_patch_torrent(pool: PgPool) -> sqlx::Result<()> {
   let app = common::setup_test(&pool).await;
-  let (_, user_dto, access_token, refresh_token) = common::new_user(&app).await;
+  let (_, user_dto, access_token, refresh_token) = common::new_mod_user(&app, &pool).await;
   let put_res = common::as_logged_in(
     access_token.clone(),
     refresh_token.clone(),
@@ -206,7 +232,7 @@ async fn test_patch_torrent(pool: PgPool) -> sqlx::Result<()> {
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_delete_torrent(pool: PgPool) -> sqlx::Result<()> {
   let app = common::setup_test(&pool).await;
-  let (_, _, access_token, refresh_token) = common::new_user(&app).await;
+  let (_, _, access_token, refresh_token) = common::new_mod_user(&app, &pool).await;
   let put_res = common::as_logged_in(
     access_token.clone(),
     refresh_token.clone(),
@@ -241,7 +267,7 @@ async fn test_delete_torrent(pool: PgPool) -> sqlx::Result<()> {
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_get_torrent_swarm(pool: PgPool) -> sqlx::Result<()> {
   let app = common::setup_test(&pool).await;
-  let (_, _, access_token, refresh_token) = common::new_user(&app).await;
+  let (_, _, access_token, refresh_token) = common::new_verified_user(&app, &pool).await;
   let put_res = common::as_logged_in(
     access_token.clone(),
     refresh_token.clone(),

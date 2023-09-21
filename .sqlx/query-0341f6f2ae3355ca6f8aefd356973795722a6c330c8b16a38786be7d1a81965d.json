@@ -1,60 +1,65 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id,\n       md5_hash,\n       info_hash,\n       ip,\n       port,\n       is_origin,\n       agent,\n       uploaded_bytes,\n       downloaded_bytes,\n       left_bytes,\n       behaviour AS \"behaviour: Behaviour\",\n       created_at,\n       updated_at\nFROM \"Peer\"\nWHERE info_hash = $1;",
+  "query": "SELECT uuid,\n       id,\n       md5_hash,\n       info_hash,\n       ip,\n       port,\n       is_origin,\n       agent,\n       uploaded_bytes,\n       downloaded_bytes,\n       left_bytes,\n       behaviour AS \"behaviour: Behaviour\",\n       created_at,\n       updated_at\nFROM \"Peer\"\nWHERE info_hash = $1\n  AND id != $2;",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
+        "name": "uuid",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
         "name": "id",
         "type_info": "Bytea"
       },
       {
-        "ordinal": 1,
+        "ordinal": 2,
         "name": "md5_hash",
         "type_info": "Varchar"
       },
       {
-        "ordinal": 2,
+        "ordinal": 3,
         "name": "info_hash",
         "type_info": "Bytea"
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "ip",
         "type_info": "Inet"
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "port",
         "type_info": "Int4"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "is_origin",
         "type_info": "Bool"
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "agent",
         "type_info": "Text"
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "uploaded_bytes",
         "type_info": "Int8"
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "downloaded_bytes",
         "type_info": "Int8"
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "left_bytes",
         "type_info": "Int8"
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "behaviour: Behaviour",
         "type_info": {
           "Custom": {
@@ -75,22 +80,24 @@
         }
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "updated_at",
         "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
+        "Bytea",
         "Bytea"
       ]
     },
     "nullable": [
+      false,
       false,
       true,
       false,
@@ -106,5 +113,5 @@
       true
     ]
   },
-  "hash": "1a89036d83f6fe1da1103c6f9acf3310f768f040edbd51248e30eb8e3aec66aa"
+  "hash": "0341f6f2ae3355ca6f8aefd356973795722a6c330c8b16a38786be7d1a81965d"
 }

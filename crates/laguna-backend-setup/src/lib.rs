@@ -168,11 +168,11 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
               .route(
                 "/{id}",
                 web::patch()
+                  .to(user_patch)
                   .wrap(AuthorizationMiddlewareFactory::new(
                     secret_key.clone(),
                     Role::Mod,
-                  ))
-                  .to(user_patch),
+                  )),
               )
               .route("/{id}/role_change", web::patch().to(user_role_change))
               .route("/me", web::get().to(user_me_get))
@@ -185,12 +185,9 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
               .route("/{info_hash}", web::get().to(torrent_get::<SHA1_LENGTH>))
               .route(
                 "/",
-                web::put()
-                  .wrap(AuthorizationMiddlewareFactory::new(
-                    secret_key.clone(),
-                    Role::Verified,
-                  ))
-                  .to(torrent_put::<SHA1_LENGTH>),
+                web::put().to(torrent_put::<SHA1_LENGTH>).wrap(
+                  AuthorizationMiddlewareFactory::new(secret_key.clone(), Role::Verified),
+                ),
               )
               .route("/rating", web::post().to(rating_create::<SHA1_LENGTH>))
               .route(
@@ -203,18 +200,15 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
               )
               .route(
                 "/{info_hash}",
-                web::patch()
-                  .wrap(AuthorizationMiddlewareFactory::new(
-                    secret_key.clone(),
-                    Role::Mod,
-                  ))
-                  .to(torrent_patch::<SHA1_LENGTH>),
+                web::patch().to(torrent_patch::<SHA1_LENGTH>).wrap(
+                  AuthorizationMiddlewareFactory::new(secret_key.clone(), Role::Mod),
+                ),
               )
               .route(
                 "/{info_hash}",
                 web::delete()
-                  .wrap(AuthorizationMiddlewareFactory::new(secret_key, Role::Mod))
-                  .to(torrent_delete::<SHA1_LENGTH>),
+                  .to(torrent_delete::<SHA1_LENGTH>)
+                  .wrap(AuthorizationMiddlewareFactory::new(secret_key, Role::Mod)),
               )
               .route(
                 "/{info_hash}/swarm",
