@@ -2,6 +2,7 @@
 #![doc(html_favicon_url = "https://sloveniaengineering.github.io/laguna-backend/favicon.ico")]
 #![doc(issue_tracker_base_url = "https://github.com/SloveniaEngineering/laguna-backend")]
 use actix_cors::Cors;
+
 use actix_jwt_auth_middleware::AuthenticationService;
 use actix_jwt_auth_middleware::{Authority, TokenSigner};
 use actix_settings::Mode;
@@ -79,10 +80,13 @@ use utoipa_swagger_ui::SwaggerUi;
 use std::sync::Once;
 
 static ENV_LOGGER_INIT: Once = Once::new();
+static CORS_INIT: Once = Once::new();
 
 #[once(name = "SETTINGS")]
 pub fn get_settings() -> Settings {
-  Settings::parse_toml(LAGUNA_CONFIG).expect("Failed to parse settings")
+  let mut settings = Settings::parse_toml(LAGUNA_CONFIG).expect("Failed to parse settings");
+  make_overridable_with_env_vars(&mut settings);
+  settings
 }
 
 // https://github.com/actix/actix-web/issues/2039
@@ -114,8 +118,7 @@ pub fn setup_with_settings(
   App::new().configure(get_config_fn(settings))
 }
 
-pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
-  make_overridable_with_env_vars(&mut settings);
+pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
   setup_logging(&settings);
   let secret_key = setup_secret_key(&settings);
   let (token_signer, authority) = crate::setup_authority!(secret_key, settings);
@@ -168,11 +171,11 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
               .route(
                 "/{id}",
                 web::patch()
+                  .to(user_patch)
                   .wrap(AuthorizationMiddlewareFactory::new(
                     secret_key.clone(),
                     Role::Mod,
-                  ))
-                  .to(user_patch),
+                  )),
               )
               .route("/{id}/role_change", web::patch().to(user_role_change))
               .route("/me", web::get().to(user_me_get))
@@ -185,12 +188,9 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
               .route("/{info_hash}", web::get().to(torrent_get::<SHA1_LENGTH>))
               .route(
                 "/",
-                web::put()
-                  .wrap(AuthorizationMiddlewareFactory::new(
-                    secret_key.clone(),
-                    Role::Verified,
-                  ))
-                  .to(torrent_put::<SHA1_LENGTH>),
+                web::put().to(torrent_put::<SHA1_LENGTH>).wrap(
+                  AuthorizationMiddlewareFactory::new(secret_key.clone(), Role::Verified),
+                ),
               )
               .route("/rating", web::post().to(rating_create::<SHA1_LENGTH>))
               .route(
@@ -203,18 +203,15 @@ pub fn get_config_fn(mut settings: Settings) -> impl FnOnce(&mut ServiceConfig) 
               )
               .route(
                 "/{info_hash}",
-                web::patch()
-                  .wrap(AuthorizationMiddlewareFactory::new(
-                    secret_key.clone(),
-                    Role::Mod,
-                  ))
-                  .to(torrent_patch::<SHA1_LENGTH>),
+                web::patch().to(torrent_patch::<SHA1_LENGTH>).wrap(
+                  AuthorizationMiddlewareFactory::new(secret_key.clone(), Role::Mod),
+                ),
               )
               .route(
                 "/{info_hash}",
                 web::delete()
-                  .wrap(AuthorizationMiddlewareFactory::new(secret_key, Role::Mod))
-                  .to(torrent_delete::<SHA1_LENGTH>),
+                  .to(torrent_delete::<SHA1_LENGTH>)
+                  .wrap(AuthorizationMiddlewareFactory::new(secret_key, Role::Mod)),
               )
               .route(
                 "/{info_hash}/swarm",
@@ -304,7 +301,12 @@ pub fn get_loglevel(settings: &Settings) -> &str {
 pub fn setup_logging(settings: &Settings) {
   if settings.actix.enable_log {
     ENV_LOGGER_INIT.call_once(|| {
-      env_logger::init_from_env(env_logger::Env::new().default_filter_or(get_loglevel(settings)));
+      let loglevel = get_loglevel(settings);
+      eprintln!(
+        "{:?} environment detected, loglevel is {}",
+        settings.actix.mode, loglevel
+      );
+      env_logger::init_from_env(env_logger::Env::new().default_filter_or(loglevel));
     });
   }
 }
@@ -379,25 +381,51 @@ pub fn setup_secret_key(settings: &Settings) -> Hs256Key {
 }
 
 pub fn setup_cors(settings: &Settings) -> Cors {
-  match settings.actix.mode {
+  let fe_ip = settings.application.frontend.address().ip();
+  let fe_port = settings.application.frontend.address().port();
+  let fe_addr = format!(
+    "http://{}:{}",
+    if fe_ip.is_loopback() {
+      String::from("localhost")
+    } else {
+      fe_ip.to_string()
+    },
+    fe_port
+  );
+  let cors = match settings.actix.mode {
     Mode::Development => Cors::permissive(),
-    Mode::Production => Cors::default()
-      .allowed_origin(settings.application.frontend.address().to_string().as_str())
-      .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
-      .allowed_headers(vec![
-        header::ORIGIN,
-        header::CONNECTION,
-        header::ACCEPT,
-        header::CONTENT_TYPE,
-        header::REFERER,
-        header::USER_AGENT,
-        header::HOST,
-        header::ACCEPT_ENCODING,
-        header::ACCEPT_LANGUAGE,
-        header::ACCESS_CONTROL_REQUEST_HEADERS,
-      ])
-      .max_age(3600),
-  }
+    Mode::Production => {
+      Cors::default()
+        // Flutter sends localhost:port as origin, but actix-cors doesn't equate 127.0.0.1 and localhost
+        // Hence we convert it to that format, see `fe_addr` above.
+        .allowed_origin(&fe_addr)
+        // Methods that can appear in Access-Control-Request-Method in preflight
+        .allowed_methods(vec!["POST", "OPTIONS", "GET", "PATCH", "PUT", "DELETE"])
+        // Headers that can appear in Access-Control-Request-Headers in preflight
+        .allowed_headers(vec![
+          header::CONTENT_TYPE,
+          header::ACCEPT,
+          header::ACCEPT_ENCODING,
+          header::ACCEPT_LANGUAGE,
+          header::ACCESS_CONTROL_REQUEST_HEADERS,
+          header::ACCESS_CONTROL_REQUEST_METHOD,
+          header::CONNECTION,
+          header::HOST,
+          header::ORIGIN,
+          header::REFERER,
+          header::USER_AGENT,
+        ])
+        .max_age(3600)
+    },
+  };
+  CORS_INIT.call_once(|| {
+    eprintln!("Frontend is {}", fe_addr);
+    eprintln!(
+      "{:?} environment detected, CORS = {:#?}",
+      settings.actix.mode, cors
+    );
+  });
+  cors
 }
 
 pub async fn setup_db(settings: &Settings) -> Result<PgPool, sqlx::Error> {

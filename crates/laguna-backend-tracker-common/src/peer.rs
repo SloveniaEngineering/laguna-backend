@@ -25,14 +25,20 @@ pub struct PeerId(
 
 impl fmt::Display for PeerId {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    f.write_str(
+    f.write_fmt(format_args!(
+      "{} ({} {})",
       self
         .0
         .iter()
         .map(|b| format!("{:02x}", b))
-        .collect::<String>()
-        .as_str(),
-    )
+        .collect::<Vec<String>>()
+        .join(""),
+      self
+        .client()
+        .map(|c| c.to_string())
+        .unwrap_or(String::from("Unknown")),
+      self.version(),
+    ))
   }
 }
 
@@ -454,18 +460,18 @@ impl PeerId {
           if b.is_ascii_digit() {
             return format!("{}", b - 48);
           }
-          if b >= b'A' && b <= b'Z' {
+          if b.is_ascii_uppercase() {
             return format!("{}", b - 55);
           }
-          if b >= b'a' && b <= b'z' {
+          if b.is_ascii_lowercase() {
             return format!("{}", b - 61);
           }
-          return String::new();
+          String::new()
         })
         .collect::<Vec<String>>()
         .join(".");
     }
-    return String::new();
+    String::new()
   }
 }
 

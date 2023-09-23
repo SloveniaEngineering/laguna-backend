@@ -1,5 +1,5 @@
 use crate::role::Role;
-use crate::torrent::Torrent;
+
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 

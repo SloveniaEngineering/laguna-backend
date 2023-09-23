@@ -5,6 +5,7 @@ SET uploaded_bytes   = $1,
     behaviour        = $4,
     updated_at       = $5
 WHERE id = $6 RETURNING
+    uuid,
     id,
     md5_hash,
     info_hash,

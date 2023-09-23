@@ -25,6 +25,7 @@ laguna-backend-api = { path = "../laguna-backend-api" }
 laguna-backend-dto = { path = "../laguna-backend-dto" }
 laguna-backend-tracker-common = { path = "../laguna-backend-tracker-common" }
 laguna-backend-tracker-http = { path = "../laguna-backend-tracker-http" }
+log = "*"
 rustversion = "1.0"
 sqlx = { version="0.7.1", features = [
     "runtime-tokio",
