@@ -65,7 +65,7 @@ use laguna_backend_model::speedlevel::SpeedLevel;
 use laguna_backend_model::torrent::Torrent;
 use laguna_backend_model::torrent_rating::TorrentRating;
 use laguna_backend_tracker_common::announce::AnnounceEvent;
-use laguna_backend_tracker_common::info_hash::{InfoHash, SHA1_LENGTH};
+use laguna_backend_tracker_common::info_hash::{InfoHash, SHA1_LENGTH, SHA256_LENGTH};
 use laguna_backend_tracker_common::peer::{PeerBin, PeerDict, PeerId, PeerStream};
 use laguna_backend_tracker_http::announce::{Announce, AnnounceReply};
 use laguna_config::make_overridable_with_env_vars;
@@ -145,7 +145,11 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
       .service(
         web::scope("peer")
           .wrap(HexifyMiddlewareFactory::new())
-          .route("/announce", web::get().to(peer_announce::<SHA1_LENGTH>)),
+          .route("/announce", web::get().to(peer_announce::<SHA1_LENGTH>))
+          .route(
+            "/v2/announce",
+            web::get().to(peer_announce::<SHA256_LENGTH>),
+          ),
       )
       // https://github.com/cloud-annotations/docusaurus-openapi/issues/231
       .service(
@@ -184,36 +188,71 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
             web::scope("/torrent")
               .route("/{info_hash}", web::get().to(torrent_get::<SHA1_LENGTH>))
               .route(
+                "/v2/{info_hash}",
+                web::get().to(torrent_get::<SHA256_LENGTH>),
+              )
+              .route(
                 "/",
                 web::put()
                   .to(torrent_put::<SHA1_LENGTH>)
                   .wrap(AuthorizationMiddlewareFactory::new(Role::Verified)),
               )
-              .route("/rating", web::post().to(rating_create::<SHA1_LENGTH>))
               .route(
-                "/rating/{info_hash}",
-                web::delete().to(rating_delete::<SHA1_LENGTH>),
-              )
-              .route(
-                "/rating/{info_hash}",
-                web::get().to(rating_torrent_average::<SHA1_LENGTH>),
-              )
-              .route(
-                "/{info_hash}",
-                web::patch()
-                  .to(torrent_patch::<SHA1_LENGTH>)
-                  .wrap(AuthorizationMiddlewareFactory::new(Role::Mod)),
-              )
-              .route(
-                "/{info_hash}",
-                web::delete()
-                  .to(torrent_delete::<SHA1_LENGTH>)
-                  .wrap(AuthorizationMiddlewareFactory::new(Role::Mod)),
-              )
-              .route(
-                "/{info_hash}/swarm",
-                web::get().to(torrent_swarm::<SHA1_LENGTH>),
+                "/v2",
+                web::put()
+                  .to(torrent_put::<SHA256_LENGTH>)
+                  .wrap(AuthorizationMiddlewareFactory::new(Role::Verified)),
               ),
+          )
+          .route("/rating", web::post().to(rating_create::<SHA1_LENGTH>))
+          .route("/v2/rating", web::post().to(rating_create::<SHA256_LENGTH>))
+          .route(
+            "/rating/{info_hash}",
+            web::delete().to(rating_delete::<SHA1_LENGTH>),
+          )
+          .route(
+            "/v2/rating/{info_hash}",
+            web::delete().to(rating_delete::<SHA256_LENGTH>),
+          )
+          .route(
+            "/rating/{info_hash}",
+            web::get().to(rating_torrent_average::<SHA1_LENGTH>),
+          )
+          .route(
+            "/v2/rating/{info_hash}",
+            web::get().to(rating_torrent_average::<SHA256_LENGTH>),
+          )
+          .route(
+            "/{info_hash}",
+            web::patch()
+              .to(torrent_patch::<SHA1_LENGTH>)
+              .wrap(AuthorizationMiddlewareFactory::new(Role::Mod)),
+          )
+          .route(
+            "/v2/{info_hash}",
+            web::patch()
+              .to(torrent_patch::<SHA256_LENGTH>)
+              .wrap(AuthorizationMiddlewareFactory::new(Role::Mod)),
+          )
+          .route(
+            "/{info_hash}",
+            web::delete()
+              .to(torrent_delete::<SHA1_LENGTH>)
+              .wrap(AuthorizationMiddlewareFactory::new(Role::Mod)),
+          )
+          .route(
+            "/v2/{info_hash}",
+            web::delete()
+              .to(torrent_delete::<SHA256_LENGTH>)
+              .wrap(AuthorizationMiddlewareFactory::new(Role::Mod)),
+          )
+          .route(
+            "/{info_hash}/swarm",
+            web::get().to(torrent_swarm::<SHA1_LENGTH>),
+          )
+          .route(
+            "/v2/{info_hash}/swarm",
+            web::get().to(torrent_swarm::<SHA256_LENGTH>),
           ),
       )
       .default_service(web::to(HttpResponse::NotFound));
@@ -266,15 +305,24 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
     user::user_get,
     user::user_patch,
     user::user_torrents_get,
-    torrent::torrent_get,
-    torrent::torrent_put,
-    torrent::torrent_patch,
-    torrent::torrent_delete,
-    torrent::torrent_swarm,
-    rating::rating_create,
-    rating::rating_delete,
-    rating::rating_torrent_average,
-    peer::peer_announce,
+    torrent::torrent_get::<SHA1_LENGTH>,
+    torrent::torrent_put::<SHA1_LENGTH>,
+    torrent::torrent_patch::<SHA1_LENGTH>,
+    torrent::torrent_delete::<SHA1_LENGTH>,
+    torrent::torrent_swarm::<SHA1_LENGTH>,
+    rating::rating_create::<SHA1_LENGTH>,
+    rating::rating_delete::<SHA1_LENGTH>,
+    rating::rating_torrent_average::<SHA1_LENGTH>,
+    peer::peer_announce::<SHA1_LENGTH>,
+    torrent::torrent_put::<SHA256_LENGTH>,
+    torrent::torrent_get::<SHA256_LENGTH>,
+    torrent::torrent_patch::<SHA256_LENGTH>,
+    torrent::torrent_delete::<SHA256_LENGTH>,
+    torrent::torrent_swarm::<SHA256_LENGTH>,
+    rating::rating_create::<SHA256_LENGTH>,
+    rating::rating_delete::<SHA256_LENGTH>,
+    rating::rating_torrent_average::<SHA256_LENGTH>,
+    peer::peer_announce::<SHA256_LENGTH>,
     register::register,
     login::login,
     meta::get_app_info,
