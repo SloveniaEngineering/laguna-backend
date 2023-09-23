@@ -172,10 +172,7 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
                 "/{id}",
                 web::patch()
                   .to(user_patch)
-                  .wrap(AuthorizationMiddlewareFactory::new(
-                    secret_key.clone(),
-                    Role::Mod,
-                  )),
+                  .wrap(AuthorizationMiddlewareFactory::new(Role::Mod)),
               )
               .route("/{id}/role_change", web::patch().to(user_role_change))
               .route("/me", web::get().to(user_me_get))
@@ -188,9 +185,9 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
               .route("/{info_hash}", web::get().to(torrent_get::<SHA1_LENGTH>))
               .route(
                 "/",
-                web::put().to(torrent_put::<SHA1_LENGTH>).wrap(
-                  AuthorizationMiddlewareFactory::new(secret_key.clone(), Role::Verified),
-                ),
+                web::put()
+                  .to(torrent_put::<SHA1_LENGTH>)
+                  .wrap(AuthorizationMiddlewareFactory::new(Role::Verified)),
               )
               .route("/rating", web::post().to(rating_create::<SHA1_LENGTH>))
               .route(
@@ -203,15 +200,15 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
               )
               .route(
                 "/{info_hash}",
-                web::patch().to(torrent_patch::<SHA1_LENGTH>).wrap(
-                  AuthorizationMiddlewareFactory::new(secret_key.clone(), Role::Mod),
-                ),
+                web::patch()
+                  .to(torrent_patch::<SHA1_LENGTH>)
+                  .wrap(AuthorizationMiddlewareFactory::new(Role::Mod)),
               )
               .route(
                 "/{info_hash}",
                 web::delete()
                   .to(torrent_delete::<SHA1_LENGTH>)
-                  .wrap(AuthorizationMiddlewareFactory::new(secret_key, Role::Mod)),
+                  .wrap(AuthorizationMiddlewareFactory::new(Role::Mod)),
               )
               .route(
                 "/{info_hash}/swarm",
