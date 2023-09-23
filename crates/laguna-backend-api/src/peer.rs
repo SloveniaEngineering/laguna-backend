@@ -34,6 +34,7 @@ pub async fn peer_announce<const N: usize>(
   announce_data: web::Query<Announce<N>>,
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, PeerError<N>> {
+  eprintln!("{:?}", req.cookies());
   // Check if torrent exists on tracker
   sqlx::query_file_as!(
     Torrent,
@@ -194,7 +195,19 @@ async fn handle_peer_started<const N: usize>(
         tracker_id: None,
         min_interval: None,
         interval: 1,
-        peers: peer_stream(announce_data.compact.unwrap_or(true), swarm),
+        peers: peer_stream(
+          announce_data.compact.unwrap_or(true),
+          announce_data.no_peer_id.unwrap_or_default(),
+          if behaviour == Behaviour::Seed {
+            // report non-seeds to seed
+            swarm
+              .into_iter()
+              .filter(|peer| peer.behaviour != Behaviour::Seed)
+              .collect()
+          } else {
+            swarm
+          },
+        ),
       }
       .to_bencode()?,
     ),
@@ -228,7 +241,11 @@ async fn handle_peer_stopped<const N: usize>(
         tracker_id: None,
         min_interval: None,
         interval: 1,
-        peers: peer_stream(announce_data.compact.unwrap_or(true), vec![]),
+        peers: peer_stream(
+          announce_data.compact.unwrap_or(true),
+          announce_data.no_peer_id.unwrap_or_default(),
+          vec![],
+        ),
       }
       .to_bencode()?,
     ),
@@ -251,7 +268,11 @@ async fn handle_peer_completed<const N: usize>(
         tracker_id: None,
         min_interval: None,
         interval: 1,
-        peers: peer_stream(announce_data.compact.unwrap_or(true), swarm),
+        peers: peer_stream(
+          announce_data.compact.unwrap_or(true),
+          announce_data.no_peer_id.unwrap_or_default(),
+          swarm,
+        ),
       }
       .to_bencode()?,
     ),
@@ -297,7 +318,19 @@ async fn handle_peer_updated<const N: usize>(
         tracker_id: None,
         min_interval: None,
         interval: 1,
-        peers: peer_stream(announce_data.compact.unwrap_or(true), swarm),
+        peers: peer_stream(
+          announce_data.compact.unwrap_or(true),
+          announce_data.no_peer_id.unwrap_or_default(),
+          if behaviour == Behaviour::Seed {
+            // report non-seeds to seed
+            swarm
+              .into_iter()
+              .filter(|peer| peer.behaviour != Behaviour::Seed)
+              .collect()
+          } else {
+            swarm
+          },
+        ),
       }
       .to_bencode()?,
     ),
@@ -322,7 +355,11 @@ async fn handle_peer_paused<const N: usize>(
         tracker_id: None,
         min_interval: None,
         interval: 1,
-        peers: peer_stream(announce_data.compact.unwrap_or(true), swarm),
+        peers: peer_stream(
+          announce_data.compact.unwrap_or(true),
+          announce_data.no_peer_id.unwrap_or_default(),
+          swarm,
+        ),
       }
       .to_bencode()?,
     ),
@@ -357,13 +394,13 @@ async fn complete_incomplete_counts(torrent_swarm: &[Peer]) -> (u64, u64) {
     })
 }
 
-fn peer_stream(compact: bool, torrent_swarm: Vec<Peer>) -> PeerStream {
+fn peer_stream(compact: bool, no_peer_id: bool, torrent_swarm: Vec<Peer>) -> PeerStream {
   if !compact || torrent_swarm.iter().any(|peer| peer.ip.is_ipv6()) {
     PeerStream::Dict(
       torrent_swarm
         .into_iter()
         .map(|peer| PeerDict {
-          peer_id: peer.id,
+          peer_id: if no_peer_id { None } else { Some(peer.id) },
           ip: peer.ip.ip(),
           port: peer.port as u16,
         })

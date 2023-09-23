@@ -485,7 +485,7 @@ pub enum PeerStream {
 /// Used when `compact=0` in announce url.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct PeerDict {
-  pub peer_id: PeerId,
+  pub peer_id: Option<PeerId>,
   pub ip: IpAddr,
   pub port: u16,
 }
@@ -518,7 +518,9 @@ impl ToBencode for PeerDict {
     encoder: bendy::encoding::SingleItemEncoder,
   ) -> Result<(), bendy::encoding::Error> {
     encoder.emit_dict(|mut d| {
-      d.emit_pair(b"peer id", AsString(self.peer_id.0))?;
+      if let Some(peer_id) = &self.peer_id {
+        d.emit_pair(b"peer id", AsString(peer_id.0))?;
+      }
       d.emit_pair(b"ip", self.ip.to_string())?;
       d.emit_pair(b"port", self.port)?;
       Ok(())

@@ -14,4 +14,5 @@ SELECT uuid,
        updated_at
 FROM "Peer"
 WHERE info_hash = $1
-  AND id != $2;
+  AND id != $2
+  AND behaviour NOT IN ('Stopped', 'Choked');
