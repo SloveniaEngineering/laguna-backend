@@ -1785,6 +1785,7 @@ dependencies = [
  "laguna-backend-model",
  "laguna-backend-tracker-common",
  "laguna-backend-tracker-http",
+ "log",
  "rustversion",
  "secrecy",
  "sqlx",
