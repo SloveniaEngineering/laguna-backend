@@ -34,7 +34,7 @@ CREATE TYPE Genre AS ENUM (
 
 CREATE TABLE IF NOT EXISTS "Torrent"
 (
-    info_hash       BYTEA PRIMARY KEY        NOT NULL CHECK (length(info_hash) = 20 OR length(info_hash) = 40),
+    info_hash       BYTEA PRIMARY KEY        NOT NULL CHECK (length(info_hash) = 20 OR length(info_hash) = 32), 
     raw             BYTEA                    NOT NULL,
     announce_url    VARCHAR(255),
     length          BIGINT                   NOT NULL,

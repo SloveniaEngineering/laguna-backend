@@ -14,5 +14,4 @@ SELECT uuid,
        updated_at,
        created_by
 FROM "Peer"
-WHERE info_hash = $1
-  AND behaviour NOT IN ('Stopped', 'Choked');
+WHERE created_by = $1;

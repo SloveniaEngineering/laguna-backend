@@ -43,6 +43,7 @@ laguna-backend-tracker-common = { path = "../laguna-backend-tracker-common" }
 # serde_bencode = "0.2.3"
 bendy = { version = "*", features = ["std", "serde"] }
 secrecy = { version = "*", features = ["serde"] }
+serde_with = { version = "*", features = ["hex"] }
 derivative = "2.2.0"
 utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
 

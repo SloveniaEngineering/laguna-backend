@@ -1755,6 +1755,7 @@ dependencies = [
  "secrecy",
  "serde",
  "serde_bytes",
+ "serde_with",
  "sha2",
  "sqlx",
  "utoipa",
@@ -1826,6 +1827,7 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "bendy",
+ "laguna-backend-model",
  "laguna-backend-tracker-common",
  "serde",
  "utoipa",
