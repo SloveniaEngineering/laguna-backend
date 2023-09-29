@@ -8,7 +8,7 @@ use serde_with::hex::Hex;
 use std::fmt::Formatter;
 
 pub const SHA1_LENGTH: usize = 20;
-pub const SHA256_LENGTH: usize = 40;
+pub const SHA256_LENGTH: usize = 32;
 
 #[serde_as]
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Hash, sqlx::Type, ToSchema)]

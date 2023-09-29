@@ -11,6 +11,7 @@ SELECT uuid,
        left_bytes,
        behaviour AS "behaviour: Behaviour",
        created_at,
-       updated_at
+       updated_at,
+       created_by
 FROM "Peer"
 WHERE id = $1;

@@ -6,8 +6,11 @@ use actix_web::{web, HttpRequest, HttpResponse};
 
 use bendy::encoding::ToBencode;
 use chrono::Utc;
-use laguna_backend_model::peer::Peer;
 
+use laguna_backend_model::peer::Peer;
+use laguna_backend_model::user::User;
+
+use laguna_backend_model::download::Download;
 use laguna_backend_model::speedlevel::SpeedLevel;
 use laguna_backend_model::torrent::Torrent;
 use laguna_backend_tracker::http::announce::{Announce, AnnounceReply};
@@ -16,6 +19,7 @@ use laguna_backend_model::genre::Genre;
 use laguna_backend_tracker_common::announce::AnnounceEvent;
 
 use laguna_backend_model::behaviour::Behaviour;
+use laguna_backend_model::role::Role;
 use laguna_backend_tracker_common::peer::{PeerBin, PeerDict, PeerStream};
 use sqlx::types::ipnetwork::IpNetwork;
 use sqlx::PgPool;
@@ -34,7 +38,20 @@ pub async fn peer_announce<const N: usize>(
   announce_data: web::Query<Announce<N>>,
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, PeerError<N>> {
-  eprintln!("{:?}", req.cookies());
+  let download = sqlx::query_file_as!(
+    Download::<N>,
+    "queries/download_lookup_byhash.sql",
+    announce_data.down_hash as _
+  )
+  .fetch_optional(pool.get_ref())
+  .await?
+  .ok_or(PeerError::DownloadNotFound(announce_data.down_hash.clone()))?;
+
+  let user = sqlx::query_file_as!(User, "queries/user_get.sql", download.user_id as _)
+    .fetch_optional(pool.get_ref())
+    .await?
+    .ok_or(PeerError::UnknownUser(download.user_id))?;
+
   // Check if torrent exists on tracker
   sqlx::query_file_as!(
     Torrent,
@@ -54,6 +71,7 @@ pub async fn peer_announce<const N: usize>(
     req,
     maybe_peer,
     announce_data.into_inner(),
+    user,
     pool,
     peer_addr.0,
   )
@@ -64,6 +82,7 @@ async fn handle_peer_request<const N: usize>(
   req: HttpRequest,
   maybe_peer: Option<Peer>,
   announce_data: Announce<N>,
+  user: User,
   pool: web::Data<PgPool>,
   peer_addr: SocketAddr,
 ) -> Result<HttpResponse, PeerError<N>> {
@@ -83,7 +102,7 @@ async fn handle_peer_request<const N: usize>(
         "Peer {} sent started event, treating as start.",
         announce_data.peer_id
       );
-      handle_peer_started(req, announce_data, pool, peer_addr).await
+      handle_peer_started(req, announce_data, user, pool, peer_addr).await
     },
     (AnnounceEvent::Completed, Some(_)) => {
       log::info!("Peer {} sent completed event.", announce_data.peer_id);
@@ -122,7 +141,7 @@ async fn handle_peer_request<const N: usize>(
         "Peer {} sent empty event, treating as start.",
         announce_data.peer_id
       );
-      handle_peer_started(req, announce_data, pool, peer_addr).await
+      handle_peer_started(req, announce_data, user, pool, peer_addr).await
     },
   }
 }
@@ -130,6 +149,7 @@ async fn handle_peer_request<const N: usize>(
 async fn handle_peer_started<const N: usize>(
   req: HttpRequest,
   announce_data: Announce<N>,
+  user: User,
   pool: web::Data<PgPool>,
   peer_addr: SocketAddr,
 ) -> Result<HttpResponse, PeerError<N>> {
@@ -177,6 +197,7 @@ async fn handle_peer_started<const N: usize>(
     behaviour as _,
     Utc::now(),
     Utc::now(),
+    user.id
   )
   .fetch_optional(pool.get_ref())
   .await?

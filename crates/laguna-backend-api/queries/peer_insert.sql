@@ -10,7 +10,8 @@ INSERT INTO "Peer" (id,
                     left_bytes,
                     behaviour,
                     created_at,
-                    updated_at)
+                    updated_at,
+                    created_by)
 VALUES ($1,
         $2,
         $3,
@@ -23,7 +24,8 @@ VALUES ($1,
         $10,
         $11,
         $12,
-        $13) RETURNING
+        $13,
+        $14) RETURNING
     uuid,
     id,
     md5_hash,
@@ -37,5 +39,6 @@ VALUES ($1,
     left_bytes,
     behaviour AS "behaviour: Behaviour",
     created_at,
-    updated_at
+    updated_at,
+    created_by
 ;

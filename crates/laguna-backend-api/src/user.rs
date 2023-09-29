@@ -2,6 +2,7 @@ use actix_jwt_auth_middleware::TokenSigner;
 use actix_web::{web, HttpResponse};
 
 use jwt_compact::alg::Hs256;
+use laguna_backend_dto::peer::PeerDTO;
 use laguna_backend_dto::role::RoleChangeDTO;
 use laguna_backend_dto::torrent::TorrentDTO;
 use laguna_backend_dto::user::UserDTO;
@@ -10,6 +11,7 @@ use laguna_backend_middleware::consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_
 use laguna_backend_middleware::mime::APPLICATION_LAGUNA_JSON_VERSIONED;
 use laguna_backend_model::behaviour::Behaviour;
 use laguna_backend_model::genre::Genre;
+use laguna_backend_model::peer::Peer;
 use laguna_backend_model::role::Role;
 use laguna_backend_model::speedlevel::SpeedLevel;
 use laguna_backend_model::torrent::Torrent;
@@ -207,8 +209,6 @@ pub async fn user_role_change(
   }
 }
 
-/*
-Turns out to do this you need to send Auth data to tracker via, say, qBitTorrent which is not possible.
 #[utoipa::path(
   get,
   path = "/api/user/{id}/peers",
@@ -236,7 +236,6 @@ pub async fn user_peers_get(
       .json(peers),
   )
 }
-*/
 
 #[utoipa::path(
   get,
