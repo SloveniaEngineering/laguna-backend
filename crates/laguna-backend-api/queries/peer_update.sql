@@ -18,5 +18,6 @@ WHERE id = $6 RETURNING
     left_bytes,
     behaviour AS "behaviour: Behaviour",
     created_at,
-    updated_at
+    updated_at,
+    created_by
 ;

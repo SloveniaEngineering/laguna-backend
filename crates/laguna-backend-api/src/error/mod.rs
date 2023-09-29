@@ -1,3 +1,4 @@
+pub mod download;
 pub mod peer;
 pub mod rating;
 pub mod torrent;
@@ -14,6 +15,7 @@ use core::fmt;
 use std::fmt::Formatter;
 use std::io;
 
+use self::download::DownloadError;
 use self::rating::RatingError;
 
 #[derive(Debug)]
@@ -26,6 +28,7 @@ pub enum APIError {
   BencodeEncodeError(encoding::Error),
   TorrentError(torrent::TorrentError),
   RatingError(rating::RatingError),
+  DownloadError(download::DownloadError),
 }
 
 impl From<io::Error> for APIError {
@@ -76,6 +79,12 @@ impl From<RatingError> for APIError {
   }
 }
 
+impl From<DownloadError> for APIError {
+  fn from(value: DownloadError) -> Self {
+    Self::DownloadError(value)
+  }
+}
+
 impl fmt::Display for APIError {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
@@ -91,6 +100,7 @@ impl fmt::Display for APIError {
         f.write_fmt(format_args!("{}", bencode_encode_error))
       },
       Self::RatingError(rating_error) => f.write_fmt(format_args!("{}", rating_error)),
+      Self::DownloadError(download_error) => f.write_fmt(format_args!("{}", download_error)),
     }
   }
 }
@@ -106,6 +116,7 @@ impl ResponseError for APIError {
       Self::BencodeDecodeError(_) => StatusCode::UNPROCESSABLE_ENTITY,
       Self::BencodeEncodeError(_) => StatusCode::UNPROCESSABLE_ENTITY,
       Self::RatingError(rating_error) => rating_error.status_code(),
+      Self::DownloadError(download_error) => download_error.status_code(),
     }
   }
 
@@ -127,6 +138,7 @@ impl ResponseError for APIError {
         .content_type(ContentType::plaintext())
         .body(bencode_encode_error.to_string()),
       Self::RatingError(rating_error) => rating_error.error_response(),
+      Self::DownloadError(download_error) => download_error.error_response(),
     }
   }
 }

@@ -201,7 +201,7 @@ impl FromBencode for TorrentFile {
 impl ToBencode for TorrentFile {
   const MAX_DEPTH: usize = 10;
   fn encode(&self, encoder: encoding::SingleItemEncoder) -> Result<(), encoding::Error> {
-    encoder.emit_dict(|mut d| {
+    encoder.emit_unsorted_dict(|d| {
       if let Some(ref announce_url) = self.announce_url {
         d.emit_pair(b"announce", announce_url)?;
       }
@@ -374,7 +374,7 @@ impl FromBencode for TorrentInfo {
 impl ToBencode for TorrentInfo {
   const MAX_DEPTH: usize = 10;
   fn encode(&self, encoder: encoding::SingleItemEncoder) -> Result<(), encoding::Error> {
-    encoder.emit_dict(|mut d| {
+    encoder.emit_unsorted_dict(|d| {
       if let Some(ref file_duration) = self.file_duration {
         d.emit_pair(b"file-duration", file_duration)?;
       }
@@ -460,7 +460,7 @@ impl FromBencode for File {
 impl ToBencode for File {
   const MAX_DEPTH: usize = 10;
   fn encode(&self, encoder: encoding::SingleItemEncoder) -> Result<(), encoding::Error> {
-    encoder.emit_dict(|mut d| {
+    encoder.emit_unsorted_dict(|d| {
       d.emit_pair(b"length", self.length)?;
       d.emit_pair(b"path", &self.path)?;
       if let Some(ref md5sum) = self.md5sum {
@@ -513,7 +513,7 @@ impl FromBencode for Node {
 impl ToBencode for Node {
   const MAX_DEPTH: usize = 10;
   fn encode(&self, encoder: encoding::SingleItemEncoder) -> Result<(), encoding::Error> {
-    encoder.emit_dict(|mut d| {
+    encoder.emit_unsorted_dict(|d| {
       d.emit_pair(b"node", &self.node)?;
       d.emit_pair(b"port", self.port)?;
       Ok(())
@@ -583,7 +583,7 @@ impl FromBencode for TorrentProfile {
 impl ToBencode for TorrentProfile {
   const MAX_DEPTH: usize = 10;
   fn encode(&self, encoder: encoding::SingleItemEncoder) -> Result<(), encoding::Error> {
-    encoder.emit_dict(|mut d| {
+    encoder.emit_unsorted_dict(|d| {
       if let Some(ref acodec) = self.acodec {
         d.emit_pair(b"acodec", acodec)?;
       }

@@ -19,12 +19,15 @@ use laguna_backend_model::torrent::Torrent;
 use digest::Digest;
 use laguna_backend_model::speedlevel::SpeedLevel;
 
+use laguna_backend_model::download::{Download, DownloadHash};
 use sqlx::PgPool;
 
 use laguna_backend_tracker::prelude::info_hash::InfoHash;
 use uuid::Uuid;
 
+use crate::error::download::DownloadError;
 use crate::error::{torrent::TorrentError, APIError};
+use sha2::Sha256;
 
 #[utoipa::path(
   get,
@@ -46,11 +49,102 @@ pub async fn torrent_get<const N: usize>(
   )
   .fetch_optional(pool.get_ref())
   .await?
+  .map(TorrentDTO::from)
   .ok_or(TorrentError::NotFound)?;
   Ok(
     HttpResponse::Ok()
       .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
       .json(torrent),
+  )
+}
+
+#[utoipa::path(
+  get,
+  path = "/api/torrent/{info_hash}/raw",
+  responses(
+    (status = 200, description = "Returns torrent.", body = Vec<u8>, content_type = "application/x-bittorrent"),
+    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+  )
+)]
+pub async fn torrent_get_raw<const N: usize>(
+  info_hash: web::Path<InfoHash<N>>,
+  pool: web::Data<PgPool>,
+  user: UserDTO,
+  domestic_announce_url: web::Data<String>,
+) -> Result<HttpResponse, APIError> {
+  let info_hash = info_hash.into_inner();
+  let download = sqlx::query_file_as!(
+    Download::<N>,
+    "queries/download_lookup.sql",
+    info_hash as _,
+    user.id
+  )
+  .fetch_optional(pool.get_ref())
+  .await?;
+
+  let torrent_bytes = sqlx::query_file_as!(Torrent, "queries/torrent_get.sql", info_hash as _)
+    .fetch_optional(pool.get_ref())
+    .await?
+    .ok_or(TorrentError::NotFound)?
+    .raw;
+
+  let mut torrent = TorrentFile::from_bencode(&torrent_bytes)?;
+
+  let down_ts = Utc::now();
+  let down_hash = Sha256::digest(
+    [
+      &info_hash.0,
+      &user.id.to_bytes_le()[..],
+      &down_ts.timestamp().to_le_bytes(),
+    ]
+    .concat(),
+  );
+
+  // overwrite annouce url by adding down_hash
+  torrent.announce_url = Some(format!(
+    "{}?down_hash={}",
+    domestic_announce_url.into_inner(),
+    DownloadHash::from(down_hash.to_vec())
+  ));
+
+  match download {
+    Some(_) => {
+      sqlx::query_file_as!(
+        Download::<N>,
+        "queries/download_update.sql",
+        down_ts,
+        down_hash.as_slice(),
+        info_hash as _,
+        user.id
+      )
+      .fetch_optional(pool.get_ref())
+      .await?
+      .map(drop)
+      .ok_or(DownloadError::NotUpdated)?;
+    },
+    None => {
+      sqlx::query_file_as!(
+        Download::<N>,
+        "queries/download_insert.sql",
+        info_hash as _,
+        user.id,
+        down_ts,
+        down_hash.as_slice()
+      )
+      .fetch_optional(pool.get_ref())
+      .await?
+      .map(drop)
+      .ok_or(DownloadError::NotCreated)?;
+    },
+  }
+
+  let torrent_bytes = torrent.to_bencode()?;
+
+  Ok(
+    HttpResponse::Ok()
+      .content_type(APPLICATION_XBITTORRENT)
+      .body(torrent_bytes),
   )
 }
 

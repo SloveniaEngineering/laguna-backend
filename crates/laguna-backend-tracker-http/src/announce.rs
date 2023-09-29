@@ -9,11 +9,13 @@ use laguna_backend_tracker_common::{
 
 use serde::{Deserialize, Serialize};
 
+use laguna_backend_model::download::DownloadHash;
 use laguna_backend_tracker_common::helpers::bool_from_int;
 use utoipa::ToSchema;
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct Announce<const N: usize> {
+  pub down_hash: DownloadHash,
   pub info_hash: InfoHash<N>,
   pub peer_id: PeerId,
   pub ip: Option<IpAddr>,

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT uuid,\n       id,\n       md5_hash,\n       info_hash,\n       ip,\n       port,\n       is_origin,\n       agent,\n       uploaded_bytes,\n       downloaded_bytes,\n       left_bytes,\n       behaviour AS \"behaviour: Behaviour\",\n       created_at,\n       updated_at\nFROM \"Peer\"\nWHERE info_hash = $1\n  AND id != $2;",
+  "query": "INSERT INTO \"Peer\" (id,\n                    md5_hash,\n                    info_hash,\n                    ip,\n                    port,\n                    is_origin,\n                    agent,\n                    uploaded_bytes,\n                    downloaded_bytes,\n                    left_bytes,\n                    behaviour,\n                    created_at,\n                    updated_at,\n                    created_by)\nVALUES ($1,\n        $2,\n        $3,\n        $4,\n        $5,\n        $6,\n        $7,\n        $8,\n        $9,\n        $10,\n        $11,\n        $12,\n        $13,\n        $14) RETURNING\n    uuid,\n    id,\n    md5_hash,\n    info_hash,\n    ip,\n    port,\n    is_origin,\n    agent,\n    uploaded_bytes,\n    downloaded_bytes,\n    left_bytes,\n    behaviour AS \"behaviour: Behaviour\",\n    created_at,\n    updated_at,\n    created_by\n;",
   "describe": {
     "columns": [
       {
@@ -88,12 +88,45 @@
         "ordinal": 13,
         "name": "updated_at",
         "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 14,
+        "name": "created_by",
+        "type_info": "Uuid"
       }
     ],
     "parameters": {
       "Left": [
         "Bytea",
-        "Bytea"
+        "Varchar",
+        "Bytea",
+        "Inet",
+        "Int4",
+        "Bool",
+        "Text",
+        "Int8",
+        "Int8",
+        "Int8",
+        {
+          "Custom": {
+            "name": "behaviour",
+            "kind": {
+              "Enum": [
+                "Lurker",
+                "Downloader",
+                "Freeleecher",
+                "Leech",
+                "Seed",
+                "Choked",
+                "Uploader",
+                "Stopped"
+              ]
+            }
+          }
+        },
+        "Timestamptz",
+        "Timestamptz",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -110,8 +143,9 @@
       false,
       false,
       false,
-      true
+      true,
+      false
     ]
   },
-  "hash": "0341f6f2ae3355ca6f8aefd356973795722a6c330c8b16a38786be7d1a81965d"
+  "hash": "efa2bf14cc31135adbe29d147a6871a7f988b8b571f594187b0f7c7d228fd647"
 }

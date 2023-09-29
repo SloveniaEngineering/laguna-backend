@@ -12,6 +12,7 @@ use actix_web::middleware::NormalizePath;
 use actix_web::middleware::TrailingSlash;
 use actix_web::web;
 use actix_web::HttpServer;
+
 use laguna::dto::meta::AppInfoDTO;
 use laguna::setup::get_settings;
 use std::env;
@@ -24,8 +25,6 @@ use laguna::setup::setup_db;
 async fn main() -> Result<(), sqlx::Error> {
   HttpServer::new(move || {
     setup()
-      .wrap(Logger::default())
-      .wrap(setup_cors(&get_settings()))
       .data_factory(|| async move { setup_db(&get_settings()).await })
       .app_data(web::Data::new(AppInfoDTO {
         version: env::var("CARGO_PKG_VERSION").expect("CARGO_PKG_VERSION not set"),
@@ -39,7 +38,9 @@ async fn main() -> Result<(), sqlx::Error> {
         repository: env::var("CARGO_PKG_REPOSITORY").expect("CARGO_PKG_REPOSITORY not set"),
       }))
       // FIXME: This shit is so annoying and doesn't work w/FE
+      .wrap(setup_cors(&get_settings()))
       .wrap(NormalizePath::new(TrailingSlash::MergeOnly))
+      .wrap(Logger::default())
   })
   .apply_settings(&get_settings())
   .run()
