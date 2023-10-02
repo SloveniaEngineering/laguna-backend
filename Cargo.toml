@@ -18,7 +18,7 @@ members = ["crates/*"]
 
 [dependencies]
 actix-web = "4"
-sqlx = { version="0.7.1", features = [
+sqlx = { version="0.7.2", features = [
     "runtime-tokio",
     "tls-rustls",
     "postgres",
