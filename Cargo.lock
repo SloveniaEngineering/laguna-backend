@@ -1652,7 +1652,7 @@ dependencies = [
  "sha-1",
  "sha2",
  "sqlx",
- "utoipa",
+ "utoipa 4.0.0",
  "uuid",
  "validator",
 ]
@@ -1685,7 +1685,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_with",
- "utoipa",
+ "utoipa 4.0.0",
  "uuid",
  "validator",
 ]
@@ -1753,7 +1753,7 @@ dependencies = [
  "serde_with",
  "sha2",
  "sqlx",
- "utoipa",
+ "utoipa 4.0.0",
  "uuid",
  "validator",
 ]
@@ -1785,7 +1785,7 @@ dependencies = [
  "rustversion",
  "secrecy",
  "sqlx",
- "utoipa",
+ "utoipa 4.0.0",
  "utoipa-redoc",
  "utoipa-swagger-ui",
 ]
@@ -1813,7 +1813,7 @@ dependencies = [
  "serde_with",
  "sqlx",
  "url",
- "utoipa",
+ "utoipa 4.0.0",
 ]
 
 [[package]]
@@ -1825,7 +1825,7 @@ dependencies = [
  "laguna-backend-model",
  "laguna-backend-tracker-common",
  "serde",
- "utoipa",
+ "utoipa 4.0.0",
 ]
 
 [[package]]
@@ -3361,8 +3361,20 @@ dependencies = [
  "indexmap 2.0.0",
  "serde",
  "serde_json",
+ "utoipa-gen 3.5.0",
+]
+
+[[package]]
+name = "utoipa"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b208a50ff438dcdc887ea3f2db59530bd2f4bc3d2c70630e4d7ee7a281a1d1b"
+dependencies = [
+ "indexmap 2.0.0",
+ "serde",
+ "serde_json",
  "serde_yaml",
- "utoipa-gen",
+ "utoipa-gen 4.0.0",
 ]
 
 [[package]]
@@ -3370,6 +3382,18 @@ name = "utoipa-gen"
 version = "3.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "05d96dcd6fc96f3df9b3280ef480770af1b7c5d14bc55192baa9b067976d920c"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.31",
+]
+
+[[package]]
+name = "utoipa-gen"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0bd516d8879043e081537690bc96c8f17b5a4602c336aecb8f1de89d9d9c7e72"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
@@ -3388,7 +3412,7 @@ dependencies = [
  "actix-web",
  "serde",
  "serde_json",
- "utoipa",
+ "utoipa 3.5.0",
 ]
 
 [[package]]
@@ -3403,7 +3427,7 @@ dependencies = [
  "rust-embed",
  "serde",
  "serde_json",
- "utoipa",
+ "utoipa 3.5.0",
  "zip",
 ]
 

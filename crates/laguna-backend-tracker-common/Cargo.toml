@@ -32,5 +32,5 @@ sqlx = { version="0.7.1", features = [
     "json",
 ] }
 url = { version = "*", features = ["serde"] }
-utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
+utoipa = { version = "4", features = ["actix_extras", "uuid", "chrono", "yaml"] }
 bendy = { version = "^0.3", features = ["std", "serde"] }
