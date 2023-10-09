@@ -1652,7 +1652,7 @@ dependencies = [
  "sha-1",
  "sha2",
  "sqlx",
- "utoipa",
+ "utoipa 3.5.0",
  "uuid",
  "validator",
 ]
@@ -1685,7 +1685,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_with",
- "utoipa",
+ "utoipa 3.5.0",
  "uuid",
  "validator",
 ]
@@ -1753,7 +1753,7 @@ dependencies = [
  "serde_with",
  "sha2",
  "sqlx",
- "utoipa",
+ "utoipa 3.5.0",
  "uuid",
  "validator",
 ]
@@ -1785,7 +1785,7 @@ dependencies = [
  "rustversion",
  "secrecy",
  "sqlx",
- "utoipa",
+ "utoipa 3.5.0",
  "utoipa-redoc",
  "utoipa-swagger-ui",
 ]
@@ -1813,7 +1813,7 @@ dependencies = [
  "serde_with",
  "sqlx",
  "url",
- "utoipa",
+ "utoipa 3.5.0",
 ]
 
 [[package]]
@@ -1825,7 +1825,7 @@ dependencies = [
  "laguna-backend-model",
  "laguna-backend-tracker-common",
  "serde",
- "utoipa",
+ "utoipa 3.5.0",
 ]
 
 [[package]]
@@ -3362,7 +3362,19 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
- "utoipa-gen",
+ "utoipa-gen 3.5.0",
+]
+
+[[package]]
+name = "utoipa"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b208a50ff438dcdc887ea3f2db59530bd2f4bc3d2c70630e4d7ee7a281a1d1b"
+dependencies = [
+ "indexmap 2.0.0",
+ "serde",
+ "serde_json",
+ "utoipa-gen 4.0.0",
 ]
 
 [[package]]
@@ -3380,15 +3392,27 @@ dependencies = [
 ]
 
 [[package]]
-name = "utoipa-redoc"
-version = "0.1.0"
+name = "utoipa-gen"
+version = "4.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d0ecce4acc6580d87b052a48fb142b1ddaf4d6d70e547d25012a4387f3cf3bd"
+checksum = "0bd516d8879043e081537690bc96c8f17b5a4602c336aecb8f1de89d9d9c7e72"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.31",
+]
+
+[[package]]
+name = "utoipa-redoc"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c91925cf8fc316aaef77dcc6845770a62016c598d4114b63e991c3e7e5b0549"
 dependencies = [
  "actix-web",
  "serde",
  "serde_json",
- "utoipa",
+ "utoipa 4.0.0",
 ]
 
 [[package]]
@@ -3403,7 +3427,7 @@ dependencies = [
  "rust-embed",
  "serde",
  "serde_json",
- "utoipa",
+ "utoipa 3.5.0",
  "zip",
 ]
 
