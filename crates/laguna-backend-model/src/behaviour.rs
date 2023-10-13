@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, sqlx::Type)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Hash, sqlx::Type, ToSchema)]
 pub enum Behaviour {
   Lurker,
   Downloader,
@@ -9,4 +10,5 @@ pub enum Behaviour {
   Seed,
   Choked,
   Uploader,
+  Stopped,
 }

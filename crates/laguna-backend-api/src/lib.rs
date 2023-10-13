@@ -5,9 +5,12 @@
 extern crate core;
 
 pub mod error;
+pub mod helpers;
 pub mod login;
-pub mod misc;
+pub mod meta;
 pub mod peer;
+pub mod rating;
 pub mod register;
+pub mod stats;
 pub mod torrent;
 pub mod user;

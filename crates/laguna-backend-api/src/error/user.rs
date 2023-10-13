@@ -2,6 +2,7 @@ use actix_web::body::BoxBody;
 use actix_web::http::StatusCode;
 use actix_web::ResponseError;
 use actix_web::{http::header::ContentType, HttpResponse};
+use laguna_backend_model::role::Role;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::Formatter;
@@ -9,10 +10,15 @@ use std::fmt::Formatter;
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum UserError {
   InvalidCredentials,
-  DidntFind,
-  ExclusiveAccess,
-  DidntCreate,
-  DidntUpdate,
+  NotFound,
+  Exclusive,
+  NotCreated,
+  NotUpdated,
+  RoleChangeNotAllowed {
+    changer: Role,
+    changee_from: Role,
+    changee_to: Role,
+  },
 }
 
 impl fmt::Display for UserError {
@@ -21,10 +27,18 @@ impl fmt::Display for UserError {
       Self::InvalidCredentials => {
         f.write_str("Uporabniško ime, elektronski naslov ali geslo napačno.")
       },
-      Self::ExclusiveAccess => f.write_str("Samo za ene oči."),
-      Self::DidntFind => f.write_str("Zahtevan uporabnik ne obstaja."),
-      Self::DidntCreate => f.write_str("Uporabnik ni bil ustvarjen."),
-      Self::DidntUpdate => f.write_str("Uporabnik ni bil posodobljen."),
+      Self::Exclusive => f.write_str("Samo za ene oči."),
+      Self::NotFound => f.write_str("Zahtevan uporabnik ne obstaja."),
+      Self::NotCreated => f.write_str("Uporabnik ni bil ustvarjen."),
+      Self::NotUpdated => f.write_str("Uporabnik ni bil posodobljen."),
+      Self::RoleChangeNotAllowed {
+        changer,
+        changee_from,
+        changee_to,
+      } => f.write_fmt(format_args!(
+        "Kot {:?} sprememba role uporabnika iz {:?} v {:?} ni dovoljena.",
+        changer, changee_from, changee_to
+      )),
     }
   }
 }
@@ -32,11 +46,12 @@ impl fmt::Display for UserError {
 impl ResponseError for UserError {
   fn status_code(&self) -> StatusCode {
     match self {
-      Self::ExclusiveAccess => StatusCode::FORBIDDEN,
+      Self::Exclusive => StatusCode::FORBIDDEN,
       Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
-      Self::DidntFind => StatusCode::BAD_REQUEST,
-      Self::DidntCreate => StatusCode::BAD_REQUEST,
-      Self::DidntUpdate => StatusCode::BAD_REQUEST,
+      Self::NotFound => StatusCode::BAD_REQUEST,
+      Self::NotCreated => StatusCode::BAD_REQUEST,
+      Self::NotUpdated => StatusCode::BAD_REQUEST,
+      Self::RoleChangeNotAllowed { .. } => StatusCode::FORBIDDEN,
     }
   }
 

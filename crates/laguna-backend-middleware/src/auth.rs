@@ -4,27 +4,22 @@ use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse};
 
 use actix_web::http::StatusCode;
 
-use actix_web::{Error, HttpResponse, ResponseError};
+use actix_web::{Error, HttpMessage, HttpResponse, ResponseError};
+
 use std::fmt;
 
 use futures_util::future::LocalBoxFuture;
-use jwt_compact::alg::{Hs256, Hs256Key};
-use jwt_compact::{AlgorithmExt, UntrustedToken, ValidationError};
+
 use laguna_backend_dto::user::UserDTO;
 use laguna_backend_model::role::Role;
 use std::future::ready;
 use std::future::Ready;
 
-use crate::consts::ACCESS_TOKEN_HEADER_NAME;
-
-pub struct AuthorizationMiddlewareFactory {
-  min_role: Role,
-  key: Hs256Key,
-}
+pub struct AuthorizationMiddlewareFactory(Role);
 
 impl AuthorizationMiddlewareFactory {
-  pub fn new(key: Hs256Key, min_role: Role) -> Self {
-    Self { key, min_role }
+  pub fn new(min_role: Role) -> Self {
+    Self(min_role)
   }
 }
 
@@ -42,8 +37,7 @@ where
 
   fn new_transform(&self, service: S) -> Self::Future {
     ready(Ok(AuthorizationMiddleware {
-      min_role: self.min_role.clone(),
-      key: self.key.clone(),
+      min_role: self.0,
       service,
     }))
   }
@@ -51,7 +45,6 @@ where
 
 pub struct AuthorizationMiddleware<S> {
   min_role: Role,
-  key: Hs256Key,
   service: S,
 }
 
@@ -59,7 +52,6 @@ pub struct AuthorizationMiddleware<S> {
 pub enum AuthorizationError {
   UnauthorizedRole { min_role: Role, actual_role: Role },
   NoToken,
-  Invalid(ValidationError),
 }
 
 impl fmt::Display for AuthorizationError {
@@ -78,9 +70,6 @@ impl fmt::Display for AuthorizationError {
       Self::NoToken => {
         write!(f, "No token")
       },
-      Self::Invalid(err) => {
-        write!(f, "Invalid token: {}", err)
-      },
     }
   }
 }
@@ -90,7 +79,6 @@ impl ResponseError for AuthorizationError {
     match self {
       Self::UnauthorizedRole { .. } => StatusCode::UNAUTHORIZED,
       Self::NoToken => StatusCode::UNAUTHORIZED,
-      Self::Invalid(_) => StatusCode::UNAUTHORIZED,
     }
   }
 
@@ -98,7 +86,6 @@ impl ResponseError for AuthorizationError {
     match self {
       Self::UnauthorizedRole { .. } => HttpResponse::Unauthorized().body(format!("{}", self)),
       Self::NoToken => HttpResponse::Unauthorized().body(format!("{}", self)),
-      Self::Invalid(_) => HttpResponse::Unauthorized().body(format!("{}", self)),
     }
   }
 }
@@ -116,39 +103,27 @@ where
   forward_ready!(service);
 
   fn call(&self, req: ServiceRequest) -> Self::Future {
-    // Token has already been validated & verified by AuthenticationService by the time it reaches this middleware.
-    let access_token_header = req.headers().get(ACCESS_TOKEN_HEADER_NAME);
-    if let Some(access_token_header) = access_token_header {
-      // SECURITY: Token is trusted at this point but additional verification is however still performed.
-      // NOTE: This is probably not a huge bottleneck and is a consequence of using external libraries for authentication (not authorization).
-      let access_token = UntrustedToken::new(access_token_header.to_str().unwrap()).unwrap();
-      let signed_access_token = Hs256
-        .validate_for_signed_token::<UserDTO>(&access_token, &self.key)
-        .map_err(|err| AuthorizationError::Invalid(err));
-      return match signed_access_token {
-        Ok(signed_access_token) => {
-          let min_role = self.min_role;
-          let role = signed_access_token.token.claims().custom.role;
-          if role < min_role {
-            return Box::pin(async move {
-              Result::<Self::Response, Self::Error>::Err(
-                AuthorizationError::UnauthorizedRole {
-                  min_role,
-                  actual_role: role,
-                }
-                .into(),
-              )
-            });
+    let user_role = if let Some(user) = req.extensions().get::<UserDTO>() {
+      user.role
+    } else {
+      return Box::pin(async move {
+        Result::<Self::Response, Self::Error>::Err(AuthorizationError::NoToken.into())
+      });
+    };
+    let min_role = self.min_role;
+    if user_role < min_role {
+      Box::pin(async move {
+        Result::<Self::Response, Self::Error>::Err(
+          AuthorizationError::UnauthorizedRole {
+            min_role,
+            actual_role: user_role,
           }
-          let fut = self.service.call(req);
-          Box::pin(async move {
-            let res = fut.await?;
-            Ok(res)
-          })
-        },
-        Err(err) => Box::pin(async move { Result::<Self::Response, Self::Error>::Err(err.into()) }),
-      };
+          .into(),
+        )
+      })
+    } else {
+      let fut = self.service.call(req);
+      Box::pin(fut)
     }
-    Box::pin(async move { Err(AuthorizationError::NoToken.into()) })
   }
 }

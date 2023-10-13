@@ -18,7 +18,7 @@ jobs:
         rust: [stable]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.rust }}
@@ -61,9 +61,10 @@ jobs:
         rust: [stable]
     runs-on: ${{ matrix.os }}
     env:
+      SQLX_OFFLINE: true
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/laguna_dev_db
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'true'
       - uses: dtolnay/rust-toolchain@stable
@@ -105,13 +106,15 @@ jobs:
         os: [ubuntu-latest]
         rust: [stable]
     env:
+      SQLX_OFFLINE: true
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/laguna_dev_db
     runs-on: ${{ matrix.os }}
+    # TODO: Maybe use https://github.com/taiki-e/install-action so to avoid recompile of tarpaulin
     container:
       image: xd009642/tarpaulin
       options: --security-opt seccomp=unconfined
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'true'
       - uses: dtolnay/rust-toolchain@stable
@@ -128,7 +131,7 @@ jobs:
           key: ${{ matrix.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Generate coverage data
         run: |
-          RUST_LOG=warn cargo tarpaulin --workspace --timeout 120 --out Xml --features testx
+          RUST_LOG=warn cargo tarpaulin --workspace --timeout 120 --out xml --features testx --skip-clean --target-dir=target/coverage
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v3 # Make sure to use v3 because it allows tokenless upload
 
@@ -139,7 +142,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build Docs
         run: cargo doc --no-deps --workspace --features dox
       - name: Doc Index Page Redirection

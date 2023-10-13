@@ -104,7 +104,7 @@ async fn test_login_with_username_or_email_too_long(pool: PgPool) -> sqlx::Resul
   let (register_dto, _, _, _) = common::new_user(&app).await;
   let login_res = common::login_user(
     LoginDTO {
-      username_or_email: String::from("a".repeat(USERNAME_MAX_LEN + 1)),
+      username_or_email: "a".repeat(USERNAME_MAX_LEN + 1),
       password: register_dto.password,
     },
     &app,
@@ -121,7 +121,7 @@ async fn test_login_with_password_too_long(pool: PgPool) -> sqlx::Result<()> {
   let login_res = common::login_user(
     LoginDTO {
       username_or_email: register_dto.username,
-      password: String::from("a".repeat(PASSWORD_MAX_LEN + 1)),
+      password: "a".repeat(PASSWORD_MAX_LEN + 1),
     },
     &app,
   )
@@ -137,7 +137,7 @@ async fn test_login_with_password_too_short(pool: PgPool) -> sqlx::Result<()> {
   let login_res = common::login_user(
     LoginDTO {
       username_or_email: register_dto.username,
-      password: String::from("a".repeat(PASSWORD_MIN_LEN - 1)),
+      password: "a".repeat(PASSWORD_MIN_LEN - 1),
     },
     &app,
   )
@@ -152,7 +152,7 @@ async fn test_login_with_username_or_email_too_short(pool: PgPool) -> sqlx::Resu
   let (register_dto, _, _, _) = common::new_user(&app).await;
   let login_res = common::login_user(
     LoginDTO {
-      username_or_email: String::from("a".repeat(USERNAME_MIN_LEN - 1)),
+      username_or_email: "a".repeat(USERNAME_MIN_LEN - 1),
       password: register_dto.password,
     },
     &app,
@@ -214,7 +214,7 @@ async fn test_login_with_wrong_password(pool: PgPool) -> sqlx::Result<()> {
 async fn test_register_password_too_long(pool: PgPool) -> sqlx::Result<()> {
   let app = common::setup_test(&pool).await;
   let mut register_dto = Faker.fake::<RegisterDTO>();
-  register_dto.password = String::from("a".repeat(PASSWORD_MAX_LEN + 1));
+  register_dto.password = "a".repeat(PASSWORD_MAX_LEN + 1);
   let register_res = common::register_user(register_dto, &app).await;
   assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
   Ok(())
@@ -224,7 +224,7 @@ async fn test_register_password_too_long(pool: PgPool) -> sqlx::Result<()> {
 async fn test_register_password_too_short(pool: PgPool) -> sqlx::Result<()> {
   let app = common::setup_test(&pool).await;
   let mut register_dto = Faker.fake::<RegisterDTO>();
-  register_dto.password = String::from("a".repeat(PASSWORD_MIN_LEN - 1));
+  register_dto.password = "a".repeat(PASSWORD_MIN_LEN - 1);
   let register_res = common::register_user(register_dto, &app).await;
   assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
   Ok(())
@@ -234,7 +234,7 @@ async fn test_register_password_too_short(pool: PgPool) -> sqlx::Result<()> {
 async fn test_register_username_too_long(pool: PgPool) -> sqlx::Result<()> {
   let app = common::setup_test(&pool).await;
   let mut register_dto = Faker.fake::<RegisterDTO>();
-  register_dto.username = String::from("a".repeat(USERNAME_MAX_LEN + 1));
+  register_dto.username = "a".repeat(USERNAME_MAX_LEN + 1);
   let register_res = common::register_user(register_dto, &app).await;
   assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
   Ok(())
@@ -244,7 +244,7 @@ async fn test_register_username_too_long(pool: PgPool) -> sqlx::Result<()> {
 async fn test_register_username_too_short(pool: PgPool) -> sqlx::Result<()> {
   let app = common::setup_test(&pool).await;
   let mut register_dto = Faker.fake::<RegisterDTO>();
-  register_dto.username = String::from("a".repeat(USERNAME_MIN_LEN - 1));
+  register_dto.username = "a".repeat(USERNAME_MIN_LEN - 1);
   let register_res = common::register_user(register_dto, &app).await;
   assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
   Ok(())
@@ -264,7 +264,7 @@ async fn test_register_email_too_long(pool: PgPool) -> sqlx::Result<()> {
 async fn test_register_email_too_short(pool: PgPool) -> sqlx::Result<()> {
   let app = common::setup_test(&pool).await;
   let mut register_dto = Faker.fake::<RegisterDTO>();
-  register_dto.email = String::from("a".repeat(EMAIL_MIN_LEN - 1));
+  register_dto.email = "a".repeat(EMAIL_MIN_LEN - 1);
   let register_res = common::register_user(register_dto, &app).await;
   assert_eq!(register_res.status(), StatusCode::BAD_REQUEST);
   Ok(())
@@ -379,9 +379,9 @@ async fn test_sql_username_injection_attempt_on_register(pool: PgPool) -> sqlx::
                avatar_url,
                role,
                behaviour,
-               is_active,
+               is_enabled,
+               is_donator,
                has_verified_email,
-               is_history_private,
                is_profile_private
         FROM "User"
         "#,
@@ -415,9 +415,9 @@ async fn test_sql_username_injection_attempt_on_login(pool: PgPool) -> sqlx::Res
                avatar_url,
                role,
                behaviour,
-               is_active,
+               is_enabled,
+               is_donator,
                has_verified_email,
-               is_history_private,
                is_profile_private
         FROM "User"
         "#,

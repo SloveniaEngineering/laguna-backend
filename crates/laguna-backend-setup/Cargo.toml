@@ -23,6 +23,9 @@ laguna-backend-middleware = { path = "../laguna-backend-middleware" }
 laguna-backend-model = { path = "../laguna-backend-model" }
 laguna-backend-api = { path = "../laguna-backend-api" }
 laguna-backend-dto = { path = "../laguna-backend-dto" }
+laguna-backend-tracker-common = { path = "../laguna-backend-tracker-common" }
+laguna-backend-tracker-http = { path = "../laguna-backend-tracker-http" }
+log = "*"
 rustversion = "1.0"
 sqlx = { version="0.7.1", features = [
     "runtime-tokio",
@@ -45,3 +48,6 @@ actix-service = "*"
 actix-cors = "*"
 const_format = "*"
 cached = "*"
+utoipa-swagger-ui = { version = "3", features = ["actix-web"] }
+utoipa-redoc = { version = "*", features = ["actix-web"] }
+utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }

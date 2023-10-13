@@ -190,3 +190,48 @@ pub fn different_string(string: String) -> String {
       .to_string()
       .as_str()
 }
+
+#[allow(dead_code)]
+pub struct MultipartField<'a> {
+  pub name: &'a [u8],
+  pub filename: &'a [u8],
+  pub content: &'a [u8],
+  pub boundary: &'a [u8],
+  pub content_type: &'a str,
+}
+
+/// Actix doesn't have a way to create Test multipart requests, so we have to do it manually.
+/// This function utilizes [`MultipartField`] to create a multipart request.
+#[allow(dead_code)]
+pub fn make_multipart(req: TestRequest, fields: Vec<MultipartField<'_>>) -> TestRequest {
+  let mut bytes_total = Vec::new();
+  let boundary = String::from_utf8_lossy(fields[0].boundary);
+  for field in fields {
+    let bytes1 = [b"--", field.boundary, b"\r\n"].concat();
+    let bytes2 = [
+      b"Content-Disposition: form-data; name=\"",
+      field.name,
+      b"\"; filename=\"",
+      field.filename,
+      b"\";\r\n",
+    ]
+    .concat();
+    let bytes3 = [
+      b"Content-Type: ",
+      field.content_type.as_bytes(),
+      b";",
+      b"\r\n\r\n",
+    ]
+    .concat();
+    let bytes4 = field.content.to_vec();
+    let bytes5 = [b"\r\n", b"--", field.boundary, b"--", b"\r\n"].concat();
+    let bytes = [bytes1, bytes2, bytes3, bytes4, bytes5].concat();
+    bytes_total.extend(bytes);
+  }
+  req
+    .insert_header((
+      "Content-Type",
+      format!("multipart/form-data; boundary={}", boundary),
+    ))
+    .set_payload(bytes_total)
+}

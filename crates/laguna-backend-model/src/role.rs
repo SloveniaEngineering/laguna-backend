@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 #[derive(
-  Serialize, Deserialize, Debug, PartialEq, Eq, Clone, sqlx::Type, PartialOrd, Ord, Copy,
+  Serialize, Deserialize, Debug, PartialEq, Eq, Clone, sqlx::Type, PartialOrd, Ord, Copy, ToSchema,
 )]
 pub enum Role {
   Normie = 0,

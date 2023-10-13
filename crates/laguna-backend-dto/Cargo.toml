@@ -25,10 +25,15 @@ uuid = { version = "*", features = ["serde", "v4", "fast-rng"] }
 validator = { version = "0.16", features = ["derive", "unic"] }
 actix-web = "4"
 serde_bytes = "0.11.11"
+serde_with = "3.3.0"
+actix-multipart-extract = "0.1.5"
+bendy = { version = "^0.3", features = ["std", "serde"] }
+# serde_bencode = "*"
 
 # Mark as optional when we don't use feature "testx".
-fake = { version = "2.6", features=["derive", "uuid", "chrono", "http"], optional = true }
+fake = { version = "2.8", features=["derive", "uuid", "chrono", "http"], optional = true }
 rand = { version = "*", optional = true }
+utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
 
 [features]
 testx = ["dep:fake", "dep:rand"]

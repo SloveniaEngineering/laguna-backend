@@ -15,8 +15,6 @@ on:
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ "master", "dev" ]
-  schedule:
-    - cron: '26 6 * * 1'
 
 jobs:
   rust-clippy-analyze:
@@ -33,7 +31,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - uses: actions/cache@v3
         with:
           path: |
@@ -49,7 +47,7 @@ jobs:
           components: clippy
 
       - name: Install required cargo
-        run: cargo install clippy-sarif sarif-fmt
+        run: cargo install --force clippy-sarif sarif-fmt
 
       - name: Run rust-clippy
         run:

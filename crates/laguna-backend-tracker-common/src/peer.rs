@@ -1,12 +1,13 @@
 use std::array::TryFromSliceError;
-use std::fmt::Formatter;
-use std::{
-  fmt,
-  net::{Ipv4Addr, SocketAddr, SocketAddrV4},
-};
+use std::fmt;
+use std::fmt::{Debug, Formatter};
+use std::net::IpAddr;
 
+use bendy::encoding::{AsString, ToBencode};
 use serde::{Deserialize, Serialize};
+use serde_with::hex::Hex;
 use serde_with::serde_as;
+use utoipa::ToSchema;
 
 pub const PEER_ID_LENGTH: usize = 20;
 pub const PEER_CLIENT_LENGTH: usize = 2;
@@ -14,23 +15,42 @@ pub const PEER_CLIENT_LENGTH: usize = 2;
 pub const PEER_BIN_DICT_LENGTH: usize = 6;
 
 #[serde_as]
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, Eq, PartialEq, sqlx::Type)]
+#[derive(Serialize, Deserialize, Clone, Copy, Eq, PartialEq, Hash, sqlx::Type, ToSchema)]
 #[sqlx(transparent)]
 pub struct PeerId(
   // OLD: See: https://github.com/serde-rs/bytes/pull/28
   // #[serde(with = "serde_byte_array")]
-  #[serde_as(as = "[_; PEER_ID_LENGTH]")] pub [u8; PEER_ID_LENGTH],
+  #[serde_as(as = "Hex")] pub [u8; PEER_ID_LENGTH],
 );
+
+impl fmt::Display for PeerId {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    f.write_fmt(format_args!(
+      "{} ({} {})",
+      self
+        .0
+        .iter()
+        .map(|b| format!("{:02x}", b))
+        .collect::<Vec<String>>()
+        .join(""),
+      self
+        .client()
+        .map(|c| c.to_string())
+        .unwrap_or(String::from("Unknown")),
+      self.version(),
+    ))
+  }
+}
+
+impl Debug for PeerId {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    f.write_fmt(format_args!("{}", self))
+  }
+}
 
 impl From<Vec<u8>> for PeerId {
   fn from(value: Vec<u8>) -> Self {
     PeerId(<[u8; PEER_ID_LENGTH]>::try_from(value.as_slice()).unwrap())
-  }
-}
-
-impl fmt::Display for PeerId {
-  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    f.write_fmt(format_args!("{:x?}", self.0))
   }
 }
 
@@ -41,6 +61,12 @@ impl fmt::Display for PeerId {
 /// - <https://github.com/kenpaicat/aquatic/blob/master/aquatic_peer_id/src/lib.rs>
 #[derive(Debug)]
 pub enum PeerClient {
+  ABC,
+  OspreyPermaseed,
+  BTQueue,
+  ShadowsClient,
+  BitTornado,
+  UPnPNATBitTorrent,
   AnyEventBitTorrent,
   Arctic,
   Ares,
@@ -268,6 +294,12 @@ impl TryFrom<[u8; PEER_CLIENT_LENGTH]> for PeerClient {
 impl fmt::Display for PeerClient {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
+      PeerClient::ABC => write!(f, "ABC"),
+      PeerClient::OspreyPermaseed => write!(f, "Osprey Permaseed"),
+      PeerClient::BTQueue => write!(f, "BTQueue"),
+      PeerClient::ShadowsClient => write!(f, "Shadows Client"),
+      PeerClient::BitTornado => write!(f, "BitTornado"),
+      PeerClient::UPnPNATBitTorrent => write!(f, "UPnP NAT BitTorrent"),
       PeerClient::AnyEventBitTorrent => write!(f, "AnyEvent::BitTorrent"),
       PeerClient::Arctic => write!(f, "Arctic"),
       PeerClient::Ares => write!(f, "Ares"),
@@ -375,68 +407,151 @@ impl fmt::Display for PeerClient {
 
 impl PeerId {
   pub fn client(&self) -> Result<PeerClient, PeerIdError> {
-    if self.0[0] == b'M' {
-      return Ok(PeerClient::Mainline);
+    match self.0[0] {
+      b'-' => PeerClient::try_from([self.0[1], self.0[2]]),
+      b'A' => Ok(PeerClient::ABC),
+      b'M' => Ok(PeerClient::Mainline),
+      b'O' => Ok(PeerClient::OspreyPermaseed),
+      b'Q' => Ok(PeerClient::BTQueue),
+      b'R' => Ok(PeerClient::Tribler), // older versions of tribler
+      b'S' => Ok(PeerClient::ShadowsClient),
+      b'T' => Ok(PeerClient::BitTornado),
+      b'U' => Ok(PeerClient::UPnPNATBitTorrent),
+      _ => Err(PeerIdError::UnknownClient),
     }
-    if self.0[0] == b'-' {
-      return PeerClient::try_from([self.0[1], self.0[2]]);
-    }
-    Err(PeerIdError::UnknownClient)
   }
 
+  /// Returns peer/torrent client version string.
+  /// Returns empty string if client is unknown.
   pub fn version(&self) -> String {
-    todo!()
+    if self.0[0] == b'-' {
+      // Azureus style of version
+      // Bytes: ['-', <client id>, <client id>, <ver>, <ver>, <ver>, <ver>, '-', <random..>]
+      // <ver> is ascii digit
+      return self.0[3..7]
+        .iter()
+        .take_while(|b| b.is_ascii_digit())
+        .map(|b| format!("{}", b - 48))
+        .collect::<Vec<String>>()
+        .join(".");
+    }
+    if self.0[0].is_ascii_alphabetic() {
+      // Shadow's style of version
+      // http://forums.degreez.net/viewtopic.php?t=7070
+      // https://wiki.theory.org/BitTorrentSpecification#peer_id
+      // '0' = 48 (-48 = 0)
+      // '1' = 49 (-48 = 1)
+      // ...
+      // '9' = 57 (-48 = 9)
+      // 'A' = 65 (-55 = 10)
+      // 'B' = 66 (-55 = 11)
+      // ...
+      // 'Z' = 90 (-55 = 35)
+      // 'a' = 97 (-61 = 36)
+      // 'b' = 98 (-61 = 37)
+      // ...
+      // 'z' = 122 (-61 = 61)
+      return self
+        .0
+        .into_iter()
+        .take(6)
+        .take_while(|b| *b != b'-')
+        .map(|b| {
+          if b.is_ascii_digit() {
+            return format!("{}", b - 48);
+          }
+          if b.is_ascii_uppercase() {
+            return format!("{}", b - 55);
+          }
+          if b.is_ascii_lowercase() {
+            return format!("{}", b - 61);
+          }
+          String::new()
+        })
+        .collect::<Vec<String>>()
+        .join(".");
+    }
+    String::new()
   }
 }
 
-pub trait Peer {
-  fn id(&self) -> Option<PeerId>;
-  fn addr(&self) -> SocketAddr;
-}
-
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 #[serde(untagged)]
 pub enum PeerStream {
-  Dict(PeerDictStream),
-  Bin(PeerBinStream),
+  Dict(Vec<PeerDict>),
+  Bin(Vec<u8>),
 }
 
-pub type PeerDictStream = Vec<PeerDict>;
-pub type PeerBinStream = Vec<PeerBin>;
-
-#[derive(Debug, Serialize, Deserialize)]
+/// Used when `compact=0` in announce url.
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct PeerDict {
-  pub id: PeerId,
-  pub addr: SocketAddr,
+  pub peer_id: Option<PeerId>,
+  pub ip: IpAddr,
+  pub port: u16,
 }
 
 /// Peer binary representation.
 /// First 4 bytes are IP address, last 2 bytes are port.
 /// Network byte order (big endian).
-#[derive(Debug, Serialize, Deserialize)]
+/// Used when `compact=1` in announce url or if no `compact` is present.
+/// See: <http://bittorrent.org/beps/bep_0023.html>
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct PeerBin(pub [u8; PEER_BIN_DICT_LENGTH]);
 
-impl Peer for PeerDict {
-  fn id(&self) -> Option<PeerId> {
-    Some(self.id)
-  }
-
-  fn addr(&self) -> SocketAddr {
-    self.addr
+impl PeerBin {
+  pub fn from_socket(ip_addr: IpAddr, port: u16) -> Self {
+    let mut buf = [0; PEER_BIN_DICT_LENGTH];
+    let octets = match ip_addr {
+      IpAddr::V4(ip) => ip.octets(),
+      _ => unreachable!(),
+    };
+    buf[..4].copy_from_slice(&octets);
+    buf[4..].copy_from_slice(&port.to_be_bytes());
+    Self(buf)
   }
 }
 
-impl Peer for PeerBin {
-  fn id(&self) -> Option<PeerId> {
-    None
+impl ToBencode for PeerDict {
+  const MAX_DEPTH: usize = 10;
+  fn encode(
+    &self,
+    encoder: bendy::encoding::SingleItemEncoder,
+  ) -> Result<(), bendy::encoding::Error> {
+    encoder.emit_dict(|mut d| {
+      if let Some(peer_id) = &self.peer_id {
+        d.emit_pair(b"peer id", AsString(peer_id.0))?;
+      }
+      d.emit_pair(b"ip", self.ip.to_string())?;
+      d.emit_pair(b"port", self.port)?;
+      Ok(())
+    })
   }
+}
 
-  fn addr(&self) -> SocketAddr {
-    SocketAddr::V4(SocketAddrV4::new(
-      Ipv4Addr::from(u32::from_be_bytes([
-        self.0[0], self.0[1], self.0[2], self.0[3],
-      ])),
-      u16::from_be_bytes([self.0[4], self.0[5]]),
-    ))
+impl ToBencode for PeerBin {
+  const MAX_DEPTH: usize = 10;
+  fn encode(
+    &self,
+    encoder: bendy::encoding::SingleItemEncoder,
+  ) -> Result<(), bendy::encoding::Error> {
+    encoder.emit(&AsString(self.0))
+  }
+}
+
+impl ToBencode for PeerStream {
+  const MAX_DEPTH: usize = 10;
+  fn encode(
+    &self,
+    encoder: bendy::encoding::SingleItemEncoder,
+  ) -> Result<(), bendy::encoding::Error> {
+    match self {
+      PeerStream::Dict(many_dict) => encoder.emit_list(|l| {
+        for dict in many_dict {
+          l.emit(dict)?;
+        }
+        Ok(())
+      }),
+      PeerStream::Bin(bin) => encoder.emit(&AsString(bin)),
+    }
   }
 }

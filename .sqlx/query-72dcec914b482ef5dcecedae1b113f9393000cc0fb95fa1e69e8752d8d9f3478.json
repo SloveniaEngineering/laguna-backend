@@ -1,0 +1,169 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT info_hash,\n       raw,\n       announce_url,\n       length,\n       file_name,\n       nfo,\n       genre      AS \"genre: Genre\",\n       leech_count,\n       seed_count,\n       completed_count,\n       speedlevel AS \"speedlevel: SpeedLevel\",\n       is_freeleech,\n       creation_date,\n       created_by,\n       uploaded_at,\n       uploaded_by,\n       modded_at,\n       modded_by\nFROM \"Torrent\"\nWHERE info_hash = $1;\n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "info_hash",
+        "type_info": "Bytea"
+      },
+      {
+        "ordinal": 1,
+        "name": "raw",
+        "type_info": "Bytea"
+      },
+      {
+        "ordinal": 2,
+        "name": "announce_url",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "length",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "file_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "nfo",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "genre: Genre",
+        "type_info": {
+          "Custom": {
+            "name": "genre",
+            "kind": {
+              "Enum": [
+                "Action",
+                "Adventure",
+                "Animation",
+                "Biography",
+                "Comedy",
+                "Crime",
+                "Documentary",
+                "Drama",
+                "Family",
+                "Fantasy",
+                "FilmNoir",
+                "GameShow",
+                "History",
+                "Horror",
+                "Musical",
+                "Mystery",
+                "News",
+                "RealityTV",
+                "Romance",
+                "SciFi",
+                "Short",
+                "Sport",
+                "TalkShow",
+                "Thriller",
+                "War",
+                "Western"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "leech_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "seed_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "completed_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 10,
+        "name": "speedlevel: SpeedLevel",
+        "type_info": {
+          "Custom": {
+            "name": "speedlevel",
+            "kind": {
+              "Enum": [
+                "Lowspeed",
+                "Mediumspeed",
+                "Highspeed"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "is_freeleech",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 12,
+        "name": "creation_date",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 13,
+        "name": "created_by",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 14,
+        "name": "uploaded_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 15,
+        "name": "uploaded_by",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 16,
+        "name": "modded_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 17,
+        "name": "modded_by",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "72dcec914b482ef5dcecedae1b113f9393000cc0fb95fa1e69e8752d8d9f3478"
+}

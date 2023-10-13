@@ -18,8 +18,7 @@ documentation = "https://sloveniaengineering.github.io/laguna-backend"
 serde = { version = "*", features = ["derive"] }
 actix-web = "4"
 serde_bytes = "*"
-serde-byte-array = "0.1.2"
-serde_with = "3.2.0"
+serde_with = { version = "3.3.0", features = ["hex"] }
 actix = "*"
 sqlx = { version="0.7.1", features = [
     "runtime-tokio",
@@ -32,3 +31,6 @@ sqlx = { version="0.7.1", features = [
     "chrono",
     "json",
 ] }
+url = { version = "*", features = ["serde"] }
+utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
+bendy = { version = "^0.3", features = ["std", "serde"] }

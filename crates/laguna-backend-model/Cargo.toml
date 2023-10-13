@@ -28,7 +28,7 @@ sqlx = { version="0.7.1", features = [
     "json",
 ] }
 
-log = "0.4.19"
+log = "0.4.20"
 env_logger = "0.10.0"
 sha2 = "0.10"
 digest = { version = "0.10.7", default-features = false }
@@ -40,11 +40,15 @@ chrono = { version = "*", features = ["serde"] }
 validator = { version = "0.16", features = ["derive", "unic"] }
 actix-web-validator = "5.0.1"
 laguna-backend-tracker-common = { path = "../laguna-backend-tracker-common" }
-serde_bencode = "0.2.3"
+# serde_bencode = "0.2.3"
+bendy = { version = "*", features = ["std", "serde"] }
 secrecy = { version = "*", features = ["serde"] }
+serde_with = { version = "*", features = ["hex"] }
+derivative = "2.2.0"
+utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
 
 # Mark as optional when we don't use feature "testx".
-fake = { version = "2.6", features=["derive", "uuid", "chrono", "http"], optional = true }
+fake = { version = "2.8", features=["derive", "uuid", "chrono", "http"], optional = true }
 rand = { version = "*", optional = true }
 
 [features]

@@ -7,16 +7,11 @@ use laguna_backend_model::role::Role;
 use laguna_backend_model::user::User;
 use laguna_backend_model::user::UserSafe;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::Validate;
 
-/// User data transfer object (DTO).
-/// This object is serialized and transfered between BE and FE (in API).
-/// Unlike [`User`], [`UserDTO`] doesn't expose the following fields:
-/// 1. `email`
-/// 2. `password`
-/// Also, [`UserDTO`]has `last_login` as an [`Option`].
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, FromRequest, Validate)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, FromRequest, Validate, ToSchema)]
 pub struct UserDTO {
   /// The user's id
   pub id: Uuid,
@@ -30,9 +25,9 @@ pub struct UserDTO {
   pub avatar_url: Option<String>,
   pub role: Role,
   pub behaviour: Behaviour,
-  pub is_active: Option<bool>,
+  pub is_enabled: bool,
+  pub is_donator: bool,
   pub has_verified_email: bool,
-  pub is_history_private: bool,
   pub is_profile_private: bool,
 }
 
@@ -46,9 +41,9 @@ impl From<User> for UserDTO {
       avatar_url: user.avatar_url,
       role: user.role,
       behaviour: user.behaviour,
-      is_active: Some(user.is_active),
+      is_enabled: user.is_enabled,
+      is_donator: user.is_donator,
       has_verified_email: user.has_verified_email,
-      is_history_private: user.is_history_private,
       is_profile_private: user.is_profile_private,
     }
   }
@@ -64,17 +59,17 @@ impl From<UserSafe> for UserDTO {
       avatar_url: user_safe.avatar_url,
       role: user_safe.role,
       behaviour: user_safe.behaviour,
-      is_active: Some(user_safe.is_active),
+      is_enabled: user_safe.is_enabled,
+      is_donator: user_safe.is_donator,
       has_verified_email: user_safe.has_verified_email,
-      is_history_private: user_safe.is_history_private,
       is_profile_private: user_safe.is_profile_private,
     }
   }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, FromRequest)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, FromRequest, ToSchema)]
 pub struct UserPatchDTO {
+  pub username: String,
   pub avatar_url: Option<String>,
-  pub is_history_private: bool,
   pub is_profile_private: bool,
 }
