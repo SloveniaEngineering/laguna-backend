@@ -17,7 +17,7 @@ documentation = "https://sloveniaengineering.github.io/laguna-backend"
 [dependencies]
 actix-web = { version = "4", features = ["cookies"] }
 argon2 = { version = "*", features = ["std"] }
-sqlx = { version="0.7.1", features = [
+sqlx = { version="0.7.2", features = [
     "runtime-tokio",
     "tls-rustls",
     "postgres",

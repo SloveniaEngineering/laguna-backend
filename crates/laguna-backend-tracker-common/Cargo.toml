@@ -20,7 +20,7 @@ actix-web = "4"
 serde_bytes = "*"
 serde_with = { version = "3.3.0", features = ["hex"] }
 actix = "*"
-sqlx = { version="0.7.1", features = [
+sqlx = { version="0.7.2", features = [
     "runtime-tokio",
     "tls-rustls",
     "postgres",
