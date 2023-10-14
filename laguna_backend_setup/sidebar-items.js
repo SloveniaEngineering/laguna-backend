@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["get_config_fn","get_loglevel","get_settings","get_settings_prime_cache","setup","setup_argon_context","setup_cors","setup_db","setup_logging","setup_secret_key","setup_with_settings"],"macro":["setup_authority"],"static":["SETTINGS"]};

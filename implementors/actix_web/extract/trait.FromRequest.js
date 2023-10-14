@@ -1,0 +1,4 @@
+(function() {var implementors = {
+"laguna_backend_dto":[["impl FromRequest for <a class=\"struct\" href=\"laguna_backend_dto/user/struct.UserPatchDTO.html\" title=\"struct laguna_backend_dto::user::UserPatchDTO\">UserPatchDTO</a>"],["impl FromRequest for <a class=\"struct\" href=\"laguna_backend_dto/user/struct.UserDTO.html\" title=\"struct laguna_backend_dto::user::UserDTO\">UserDTO</a>"]],
+"laguna_backend_model":[["impl FromRequest for <a class=\"struct\" href=\"laguna_backend_model/user/struct.User.html\" title=\"struct laguna_backend_model::user::User\">User</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["File","Node","TorrentFile","TorrentInfo","TorrentPatchDTO","TorrentProfile","TorrentPutDTO"],"type":["TorrentDTO"]};

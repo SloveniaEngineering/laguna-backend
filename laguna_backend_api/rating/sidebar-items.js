@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["rating_create","rating_delete","rating_torrent_average"]};
