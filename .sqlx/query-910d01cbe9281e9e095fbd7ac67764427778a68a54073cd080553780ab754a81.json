@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "REFRESH MATERIALIZED VIEW \"TorrentStats\";",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "910d01cbe9281e9e095fbd7ac67764427778a68a54073cd080553780ab754a81"
+}

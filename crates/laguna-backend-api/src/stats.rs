@@ -13,9 +13,12 @@ use sqlx::PgPool;
     ),
 )]
 pub async fn stats_peer_get(pool: web::Data<PgPool>) -> Result<HttpResponse, APIError> {
+  let mut refresh_transaction = pool.begin().await?;
+  sqlx::query_file!("queries/stats_peer_refresh.sql").execute(&mut *refresh_transaction).await?;
   let stats = sqlx::query_file_as!(PeerStats, "queries/stats_peer_get.sql")
-    .fetch_one(pool.get_ref())
+    .fetch_one(&mut *refresh_transaction)
     .await?;
+  refresh_transaction.commit().await?;
   Ok(
     HttpResponse::Ok()
       .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
@@ -31,9 +34,12 @@ pub async fn stats_peer_get(pool: web::Data<PgPool>) -> Result<HttpResponse, API
     ),
 )]
 pub async fn stats_torrent_get(pool: web::Data<PgPool>) -> Result<HttpResponse, APIError> {
+  let mut refresh_transaction = pool.begin().await?;
+  sqlx::query_file!("queries/stats_torrent_refresh.sql").execute(&mut *refresh_transaction).await?;
   let stats = sqlx::query_file_as!(TorrentStats, "queries/stats_torrent_get.sql")
-    .fetch_one(pool.get_ref())
+    .fetch_one(&mut *refresh_transaction)
     .await?;
+  refresh_transaction.commit().await?;
   Ok(
     HttpResponse::Ok()
       .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
@@ -49,9 +55,12 @@ pub async fn stats_torrent_get(pool: web::Data<PgPool>) -> Result<HttpResponse, 
     ),
 )]
 pub async fn stats_user_get(pool: web::Data<PgPool>) -> Result<HttpResponse, APIError> {
+  let mut refresh_transaction = pool.begin().await?;
+  sqlx::query_file!("queries/stats_user_refresh.sql").execute(&mut *refresh_transaction).await?;
   let stats = sqlx::query_file_as!(UserStats, "queries/stats_user_get.sql")
-    .fetch_one(pool.get_ref())
+    .fetch_one(&mut *refresh_transaction)
     .await?;
+  refresh_transaction.commit().await?;
   Ok(
     HttpResponse::Ok()
       .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
@@ -67,15 +76,20 @@ pub async fn stats_user_get(pool: web::Data<PgPool>) -> Result<HttpResponse, API
     ),
 )]
 pub async fn stats_joint_get(pool: web::Data<PgPool>) -> Result<HttpResponse, APIError> {
+  let mut refresh_transaction = pool.begin().await?;
+  sqlx::query_file!("queries/stats_peer_refresh.sql").execute(&mut *refresh_transaction).await?;
+  sqlx::query_file!("queries/stats_torrent_refresh.sql").execute(&mut *refresh_transaction).await?;
+  sqlx::query_file!("queries/stats_user_refresh.sql").execute(&mut *refresh_transaction).await?;
   let peer_stats = sqlx::query_file_as!(PeerStats, "queries/stats_peer_get.sql")
-    .fetch_one(pool.get_ref())
+    .fetch_one(&mut *refresh_transaction)
     .await?;
   let torrent_stats = sqlx::query_file_as!(TorrentStats, "queries/stats_torrent_get.sql")
-    .fetch_one(pool.get_ref())
+    .fetch_one(&mut *refresh_transaction)
     .await?;
   let user_stats = sqlx::query_file_as!(UserStats, "queries/stats_user_get.sql")
-    .fetch_one(pool.get_ref())
+    .fetch_one(&mut *refresh_transaction)
     .await?;
+  refresh_transaction.commit().await?;
   Ok(
     HttpResponse::Ok()
       .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
