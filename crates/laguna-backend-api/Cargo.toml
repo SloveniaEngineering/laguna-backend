@@ -19,7 +19,7 @@ laguna-backend-model = { path = "../laguna-backend-model" }
 laguna-backend-middleware = { path = "../laguna-backend-middleware" }
 actix-web = { version = "4", features = ["cookies"] }
 sha-1 = "0.10.1"
-sqlx = { version="0.7.1", features = [
+sqlx = { version="0.7.2", features = [
     "runtime-tokio",
     "tls-rustls",
     "postgres",
