@@ -53,7 +53,7 @@ laguna-backend-tracker-common = { path = "../laguna-backend-tracker-common" }
 laguna-backend-config = { path = "../laguna-backend-config" }
 secrecy = { version = "*", features = ["serde"] }
 rand = "*"
-utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
+utoipa = { version = "4", features = ["actix_extras", "uuid", "chrono", "yaml"] }
 bendy = { version = "^0.3", features = ["std", "serde"] }
 # serde_bencode = "*"
 
