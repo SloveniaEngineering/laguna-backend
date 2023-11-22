@@ -1,11 +1,11 @@
 use actix_web::web;
-use laguna_backend_model::user::UserSafe;
+use laguna_backend_model::user::User;
 use rand::Rng;
 
 use crate::error::APIError;
 
 pub(crate) async fn generate_username_recommendations(
-  user: UserSafe,
+  user: User,
   pool: &web::Data<sqlx::Pool<sqlx::Postgres>>,
 ) -> Result<Vec<String>, APIError> {
   let recommendations = vec![

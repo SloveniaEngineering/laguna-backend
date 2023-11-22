@@ -9,16 +9,24 @@ use std::fmt::Debug;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+/// Download hash of a downloaded torrent, this value is injected directly into [`Announce`] URL and is used to identify the [`User`].
 #[serde_as]
 #[derive(Serialize, Deserialize, PartialEq, Eq, Clone, sqlx::Type, ToSchema)]
 #[sqlx(transparent)]
 pub struct DownloadHash(#[serde_as(as = "Hex")] pub [u8; SHA256_LENGTH]);
 
+/// Download record.
+/// Created when user downloads a specific torrent.
+/// If the same torrent is downloaded twice, the last download's download record is stored.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, ToSchema, sqlx::FromRow)]
 pub struct Download<const N: usize> {
+  /// Info hash of torrent file being downloaded.
   pub info_hash: InfoHash<N>,
+  /// ID of user that downloads the torrent file.
   pub user_id: Uuid,
+  /// Timestamp of download (for security purposes)
   pub ts: DateTime<Utc>,
+  /// Computed as sha256 of (info_hash, user_id, ts).
   pub down_hash: DownloadHash,
 }
 

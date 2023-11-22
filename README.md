@@ -9,4 +9,4 @@
 </p>
 
 * For general documentation see [Laguna docs](https://sloveniaengineering.github.io/laguna-docs/)
-* For internal documentation see [Dev docs](https://sloveniaengineering.github.io/laguna-backend).
+* For internal documentation see [Backend docs](https://sloveniaengineering.github.io/laguna-backend).

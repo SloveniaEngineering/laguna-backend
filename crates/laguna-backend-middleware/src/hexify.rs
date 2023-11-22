@@ -8,10 +8,12 @@ use actix_web::Error;
 use percent_encoding::percent_decode_str;
 use qstring::QString;
 
+#[allow(missing_docs)]
 #[derive(Debug, Clone)]
 pub struct HexifyMiddlewareFactory;
 
 impl HexifyMiddlewareFactory {
+  /// New hexify middleware instance.
   pub fn new() -> Self {
     Self
   }
@@ -39,6 +41,7 @@ where
   }
 }
 
+#[allow(missing_docs)]
 pub struct HexifyMiddleware<S> {
   service: S,
 }

@@ -1,6 +1,8 @@
 #![doc(html_logo_url = "https://sloveniaengineering.github.io/laguna-backend/logo.png")]
 #![doc(html_favicon_url = "https://sloveniaengineering.github.io/laguna-backend/favicon.ico")]
 #![doc(issue_tracker_base_url = "https://github.com/SloveniaEngineering/laguna-backend")]
+#![forbid(missing_docs)]
+//! Setup functions for when server is booting.
 use actix_cors::Cors;
 
 use actix_jwt_auth_middleware::AuthenticationService;
@@ -82,6 +84,7 @@ use std::sync::Once;
 static ENV_LOGGER_INIT: Once = Once::new();
 static CORS_INIT: Once = Once::new();
 
+/// Cached settings specified in Laguna.toml file.
 #[once(name = "SETTINGS")]
 pub fn get_settings() -> Settings {
   let mut settings = Settings::parse_toml(LAGUNA_CONFIG).expect("Failed to parse settings");
@@ -89,8 +92,10 @@ pub fn get_settings() -> Settings {
   settings
 }
 
-// https://github.com/actix/actix-web/issues/2039
-// https://github.com/actix/actix-web/issues/1190
+/// Setup with Laguna.toml settings.
+/// Interesting issues discussing returning [`App<T>`]:
+/// <https://github.com/actix/actix-web/issues/2039>
+/// <https://github.com/actix/actix-web/issues/1190>
 pub fn setup() -> App<
   impl ServiceFactory<
     ServiceRequest,
@@ -103,7 +108,9 @@ pub fn setup() -> App<
   setup_with_settings(get_settings())
 }
 
-// https://github.com/actix/actix-web/blob/b1c85ba85be91b5ea34f31264853b411fadce1ef/actix-web/src/app.rs#L698
+/// Setup with any settings specified.
+/// Test if [`App<T>`] can be return from function:
+/// <https://github.com/actix/actix-web/blob/b1c85ba85be91b5ea34f31264853b411fadce1ef/actix-web/src/app.rs#L698>
 pub fn setup_with_settings(
   settings: Settings,
 ) -> App<
@@ -118,6 +125,7 @@ pub fn setup_with_settings(
   App::new().configure(get_config_fn(settings))
 }
 
+/// Configuring function, based on [`Settings`] it produces function which can be used to define routes and app data.
 pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
   setup_logging(&settings);
   let secret_key = setup_secret_key(&settings);
@@ -267,6 +275,7 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
   }
 }
 
+/// Required by OpenAPI generator.
 #[derive(OpenApi)]
 #[openapi(
   info(description = "API documentation", title = "Laguna API"),
@@ -346,6 +355,7 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
 )]
 struct ApiDoc;
 
+/// Retrieve log level based on settings.
 #[inline]
 pub fn get_loglevel(settings: &Settings) -> &str {
   match settings.actix.mode {
@@ -354,6 +364,7 @@ pub fn get_loglevel(settings: &Settings) -> &str {
   }
 }
 
+/// Initialize logging, this is done only once even if this function is called multiple times due to internal [`Once`].
 pub fn setup_logging(settings: &Settings) {
   if settings.actix.enable_log {
     ENV_LOGGER_INIT.call_once(|| {
@@ -367,6 +378,9 @@ pub fn setup_logging(settings: &Settings) {
   }
 }
 
+/// Macro returning [`TokenSigner`] and [`Authority`] used by JWT auth.
+// This is a macro because types are too hard and Rust isn't there yet with inference.
+// TODO: Make this a function that returns an `impl`.
 #[macro_export]
 macro_rules! setup_authority {
   ($secret_key:ident, $settings:ident) => {{
@@ -401,6 +415,7 @@ macro_rules! setup_authority {
   }};
 }
 
+/// Sets up [`Argon2<'static>`] context used for hashing passwords.
 pub fn setup_argon_context(settings: &Settings) -> Argon2<'static> {
   let password_pepper = Box::leak::<'static>(
     settings
@@ -425,6 +440,7 @@ pub fn setup_argon_context(settings: &Settings) -> Argon2<'static> {
   .unwrap()
 }
 
+/// Sets up secret key used for JWT auth.
 pub fn setup_secret_key(settings: &Settings) -> Hs256Key {
   Hs256Key::new(
     settings
@@ -436,6 +452,9 @@ pub fn setup_secret_key(settings: &Settings) -> Hs256Key {
   )
 }
 
+/// Sets up CORS policies with respect to FE.
+/// Production environment is more strict, development environment use CORS permissive.
+/// CORS supports preflight requests, so FE can make them.
 pub fn setup_cors(settings: &Settings) -> Cors {
   let fe_ip = settings.application.frontend.address().ip();
   let fe_port = settings.application.frontend.address().port();
@@ -484,6 +503,9 @@ pub fn setup_cors(settings: &Settings) -> Cors {
   cors
 }
 
+/// Sets up DB connection and migrates tables.
+/// Current maximum amount of connections is 100.
+// TODO: Parameterize this better.
 pub async fn setup_db(settings: &Settings) -> Result<PgPool, sqlx::Error> {
   let pool = PgPoolOptions::new()
     .max_connections(100)

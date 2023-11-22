@@ -16,13 +16,13 @@ use laguna_backend_model::role::Role;
 use laguna_backend_model::speedlevel::SpeedLevel;
 use laguna_backend_model::torrent::Torrent;
 use laguna_backend_model::user::User;
-use laguna_backend_model::user::UserSafe;
 
 use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::error::{user::UserError, APIError};
 
+#[allow(missing_docs)]
 #[utoipa::path(
     get,
     path = "/api/user/me",
@@ -35,6 +35,7 @@ pub async fn user_me_get(user: UserDTO) -> Result<HttpResponse, APIError> {
   Ok(HttpResponse::Ok().json(user))
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   get,
   path = "/api/user/{id}",
@@ -54,7 +55,6 @@ pub async fn user_get(
   let user = sqlx::query_file_as!(User, "queries/user_get.sql", id.into_inner())
     .fetch_optional(pool.get_ref())
     .await?
-    .map(UserSafe::from)
     .map(UserDTO::from)
     .ok_or(UserError::NotFound)?;
   Ok(
@@ -64,6 +64,7 @@ pub async fn user_get(
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   delete,
   path = "/api/user/{id}",
@@ -80,12 +81,12 @@ pub async fn user_me_delete(
   sqlx::query_file_as!(User, "queries/user_delete.sql", user.id)
     .fetch_optional(pool.get_ref())
     .await?
-    .map(UserSafe::from)
     .map(drop) // Zero-ize immediately
     .ok_or(UserError::NotFound)?;
   Ok(HttpResponse::Ok().finish())
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   patch,
   path = "/api/user/me",
@@ -115,7 +116,6 @@ pub async fn user_patch_me(
   )
   .fetch_optional(pool.get_ref())
   .await?
-  .map(UserSafe::from)
   .map(UserDTO::from)
   .ok_or(UserError::NotUpdated)?;
   Ok(
@@ -133,6 +133,7 @@ pub async fn user_patch_me(
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   patch,
   path = "/api/user/{id}",
@@ -156,6 +157,7 @@ pub async fn user_patch(
   Ok(HttpResponse::Ok().finish())
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   patch,
   path = "/api/user/{id}/role_change",
@@ -175,7 +177,6 @@ pub async fn user_role_change(
   let changee = sqlx::query_file_as!(User, "queries/user_get.sql", user_id.into_inner())
     .fetch_optional(pool.get_ref())
     .await?
-    .map(UserSafe::from)
     .ok_or(UserError::NotFound)?;
   // TODO: Can user change its own role? Currently yes but only according to the formula below, which is safe.
   match (current_user.role, changee.role, role_change_dto.to) {
@@ -189,7 +190,6 @@ pub async fn user_role_change(
       )
       .fetch_optional(pool.get_ref())
       .await?
-      .map(UserSafe::from)
       .map(UserDTO::from)
       .ok_or(UserError::NotUpdated)?;
       Ok(
@@ -209,6 +209,7 @@ pub async fn user_role_change(
   }
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   get,
   path = "/api/user/{id}/peers",
@@ -237,6 +238,7 @@ pub async fn user_peers_get(
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   get,
   path = "/api/user/{id}/torrents",

@@ -29,21 +29,9 @@ sqlx = { version="0.7.2", features = [
     "chrono",
     "json",
 ] }
-env_logger = "0.10.0"
-log = "0.4.20"
-argon2 = { version = "*", features = ["std"] }
-actix-jwt-auth-middleware = "0.3.0"
-jwt-compact = "0.7.0"
-sha2 = "0.10"
-chrono = { version = "*", features = ["serde"] }
-uuid = { version = "*", features = ["serde", "v4", "fast-rng"] }
-digest = { version = "0.10.7", default-features = false }
 laguna = { package = "laguna-backend-internal", path = "crates/laguna-backend-internal" }
-actix-cors = "0.6.4"
-actix-settings = "*"
-const_format = "*"
-actix-service = "*"
-secrecy = { version = "*", features = ["serde"] }
+# FIXME: Bump to 0.7.* seems to break the program.
+actix-settings = "0.6.0"
 
 [dev-dependencies]
 

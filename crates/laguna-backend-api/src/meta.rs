@@ -5,6 +5,7 @@ use laguna_backend_dto::meta::AppInfoDTO;
 use laguna_backend_middleware::mime::APPLICATION_LAGUNA_JSON_VERSIONED;
 use log::info;
 
+#[allow(missing_docs)]
 #[utoipa::path(
   get,
   path = "/api/misc/appinfo",
@@ -18,6 +19,7 @@ pub async fn get_app_info(laguna: web::Data<AppInfoDTO>) -> HttpResponse {
     .json(laguna)
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   get,
   path = "/api/misc/healthcheck",

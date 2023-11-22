@@ -9,9 +9,8 @@ use chrono::Utc;
 use laguna_backend_dto::{already_exists::AlreadyExistsDTO, register::RegisterDTO};
 use laguna_backend_model::behaviour::Behaviour;
 use laguna_backend_model::role::Role;
-use laguna_backend_model::user::{User, UserSafe};
+use laguna_backend_model::user::User;
 
-use secrecy::ExposeSecret;
 use sqlx::PgPool;
 
 use crate::{
@@ -19,6 +18,7 @@ use crate::{
   helpers::register::generate_username_recommendations,
 };
 
+#[allow(missing_docs)]
 #[utoipa::path(
   post,
   path = "/api/user/auth/register",
@@ -42,15 +42,14 @@ pub async fn register(
     register_dto.email
   )
   .fetch_optional(pool.get_ref())
-  .await?
-  .map(UserSafe::from);
+  .await?;
 
   if let Some(user) = fetched_user {
     return Ok(HttpResponse::AlreadyReported().json(AlreadyExistsDTO {
       message: String::from(
         "Uporabnik s tem uporabniškim imenom, elektronskim naslovom že obstaja.",
       ),
-      recommended_usernames: if user.email.expose_secret() == &register_dto.email {
+      recommended_usernames: if user.email == register_dto.email {
         Vec::new()
       } else {
         generate_username_recommendations(user, &pool).await?

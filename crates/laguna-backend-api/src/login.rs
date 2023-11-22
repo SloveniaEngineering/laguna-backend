@@ -13,13 +13,13 @@ use laguna_backend_middleware::{
 };
 use laguna_backend_model::behaviour::Behaviour;
 use laguna_backend_model::role::Role;
-use laguna_backend_model::user::{User, UserSafe};
+use laguna_backend_model::user::User;
 
-use secrecy::ExposeSecret;
 use sqlx::PgPool;
 
 use crate::error::{user::UserError, APIError};
 
+#[allow(missing_docs)]
 #[utoipa::path(
   post,
   path = "/api/user/auth/login",
@@ -46,10 +46,9 @@ pub async fn login(
   )
   .fetch_optional(pool.get_ref())
   .await?
-  .map(UserSafe::from)
   .ok_or(UserError::InvalidCredentials)?;
 
-  let password_hash = PasswordHash::new(user.password.expose_secret()).unwrap();
+  let password_hash = PasswordHash::new(&user.password).unwrap();
   if argon_context
     .verify_password(login_dto.password.as_bytes(), &password_hash)
     .is_err()
@@ -63,7 +62,6 @@ pub async fn login(
   let user = sqlx::query_file_as!(User, "queries/user_login_update.sql", Utc::now(), user.id)
     .fetch_optional(pool.get_ref())
     .await?
-    .map(UserSafe::from)
     .map(UserDTO::from)
     .ok_or(UserError::NotUpdated)?;
 

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use validator::Validate;
 
+#[allow(missing_docs)]
 #[derive(Debug, Serialize, Deserialize, ToSchema, Validate)]
 pub struct RatingDTO<const N: usize> {
   #[validate(range(min = 0, max = 10))]

@@ -1596,23 +1596,10 @@ dependencies = [
 name = "laguna-backend"
 version = "0.1.0"
 dependencies = [
- "actix-cors",
- "actix-jwt-auth-middleware",
- "actix-service",
  "actix-settings",
  "actix-web",
- "argon2",
- "chrono",
- "const_format",
- "digest",
- "env_logger",
- "jwt-compact",
  "laguna-backend-internal",
- "log",
- "secrecy",
- "sha2",
  "sqlx",
- "uuid",
 ]
 
 [[package]]

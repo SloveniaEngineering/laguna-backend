@@ -27,6 +27,7 @@ use sqlx::PgPool;
 use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 
+#[allow(missing_docs)]
 #[utoipa::path(
   get,
   path = "/peer/announce",
@@ -78,6 +79,7 @@ pub async fn peer_announce<const N: usize>(
   .await
 }
 
+/// Delegates peer request to one of subfunctions depend on event type.
 async fn handle_peer_request<const N: usize>(
   req: HttpRequest,
   maybe_peer: Option<Peer>,
@@ -146,6 +148,7 @@ async fn handle_peer_request<const N: usize>(
   }
 }
 
+#[allow(missing_docs)]
 async fn handle_peer_started<const N: usize>(
   req: HttpRequest,
   announce_data: Announce<N>,
@@ -235,6 +238,7 @@ async fn handle_peer_started<const N: usize>(
   )
 }
 
+#[allow(missing_docs)]
 async fn handle_peer_stopped<const N: usize>(
   announce_data: Announce<N>,
   pool: web::Data<PgPool>,
@@ -273,6 +277,7 @@ async fn handle_peer_stopped<const N: usize>(
   )
 }
 
+#[allow(missing_docs)]
 async fn handle_peer_completed<const N: usize>(
   announce_data: Announce<N>,
   pool: web::Data<PgPool>,
@@ -300,6 +305,7 @@ async fn handle_peer_completed<const N: usize>(
   )
 }
 
+#[allow(missing_docs)]
 async fn handle_peer_updated<const N: usize>(
   announce_data: Announce<N>,
   pool: web::Data<PgPool>,
@@ -358,6 +364,7 @@ async fn handle_peer_updated<const N: usize>(
   )
 }
 
+#[allow(missing_docs)]
 async fn handle_peer_paused<const N: usize>(
   _peer: Peer,
   announce_data: Announce<N>,
@@ -387,6 +394,8 @@ async fn handle_peer_paused<const N: usize>(
   )
 }
 
+/// Returns all peers in a specific torrent's swarm.
+// TODO: This hits a DB quite hard, we should cache this.
 #[inline]
 async fn torrent_swarm<const N: usize>(
   pool: &PgPool,
@@ -404,6 +413,9 @@ async fn torrent_swarm<const N: usize>(
   )
 }
 
+/// Returns how many peers in swarm completed or incompleted.
+/// NOTE: This is not realtime but close enough.
+// TODO: This hits DB quite hard, we should cache this.
 async fn complete_incomplete_counts(torrent_swarm: &[Peer]) -> (u64, u64) {
   torrent_swarm
     .iter()
@@ -415,6 +427,7 @@ async fn complete_incomplete_counts(torrent_swarm: &[Peer]) -> (u64, u64) {
     })
 }
 
+/// Creates [`PeerStream`] based on `compact` and other parameters.
 fn peer_stream(compact: bool, no_peer_id: bool, torrent_swarm: Vec<Peer>) -> PeerStream {
   if !compact || torrent_swarm.iter().any(|peer| peer.ip.is_ipv6()) {
     PeerStream::Dict(

@@ -5,6 +5,7 @@ use laguna_backend_model::role::Role;
 use laguna_backend_model::views::stats::{JointStats, PeerStats, TorrentStats, UserStats};
 use sqlx::PgPool;
 
+#[allow(missing_docs)]
 #[utoipa::path(
     get,
     path = "/api/stats/peer",
@@ -14,7 +15,9 @@ use sqlx::PgPool;
 )]
 pub async fn stats_peer_get(pool: web::Data<PgPool>) -> Result<HttpResponse, APIError> {
   let mut refresh_transaction = pool.begin().await?;
-  sqlx::query_file!("queries/stats_peer_refresh.sql").execute(&mut *refresh_transaction).await?;
+  sqlx::query_file!("queries/stats_peer_refresh.sql")
+    .execute(&mut *refresh_transaction)
+    .await?;
   let stats = sqlx::query_file_as!(PeerStats, "queries/stats_peer_get.sql")
     .fetch_one(&mut *refresh_transaction)
     .await?;
@@ -26,6 +29,7 @@ pub async fn stats_peer_get(pool: web::Data<PgPool>) -> Result<HttpResponse, API
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
     get,
     path = "/api/stats/torrent",
@@ -35,7 +39,9 @@ pub async fn stats_peer_get(pool: web::Data<PgPool>) -> Result<HttpResponse, API
 )]
 pub async fn stats_torrent_get(pool: web::Data<PgPool>) -> Result<HttpResponse, APIError> {
   let mut refresh_transaction = pool.begin().await?;
-  sqlx::query_file!("queries/stats_torrent_refresh.sql").execute(&mut *refresh_transaction).await?;
+  sqlx::query_file!("queries/stats_torrent_refresh.sql")
+    .execute(&mut *refresh_transaction)
+    .await?;
   let stats = sqlx::query_file_as!(TorrentStats, "queries/stats_torrent_get.sql")
     .fetch_one(&mut *refresh_transaction)
     .await?;
@@ -47,6 +53,7 @@ pub async fn stats_torrent_get(pool: web::Data<PgPool>) -> Result<HttpResponse, 
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
     get,
     path = "/api/stats/user",
@@ -56,7 +63,9 @@ pub async fn stats_torrent_get(pool: web::Data<PgPool>) -> Result<HttpResponse, 
 )]
 pub async fn stats_user_get(pool: web::Data<PgPool>) -> Result<HttpResponse, APIError> {
   let mut refresh_transaction = pool.begin().await?;
-  sqlx::query_file!("queries/stats_user_refresh.sql").execute(&mut *refresh_transaction).await?;
+  sqlx::query_file!("queries/stats_user_refresh.sql")
+    .execute(&mut *refresh_transaction)
+    .await?;
   let stats = sqlx::query_file_as!(UserStats, "queries/stats_user_get.sql")
     .fetch_one(&mut *refresh_transaction)
     .await?;
@@ -68,6 +77,7 @@ pub async fn stats_user_get(pool: web::Data<PgPool>) -> Result<HttpResponse, API
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
     get,
     path = "/api/stats/",
@@ -77,9 +87,15 @@ pub async fn stats_user_get(pool: web::Data<PgPool>) -> Result<HttpResponse, API
 )]
 pub async fn stats_joint_get(pool: web::Data<PgPool>) -> Result<HttpResponse, APIError> {
   let mut refresh_transaction = pool.begin().await?;
-  sqlx::query_file!("queries/stats_peer_refresh.sql").execute(&mut *refresh_transaction).await?;
-  sqlx::query_file!("queries/stats_torrent_refresh.sql").execute(&mut *refresh_transaction).await?;
-  sqlx::query_file!("queries/stats_user_refresh.sql").execute(&mut *refresh_transaction).await?;
+  sqlx::query_file!("queries/stats_peer_refresh.sql")
+    .execute(&mut *refresh_transaction)
+    .await?;
+  sqlx::query_file!("queries/stats_torrent_refresh.sql")
+    .execute(&mut *refresh_transaction)
+    .await?;
+  sqlx::query_file!("queries/stats_user_refresh.sql")
+    .execute(&mut *refresh_transaction)
+    .await?;
   let peer_stats = sqlx::query_file_as!(PeerStats, "queries/stats_peer_get.sql")
     .fetch_one(&mut *refresh_transaction)
     .await?;

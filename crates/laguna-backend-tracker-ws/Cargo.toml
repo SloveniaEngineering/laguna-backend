@@ -3,7 +3,7 @@ name = "laguna-backend-tracker-ws"
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
-readme = "README.md"
+readme = "README"
 authors = [
     "kenpaicat <133065911+kenpaicat@users.noreply.github.com>",
     "kozabrada123 <59031733+kozabrada123@users.noreply.github.com>",

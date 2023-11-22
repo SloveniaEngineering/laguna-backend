@@ -10,6 +10,7 @@ use crate::error::rating::RatingError;
 use crate::error::APIError;
 use actix_web_validator::Json;
 
+#[allow(missing_docs)]
 #[utoipa::path(
     post,
     path = "/api/torrent/rating",
@@ -52,6 +53,7 @@ pub async fn rating_create<const N: usize>(
   Ok(HttpResponse::Ok().finish())
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
     delete,
     path = "/api/torrent/rating/{info_hash}",
@@ -77,6 +79,7 @@ pub async fn rating_delete<const N: usize>(
   Ok(HttpResponse::Ok().finish())
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
     get,
     path = "/api/torrent/rating/{info_hash}",

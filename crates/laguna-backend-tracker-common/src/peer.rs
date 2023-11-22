@@ -9,11 +9,15 @@ use serde_with::hex::Hex;
 use serde_with::serde_as;
 use utoipa::ToSchema;
 
+/// Size of peer id in bytes.
 pub const PEER_ID_LENGTH: usize = 20;
+/// Size of peer client in bytes.
 pub const PEER_CLIENT_LENGTH: usize = 2;
 
+/// Size of peer bencoded into string in bytes. Used in compact representation of peer by [`AnnounceReply`].
 pub const PEER_BIN_DICT_LENGTH: usize = 6;
 
+/// Peer id of torrent client, 20 bytes: 2 for peer's client, 18 for peer's raw id.
 #[serde_as]
 #[derive(Serialize, Deserialize, Clone, Copy, Eq, PartialEq, Hash, sqlx::Type, ToSchema)]
 #[sqlx(transparent)]
@@ -59,6 +63,7 @@ impl From<Vec<u8>> for PeerId {
 /// - <https://wiki.theory.org/BitTorrentSpecification>
 /// - <https://github.com/torrust/torrust-tracker/blob/develop/src/tracker/peer.rs>
 /// - <https://github.com/kenpaicat/aquatic/blob/master/aquatic_peer_id/src/lib.rs>
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub enum PeerClient {
   ABC,
@@ -170,8 +175,11 @@ pub enum PeerClient {
   ZipTorrent,
 }
 
+/// Errors surrounding [`PeerId`].
 pub enum PeerIdError {
+  /// Peer client is not a known client.
   UnknownClient,
+  /// Cannot convert a slice to `[u8; 20]` required to determine [`PeerId`].
   Invalid(TryFromSliceError),
 }
 
@@ -406,6 +414,7 @@ impl fmt::Display for PeerClient {
 }
 
 impl PeerId {
+  /// Get [`PeerClient`] from [`PeerId`] based on first 2 bytes.
   pub fn client(&self) -> Result<PeerClient, PeerIdError> {
     match self.0[0] {
       b'-' => PeerClient::try_from([self.0[1], self.0[2]]),
@@ -475,30 +484,38 @@ impl PeerId {
   }
 }
 
+/// [`PeerStream`] of all peers in swarm returned in [`AnnounceReply`] to torrent client.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 #[serde(untagged)]
 pub enum PeerStream {
+  /// Used if `compact=0` in [`Announce`].
   Dict(Vec<PeerDict>),
+  /// Used if `compact=1` in [`Announce`].
   Bin(Vec<u8>),
 }
 
-/// Used when `compact=0` in announce url.
+/// Used when `compact=0` in [`Announce`].
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct PeerDict {
+  /// Peer id, optional means it doesn't have to be sent, if `no_peer_id` is set in [`Announce`].
   pub peer_id: Option<PeerId>,
+  /// IP of peer
   pub ip: IpAddr,
+  /// Port of peer
   pub port: u16,
 }
 
 /// Peer binary representation.
 /// First 4 bytes are IP address, last 2 bytes are port.
 /// Network byte order (big endian).
-/// Used when `compact=1` in announce url or if no `compact` is present.
+/// Used when `compact=1` or `compact=None` in [`Announce`].
 /// See: <http://bittorrent.org/beps/bep_0023.html>
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct PeerBin(pub [u8; PEER_BIN_DICT_LENGTH]);
 
 impl PeerBin {
+  /// Convert socket data into [`PeerBin`].
+  /// IP and Port are considered as BE (network-order) bytes.
   pub fn from_socket(ip_addr: IpAddr, port: u16) -> Self {
     let mut buf = [0; PEER_BIN_DICT_LENGTH];
     let octets = match ip_addr {

@@ -3,7 +3,7 @@
 #![doc(issue_tracker_base_url = "https://github.com/SloveniaEngineering/laguna-backend")]
 #![doc = include_str!("../README.md")]
 #![forbid(unsafe_code)]
-#![forbid(unsafe_code)]
+#![forbid(missing_docs)]
 
 use actix_settings::ApplySettings;
 
@@ -37,7 +37,6 @@ async fn main() -> Result<(), sqlx::Error> {
         description: env::var("CARGO_PKG_DESCRIPTION").expect("CARGO_PKG_DESCRIPTION not set"),
         repository: env::var("CARGO_PKG_REPOSITORY").expect("CARGO_PKG_REPOSITORY not set"),
       }))
-      // FIXME: This shit is so annoying and doesn't work w/FE
       .wrap(setup_cors(&get_settings()))
       .wrap(NormalizePath::new(TrailingSlash::MergeOnly))
       .wrap(Logger::default())

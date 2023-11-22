@@ -29,6 +29,7 @@ use crate::error::download::DownloadError;
 use crate::error::{torrent::TorrentError, APIError};
 use sha2::Sha256;
 
+#[allow(missing_docs)]
 #[utoipa::path(
   get,
   path = "/api/torrent/{info_hash}",
@@ -58,6 +59,7 @@ pub async fn torrent_get<const N: usize>(
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   get,
   path = "/api/torrent/{info_hash}/raw",
@@ -148,6 +150,7 @@ pub async fn torrent_get_raw<const N: usize>(
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   patch,
   path = "/api/torrent/{info_hash}",
@@ -182,6 +185,7 @@ pub async fn torrent_patch<const N: usize>(
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   put,
   path = "/api/torrent",
@@ -273,6 +277,7 @@ pub async fn torrent_put<const N: usize>(
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   delete,
   path = "/api/torrent/{info_hash}",
@@ -302,6 +307,7 @@ pub async fn torrent_delete<const N: usize>(
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   get,
   path = "/api/torrent/{info_hash}/swarm",

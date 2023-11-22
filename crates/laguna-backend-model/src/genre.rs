@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-// GitHub copilot generated
+/// GitHub copilot generated.
+/// Different genres for Movie-based content.
+#[allow(missing_docs)]
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, sqlx::Type, ToSchema)]
 pub enum Genre {
   Action,
