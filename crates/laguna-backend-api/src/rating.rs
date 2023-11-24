@@ -16,9 +16,9 @@ use actix_web_validator::Json;
     path = "/api/torrent/rating",
     request_body = RatingDTO<N>,
     responses(
-        (status = 200, description = "Rating created.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
-        (status = 400, description = "Rating already exists.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
-        (status = 401, description = "Not logged in, hence unauthorized.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+        (status = 200, description = "Rating created.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+        (status = 400, description = "Rating already exists.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+        (status = 401, description = "Not logged in, hence unauthorized.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
     ),
 )]
 pub async fn rating_create<const N: usize>(
@@ -58,8 +58,8 @@ pub async fn rating_create<const N: usize>(
     delete,
     path = "/api/torrent/rating/{info_hash}",
     responses(
-        (status = 200, description = "Rating deleted.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
-        (status = 401, description = "Not logged in, hence unauthorized.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+        (status = 200, description = "Rating deleted.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+        (status = 401, description = "Not logged in, hence unauthorized.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
     ),
 )]
 pub async fn rating_delete<const N: usize>(
@@ -84,8 +84,8 @@ pub async fn rating_delete<const N: usize>(
     get,
     path = "/api/torrent/rating/{info_hash}",
     responses(
-        (status = 200, description = "Rating for torrent.", body = TorrentRating, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
-        (status = 401, description = "Not logged in, hence unauthorized.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+        (status = 200, description = "Rating for torrent.", body = TorrentRating, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+        (status = 401, description = "Not logged in, hence unauthorized.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
     ),
 )]
 pub async fn rating_torrent_average<const N: usize>(
