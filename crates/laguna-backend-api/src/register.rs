@@ -24,8 +24,8 @@ use crate::{
   path = "/api/user/auth/register",
   responses(
     (status = 200, description = "User registered successfully."),
-    (status = 208, description = "User already exists.", body = AlreadyExistsDTO, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "Bad request.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 208, description = "User already exists.", body = AlreadyExistsDTO, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 400, description = "Bad request.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
   ),
 )]
 pub async fn register(

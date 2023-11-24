@@ -40,9 +40,9 @@ pub async fn user_me_get(user: UserDTO) -> Result<HttpResponse, APIError> {
   get,
   path = "/api/user/{id}",
   responses(
-    (status = 200, description = "Returns user.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "User not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns user.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 400, description = "User not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
   ),
   params(
     ("id", Path, description = "User's id.", format = Uuid)
@@ -70,8 +70,8 @@ pub async fn user_get(
   path = "/api/user/{id}",
   responses(
     (status = 200, description = "Delete successful"),
-    (status = 400, description = "User not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 400, description = "User not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
   ),
 )]
 pub async fn user_me_delete(
@@ -91,12 +91,12 @@ pub async fn user_me_delete(
   patch,
   path = "/api/user/me",
   responses(
-    (status = 200, description = "Returns updated user.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json", headers(
+    (status = 200, description = "Returns updated user.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json", headers(
       ("X-Access-Token" = String, description = "New access token."),
       ("X-Refresh-Token" = String, description = "New refresh token.")
     )),
-    (status = 400, description = "User not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 400, description = "User not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
   ),
   request_body = UserPatchDTO
 )]
@@ -138,9 +138,9 @@ pub async fn user_patch_me(
   patch,
   path = "/api/user/{id}",
   responses(
-    (status = 200, description = "Returns updated user.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "User not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns updated user.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 400, description = "User not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
   ),
   request_body = UserPatchDTO,
   params(
@@ -162,10 +162,10 @@ pub async fn user_patch(
   patch,
   path = "/api/user/{id}/role_change",
   responses(
-    (status = 200, description = "Returns updated user.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "User not found or role not changed due to DB related reasons.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 403, description = "Not allowed to change role.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns updated user.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 400, description = "User not found or role not changed due to DB related reasons.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 403, description = "Not allowed to change role.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
   ),
 )]
 pub async fn user_role_change(
@@ -214,9 +214,9 @@ pub async fn user_role_change(
   get,
   path = "/api/user/{id}/peers",
   responses(
-    (status = 200, description = "Returns user's peers.", body = Vec<Peer>, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "User not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns user's peers.", body = Vec<Peer>, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 400, description = "User not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
   ),
   params(
     ("id", Path, description = "User's id.", format = Uuid)
@@ -243,9 +243,9 @@ pub async fn user_peers_get(
   get,
   path = "/api/user/{id}/torrents",
   responses(
-    (status = 200, description = "Returns user's torrents.", body = Vec<Torrent>, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "User not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns user's torrents.", body = Vec<Torrent>, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 400, description = "User not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
   ),
   params(
     ("id", Path, description = "User's id.", format = Uuid)

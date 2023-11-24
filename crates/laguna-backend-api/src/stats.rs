@@ -10,7 +10,7 @@ use sqlx::PgPool;
     get,
     path = "/api/stats/peer",
     responses(
-        (status = 200, description = "Returns `PeerStats`", body = PeerStats, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+        (status = 200, description = "Returns `PeerStats`", body = PeerStats, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
     ),
 )]
 pub async fn stats_peer_get(pool: web::Data<PgPool>) -> Result<HttpResponse, APIError> {
@@ -34,7 +34,7 @@ pub async fn stats_peer_get(pool: web::Data<PgPool>) -> Result<HttpResponse, API
     get,
     path = "/api/stats/torrent",
     responses(
-        (status = 200, description = "Returns `TorrentStats`", body = TorrentStats, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+        (status = 200, description = "Returns `TorrentStats`", body = TorrentStats, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
     ),
 )]
 pub async fn stats_torrent_get(pool: web::Data<PgPool>) -> Result<HttpResponse, APIError> {
@@ -58,7 +58,7 @@ pub async fn stats_torrent_get(pool: web::Data<PgPool>) -> Result<HttpResponse, 
     get,
     path = "/api/stats/user",
     responses(
-        (status = 200, description = "Returns `UserStats`", body = UserStats, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+        (status = 200, description = "Returns `UserStats`", body = UserStats, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
     ),
 )]
 pub async fn stats_user_get(pool: web::Data<PgPool>) -> Result<HttpResponse, APIError> {
@@ -82,7 +82,7 @@ pub async fn stats_user_get(pool: web::Data<PgPool>) -> Result<HttpResponse, API
     get,
     path = "/api/stats/",
     responses(
-        (status = 200, description = "Returns `JointStats`", body = JointStats, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+        (status = 200, description = "Returns `JointStats`", body = JointStats, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
     ),
 )]
 pub async fn stats_joint_get(pool: web::Data<PgPool>) -> Result<HttpResponse, APIError> {

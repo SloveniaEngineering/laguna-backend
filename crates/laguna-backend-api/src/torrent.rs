@@ -34,9 +34,9 @@ use sha2::Sha256;
   get,
   path = "/api/torrent/{info_hash}",
   responses(
-    (status = 200, description = "Returns torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
   )
 )]
 pub async fn torrent_get<const N: usize>(
@@ -65,8 +65,8 @@ pub async fn torrent_get<const N: usize>(
   path = "/api/torrent/{info_hash}/raw",
   responses(
     (status = 200, description = "Returns torrent.", body = Vec<u8>, content_type = "application/x-bittorrent"),
-    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
   )
 )]
 pub async fn torrent_get_raw<const N: usize>(
@@ -155,9 +155,9 @@ pub async fn torrent_get_raw<const N: usize>(
   patch,
   path = "/api/torrent/{info_hash}",
   responses(
-    (status = 200, description = "Returns updated torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns updated torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
   ),
   request_body = TorrentPatchDTO,
 )]
@@ -190,9 +190,9 @@ pub async fn torrent_patch<const N: usize>(
   put,
   path = "/api/torrent",
   responses(
-    (status = 200, description = "Returns created torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns created torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
   ),
   request_body(content = TorrentPutDTO, content_type = "multipart/form-data"),
 )]
@@ -282,9 +282,9 @@ pub async fn torrent_put<const N: usize>(
   delete,
   path = "/api/torrent/{info_hash}",
   responses(
-    (status = 200, description = "Returns deleted torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns deleted torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
   )
 )]
 pub async fn torrent_delete<const N: usize>(
@@ -312,9 +312,9 @@ pub async fn torrent_delete<const N: usize>(
   get,
   path = "/api/torrent/{info_hash}/swarm",
   responses(
-    (status = 200, description = "Returns torrent swarm.", body = Vec<Peer>, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns torrent swarm.", body = Vec<Peer>, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
   )
 )]
 pub async fn torrent_swarm<const N: usize>(

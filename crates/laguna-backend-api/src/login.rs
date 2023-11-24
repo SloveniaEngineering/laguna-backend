@@ -24,12 +24,12 @@ use crate::error::{user::UserError, APIError};
   post,
   path = "/api/user/auth/login",
   responses(
-    (status = 200, description = "User logged in successfully.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json", headers(
+    (status = 200, description = "User logged in successfully.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json", headers(
       ("X-Access-Token" = String, description = "Access token."),
       ("X-Refresh-Token" = String, description = "Refresh token.")
     )),
-    (status = 400, description = "Bad request.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Invalid credentials.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json")
+    (status = 400, description = "Bad request.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json"),
+    (status = 401, description = "Invalid credentials.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-alpha+json")
   ),
 )]
 pub async fn login(

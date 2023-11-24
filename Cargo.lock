@@ -152,50 +152,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "actix-multipart"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b960e2aea75f49c8f069108063d12a48d329fc8b60b786dfc7552a9d5918d2d"
-dependencies = [
- "actix-multipart-derive",
- "actix-utils",
- "actix-web",
- "bytes",
- "derive_more",
- "futures-core",
- "futures-util",
- "httparse",
- "local-waker",
- "log",
- "memchr",
- "mime",
- "serde",
- "serde_json",
- "serde_plain",
- "tempfile",
- "tokio",
-]
-
-[[package]]
-name = "actix-multipart-derive"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a0a77f836d869f700e5b47ac7c3c8b9c8bc82e4aec861954c6198abee3ebd4d"
-dependencies = [
- "darling 0.20.3",
- "parse-size",
- "proc-macro2",
- "quote",
- "syn 2.0.31",
-]
-
-[[package]]
 name = "actix-multipart-extract"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e5b099b5b168220028fd46280be5ec84859b9bf464198a9e596db9103dad8c0"
 dependencies = [
- "actix-multipart 0.4.0",
+ "actix-multipart",
  "actix-multipart-extract-derive",
  "actix-web",
  "futures",
@@ -1594,7 +1556,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend"
-version = "0.1.0"
+version = "1.0.0-beta"
 dependencies = [
  "actix-settings",
  "actix-web",
@@ -1604,11 +1566,11 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-api"
-version = "0.1.0"
+version = "1.0.0-beta"
 dependencies = [
  "actix-http",
  "actix-jwt-auth-middleware",
- "actix-multipart 0.6.1",
+ "actix-multipart",
  "actix-multipart-extract",
  "actix-web",
  "actix-web-validator",
@@ -1645,7 +1607,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-config"
-version = "0.1.0"
+version = "1.0.0-beta"
 dependencies = [
  "actix-settings",
  "const_format",
@@ -1656,7 +1618,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-dto"
-version = "0.1.0"
+version = "1.0.0-beta"
 dependencies = [
  "actix-jwt-auth-middleware",
  "actix-multipart-extract",
@@ -1678,7 +1640,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-internal"
-version = "0.1.0"
+version = "1.0.0-beta"
 dependencies = [
  "laguna-backend-api",
  "laguna-backend-config",
@@ -1691,7 +1653,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-middleware"
-version = "0.1.0"
+version = "1.0.0-beta"
 dependencies = [
  "actix-jwt-auth-middleware",
  "actix-web",
@@ -1719,7 +1681,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-model"
-version = "0.1.0"
+version = "1.0.0-beta"
 dependencies = [
  "actix-jwt-auth-middleware",
  "actix-web",
@@ -1746,7 +1708,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-setup"
-version = "0.1.0"
+version = "1.0.0-beta"
 dependencies = [
  "actix-cors",
  "actix-http",
@@ -1778,7 +1740,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-tracker"
-version = "0.1.0"
+version = "1.0.0-beta"
 dependencies = [
  "laguna-backend-tracker-common",
  "laguna-backend-tracker-http",
@@ -1789,7 +1751,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-tracker-common"
-version = "0.1.0"
+version = "1.0.0-beta"
 dependencies = [
  "actix",
  "actix-web",
@@ -1804,7 +1766,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-tracker-http"
-version = "0.1.0"
+version = "1.0.0-beta"
 dependencies = [
  "actix-web",
  "bendy",
@@ -1816,11 +1778,11 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-tracker-udp"
-version = "0.1.0"
+version = "1.0.0-beta"
 
 [[package]]
 name = "laguna-backend-tracker-ws"
-version = "0.1.0"
+version = "1.0.0-beta"
 
 [[package]]
 name = "language-tags"
@@ -2517,15 +2479,6 @@ checksum = "6b420ce6e3d8bd882e9b243c6eed35dbc9a6110c9769e74b584e0d68d1f20c65"
 dependencies = [
  "itoa",
  "ryu",
- "serde",
-]
-
-[[package]]
-name = "serde_plain"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ce1fc6db65a611022b23a0dec6975d63fb80a302cb3388835ff02c097258d50"
-dependencies = [
  "serde",
 ]
 
