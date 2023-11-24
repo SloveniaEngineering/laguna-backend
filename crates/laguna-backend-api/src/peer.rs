@@ -20,6 +20,7 @@ use laguna_backend_tracker_common::announce::AnnounceEvent;
 
 use laguna_backend_model::behaviour::Behaviour;
 use laguna_backend_model::role::Role;
+
 use laguna_backend_tracker_common::peer::{PeerBin, PeerDict, PeerStream};
 use sqlx::types::ipnetwork::IpNetwork;
 use sqlx::PgPool;
@@ -157,19 +158,18 @@ async fn handle_peer_started<const N: usize>(
   peer_addr: SocketAddr,
 ) -> Result<HttpResponse, PeerError<N>> {
   // If ip was specified by client, prefer it over the one in the request.
-  // If proxy is used, prefer the original ip.
-  let ip = IpNetwork::from(if let Some(ip) = announce_data.ip {
-    ip
-  } else if let Some(ip) = req.connection_info().realip_remote_addr() {
-    // Forwarded by proxy
-    if let Ok(ip) = IpAddr::from_str(ip) {
-      ip
-    } else {
-      peer_addr.ip()
-    }
-  } else {
-    peer_addr.ip()
-  });
+  // If proxy is used, prefer the original ip (realip).
+  // If neither is available, use the peer's ip (socket).
+  let ip = IpNetwork::from(
+    announce_data.ip.unwrap_or(
+      req
+        .connection_info()
+        .realip_remote_addr()
+        .map(IpAddr::from_str)
+        .unwrap_or(Ok(peer_addr.ip()))
+        .unwrap_or(peer_addr.ip()),
+    ),
+  );
 
   let user_agent = req
     .headers()
@@ -207,15 +207,15 @@ async fn handle_peer_started<const N: usize>(
   .map(drop)
   .ok_or(PeerError::NotCreated)?;
 
-  let (complete, incomplete) = complete_incomplete_counts(&swarm).await;
+  let peer_count = complete_incomplete_counts(pool.get_ref(), &announce_data).await?;
 
   Ok(
     HttpResponse::Ok().body(
       AnnounceReply {
         failure_reason: None,
         warning_message: None,
-        complete,
-        incomplete,
+        complete: peer_count.complete.unwrap_or_default() as u64,
+        incomplete: peer_count.incomplete.unwrap_or_default() as u64,
         tracker_id: None,
         min_interval: None,
         interval: 1,
@@ -283,14 +283,14 @@ async fn handle_peer_completed<const N: usize>(
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, PeerError<N>> {
   let swarm = torrent_swarm(pool.get_ref(), &announce_data).await?;
-  let (complete, incomplete) = complete_incomplete_counts(&swarm).await;
+  let peer_count = complete_incomplete_counts(pool.get_ref(), &announce_data).await?;
   Ok(
     HttpResponse::Ok().body(
       AnnounceReply {
         failure_reason: None,
         warning_message: None,
-        complete,
-        incomplete,
+        complete: peer_count.complete.unwrap_or_default() as u64,
+        incomplete: peer_count.incomplete.unwrap_or_default() as u64,
         tracker_id: None,
         min_interval: None,
         interval: 1,
@@ -333,15 +333,15 @@ async fn handle_peer_updated<const N: usize>(
   .map(drop)
   .ok_or(PeerError::NotUpdated)?;
 
-  let (complete, incomplete) = complete_incomplete_counts(&swarm).await;
+  let peer_count = complete_incomplete_counts(pool.get_ref(), &announce_data).await?;
 
   Ok(
     HttpResponse::Ok().body(
       AnnounceReply {
         failure_reason: None,
         warning_message: None,
-        complete,
-        incomplete,
+        complete: peer_count.complete.unwrap_or_default() as u64,
+        incomplete: peer_count.incomplete.unwrap_or_default() as u64,
         tracker_id: None,
         min_interval: None,
         interval: 1,
@@ -371,15 +371,15 @@ async fn handle_peer_paused<const N: usize>(
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, PeerError<N>> {
   let swarm = torrent_swarm(pool.get_ref(), &announce_data).await?;
-  let (complete, incomplete) = complete_incomplete_counts(&swarm).await;
+  let peer_count = complete_incomplete_counts(pool.get_ref(), &announce_data).await?;
 
   Ok(
     HttpResponse::Ok().body(
       AnnounceReply {
         failure_reason: None,
         warning_message: None,
-        complete,
-        incomplete,
+        complete: peer_count.complete.unwrap_or_default() as u64,
+        incomplete: peer_count.incomplete.unwrap_or_default() as u64,
         tracker_id: None,
         min_interval: None,
         interval: 1,
@@ -394,37 +394,44 @@ async fn handle_peer_paused<const N: usize>(
   )
 }
 
-/// Returns all peers in a specific torrent's swarm.
-// TODO: This hits a DB quite hard, we should cache this.
+/// Returns all peers in a specific torrent's swarm excluding oneself.
 #[inline]
 async fn torrent_swarm<const N: usize>(
   pool: &PgPool,
   announce_data: &Announce<N>,
 ) -> Result<Vec<Peer>, PeerError<N>> {
-  Ok(
-    sqlx::query_file_as!(
-      Peer,
-      "queries/torrent_swarm_noself.sql",
-      &announce_data.info_hash as _,
-      &announce_data.peer_id as _
-    )
-    .fetch_all(pool)
-    .await?,
+  sqlx::query_file_as!(
+    Peer,
+    "queries/torrent_swarm_noself.sql",
+    &announce_data.info_hash as _,
+    &announce_data.peer_id as _
   )
+  .fetch_all(pool)
+  .await
+  .map_err(PeerError::from)
 }
 
-/// Returns how many peers in swarm completed or incompleted.
+#[derive(Debug, sqlx::FromRow)]
+struct PeerCount {
+  complete: Option<i64>,
+  incomplete: Option<i64>,
+}
+
+/// Returns how many peers in swarm completed or incompleted excluding oneself.
 /// NOTE: This is not realtime but close enough.
-// TODO: This hits DB quite hard, we should cache this.
-async fn complete_incomplete_counts(torrent_swarm: &[Peer]) -> (u64, u64) {
-  torrent_swarm
-    .iter()
-    .fold((0, 0), |(complete, incomplete), peer| {
-      match peer.left_bytes {
-        0 => (complete + 1, incomplete),
-        _ => (complete, incomplete + 1),
-      }
-    })
+async fn complete_incomplete_counts<const N: usize>(
+  pool: &PgPool,
+  announce_data: &Announce<N>,
+) -> Result<PeerCount, PeerError<N>> {
+  sqlx::query_file_as!(
+    PeerCount,
+    "queries/torrent_swarm_complete_incomplete_noself.sql",
+    &announce_data.info_hash as _,
+    &announce_data.peer_id as _
+  )
+  .fetch_one(pool)
+  .await
+  .map_err(PeerError::from)
 }
 
 /// Creates [`PeerStream`] based on `compact` and other parameters.
