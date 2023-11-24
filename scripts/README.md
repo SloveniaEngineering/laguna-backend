@@ -17,5 +17,6 @@ Common development scripts.
 | `fix.sh`               | Runs `cargo fix` which removes unnecessary imports and other things, it also formats code.                                              |
 | `lintfix.sh`           | Just like `fix.sh` but considers clippy (the linter) as well as compiler.                                                               |
 | `prepare.sh`           | Run this if you changed any prepared compile-time query macros (`query_*!(something)`).                                                 |
+| `setversion.sh`        | Sets version specified as command argument to all `Cargo.toml` files and all MIME types found in `laguna-backend-api`.                  |
 | `test.sh`              | Runs all tests and show their output.                                                                                                   |
 | `tools.sh`             | Installs common tools for effective development environment.                                                                            |

@@ -1556,7 +1556,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend"
-version = "1.0.0-beta"
+version = "1.0.0-alpha"
 dependencies = [
  "actix-settings",
  "actix-web",
@@ -1566,7 +1566,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-api"
-version = "1.0.0-beta"
+version = "1.0.0-alpha"
 dependencies = [
  "actix-http",
  "actix-jwt-auth-middleware",
@@ -1607,7 +1607,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-config"
-version = "1.0.0-beta"
+version = "1.0.0-alpha"
 dependencies = [
  "actix-settings",
  "const_format",
@@ -1618,7 +1618,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-dto"
-version = "1.0.0-beta"
+version = "1.0.0-alpha"
 dependencies = [
  "actix-jwt-auth-middleware",
  "actix-multipart-extract",
@@ -1640,7 +1640,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-internal"
-version = "1.0.0-beta"
+version = "1.0.0-alpha"
 dependencies = [
  "laguna-backend-api",
  "laguna-backend-config",
@@ -1653,7 +1653,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-middleware"
-version = "1.0.0-beta"
+version = "1.0.0-alpha"
 dependencies = [
  "actix-jwt-auth-middleware",
  "actix-web",
@@ -1681,7 +1681,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-model"
-version = "1.0.0-beta"
+version = "1.0.0-alpha"
 dependencies = [
  "actix-jwt-auth-middleware",
  "actix-web",
@@ -1708,7 +1708,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-setup"
-version = "1.0.0-beta"
+version = "1.0.0-alpha"
 dependencies = [
  "actix-cors",
  "actix-http",
@@ -1740,7 +1740,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-tracker"
-version = "1.0.0-beta"
+version = "1.0.0-alpha"
 dependencies = [
  "laguna-backend-tracker-common",
  "laguna-backend-tracker-http",
@@ -1751,7 +1751,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-tracker-common"
-version = "1.0.0-beta"
+version = "1.0.0-alpha"
 dependencies = [
  "actix",
  "actix-web",
@@ -1766,7 +1766,7 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-tracker-http"
-version = "1.0.0-beta"
+version = "1.0.0-alpha"
 dependencies = [
  "actix-web",
  "bendy",
@@ -1778,11 +1778,11 @@ dependencies = [
 
 [[package]]
 name = "laguna-backend-tracker-udp"
-version = "1.0.0-beta"
+version = "1.0.0-alpha"
 
 [[package]]
 name = "laguna-backend-tracker-ws"
-version = "1.0.0-beta"
+version = "1.0.0-alpha"
 
 [[package]]
 name = "language-tags"
