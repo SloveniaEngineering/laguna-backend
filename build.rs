@@ -13,7 +13,7 @@ fn main() {
   );
   if env::var("CARGO_FEATURE_DOX").is_ok() {
     println!("cargo:warning=Copying logos to documentation. CARGO_FEATURE_DOX is set.");
-    fs::copy("assets/logo.png", "target/doc/logo.png")
+    fs::copy("assets/logo.svg", "target/doc/logo.svg")
       .expect("Failed to copy crate logo when building documentation.");
     fs::copy("assets/favicon.ico", "target/doc/favicon.ico")
       .expect("Failed to copy crate favicon when building documentation.");
