@@ -16,4 +16,4 @@ SELECT id,
        email_confirm_hash,
        email_confirm_expiry
 FROM "User"
-WHERE id = $1;
+WHERE email_confirm_hash = $1;

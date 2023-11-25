@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE \"User\"\nSET role = $1\nWHERE id = $2 RETURNING\n  id,\n  username,\n  email,\n  password,\n  first_login,\n  last_login,\n  avatar_url,\n  salt,\n  role AS \"role: Role\",\n  hnr_count,\n  behaviour AS \"behaviour: Behaviour\",\n  is_enabled,\n  is_donator,\n  has_verified_email,\n  is_profile_private\n;",
+  "query": "UPDATE \"User\"\nSET email_confirm_hash = NULL,\n    email_confirm_expiry = NULL,\n    has_verified_email = TRUE\nWHERE id = $1\nRETURNING\n    id,\n    username,\n    email,\n    password,\n    first_login,\n    last_login,\n    avatar_url,\n    salt,\n    role AS \"role: Role\",\n    hnr_count,\n    behaviour AS \"behaviour: Behaviour\",\n    is_enabled,\n    is_donator,\n    has_verified_email,\n    is_profile_private,\n    email_confirm_hash,\n    email_confirm_expiry;",
   "describe": {
     "columns": [
       {
@@ -105,23 +105,20 @@
         "ordinal": 14,
         "name": "is_profile_private",
         "type_info": "Bool"
+      },
+      {
+        "ordinal": 15,
+        "name": "email_confirm_hash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 16,
+        "name": "email_confirm_expiry",
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
-        {
-          "Custom": {
-            "name": "role",
-            "kind": {
-              "Enum": [
-                "Normie",
-                "Verified",
-                "Mod",
-                "Admin"
-              ]
-            }
-          }
-        },
         "Uuid"
       ]
     },
@@ -140,8 +137,10 @@
       false,
       false,
       false,
-      false
+      false,
+      true,
+      true
     ]
   },
-  "hash": "2b50bc5355d44af50c26e2a07295ed3775d4122bb335eef310f50730150b4464"
+  "hash": "c70cc51ca144d5adbcdf27bf66cbeeb90b18c772fa99b6f3831b16b08b0f312e"
 }

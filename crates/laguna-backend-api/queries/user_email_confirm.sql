@@ -1,7 +1,9 @@
 UPDATE "User"
-SET avatar_url         = $1,
-    is_profile_private = $2
-WHERE id = $3 RETURNING
+SET email_confirm_hash = NULL,
+    email_confirm_expiry = NULL,
+    has_verified_email = TRUE
+WHERE id = $1
+RETURNING
     id,
     username,
     email,
@@ -18,5 +20,4 @@ WHERE id = $3 RETURNING
     has_verified_email,
     is_profile_private,
     email_confirm_hash,
-    email_confirm_expiry
-;
+    email_confirm_expiry;

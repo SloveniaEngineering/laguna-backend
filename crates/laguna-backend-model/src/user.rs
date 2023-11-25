@@ -48,4 +48,8 @@ pub struct User {
   pub has_verified_email: bool,
   /// Does user wish his profile to be private (visible only to [`Role::Mod`] and [`Role::Admin`] users)?
   pub is_profile_private: bool,
+  /// User's last confirmation action hash. sha256(timestamp of action + email).
+  pub email_confirm_hash: Option<String>,
+  /// Email confirmation expiry.
+  pub email_confirm_expiry: Option<DateTime<Utc>>,
 }

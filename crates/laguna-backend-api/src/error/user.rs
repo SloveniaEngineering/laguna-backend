@@ -12,6 +12,7 @@ pub enum UserError {
   InvalidCredentials,
   NotFound,
   Exclusive,
+  ExclusiveOrAdmin,
   NotCreated,
   NotUpdated,
   RoleChangeNotAllowed {
@@ -20,6 +21,8 @@ pub enum UserError {
     changee_to: Role,
   },
   SelfRoleChangeNotAllowed,
+  EmailAlreadyVerified,
+  EmailConfirmHashExpired,
 }
 
 impl fmt::Display for UserError {
@@ -29,6 +32,7 @@ impl fmt::Display for UserError {
         f.write_str("Uporabniško ime, elektronski naslov ali geslo napačno.")
       },
       Self::Exclusive => f.write_str("Samo za ene oči."),
+      Self::ExclusiveOrAdmin => f.write_str("Samo za ene oči ali administratorje."),
       Self::NotFound => f.write_str("Zahtevan uporabnik ne obstaja."),
       Self::NotCreated => f.write_str("Uporabnik ni bil ustvarjen."),
       Self::NotUpdated => f.write_str("Uporabnik ni bil posodobljen."),
@@ -41,6 +45,10 @@ impl fmt::Display for UserError {
         changer, changee_from, changee_to
       )),
       Self::SelfRoleChangeNotAllowed => f.write_str("Sprememba lastne vloge ni dovoljena."),
+      Self::EmailAlreadyVerified => f.write_str("Elektronski naslov je že potrjen."),
+      Self::EmailConfirmHashExpired => {
+        f.write_str("Povezava za potrditev elektronskega naslova je potekla.")
+      },
     }
   }
 }
@@ -49,12 +57,15 @@ impl ResponseError for UserError {
   fn status_code(&self) -> StatusCode {
     match self {
       Self::Exclusive => StatusCode::FORBIDDEN,
+      Self::ExclusiveOrAdmin => StatusCode::FORBIDDEN,
       Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
       Self::NotFound => StatusCode::BAD_REQUEST,
       Self::NotCreated => StatusCode::BAD_REQUEST,
       Self::NotUpdated => StatusCode::BAD_REQUEST,
       Self::RoleChangeNotAllowed { .. } => StatusCode::FORBIDDEN,
       Self::SelfRoleChangeNotAllowed => StatusCode::FORBIDDEN,
+      Self::EmailAlreadyVerified => StatusCode::BAD_REQUEST,
+      Self::EmailConfirmHashExpired => StatusCode::BAD_REQUEST,
     }
   }
 

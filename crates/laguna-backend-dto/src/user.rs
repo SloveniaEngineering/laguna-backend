@@ -30,6 +30,8 @@ pub struct UserDTO {
   pub is_donator: bool,
   pub has_verified_email: bool,
   pub is_profile_private: bool,
+  pub email_confirm_hash: Option<String>,
+  pub email_confirm_expiry: Option<DateTime<Utc>>,
 }
 
 impl From<User> for UserDTO {
@@ -46,6 +48,8 @@ impl From<User> for UserDTO {
       is_donator: user.is_donator,
       has_verified_email: user.has_verified_email,
       is_profile_private: user.is_profile_private,
+      email_confirm_hash: user.email_confirm_hash,
+      email_confirm_expiry: user.email_confirm_expiry,
     }
   }
 }

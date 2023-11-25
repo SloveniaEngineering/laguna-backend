@@ -109,7 +109,7 @@ pub async fn user_patch(
   // TODO: Middleware this.
   let user_id = user_id.into_inner();
   if user_id != current_user.id && current_user.role != Role::Admin {
-    Err(UserError::NotUpdated)?;
+    Err(UserError::ExclusiveOrAdmin)?;
   }
 
   let user = sqlx::query_file_as!(

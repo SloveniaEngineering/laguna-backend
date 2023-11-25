@@ -4,6 +4,8 @@
 #![doc(issue_tracker_base_url = "https://github.com/SloveniaEngineering/laguna-backend")]
 #![deny(missing_docs)]
 #[allow(missing_docs)]
+pub mod email_confirm;
+#[allow(missing_docs)]
 pub mod error;
 #[allow(missing_docs)]
 pub mod helpers;

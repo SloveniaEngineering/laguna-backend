@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE \"User\"\nSET avatar_url         = $1,\n    is_profile_private = $2\nWHERE id = $3 RETURNING\n    id,\n    username,\n    email,\n    password,\n    first_login,\n    last_login,\n    avatar_url,\n    salt,\n    role AS \"role: Role\",\n    hnr_count,\n    behaviour AS \"behaviour: Behaviour\",\n    is_enabled,\n    is_donator,\n    has_verified_email,\n    is_profile_private\n;",
+  "query": "SELECT id,\n       username,\n       email,\n       password,\n       first_login,\n       last_login,\n       avatar_url,\n       salt,\n       role      AS \"role: Role\",\n       hnr_count,\n       behaviour AS \"behaviour: Behaviour\",\n       is_enabled,\n       is_donator,\n       has_verified_email,\n       is_profile_private,\n       email_confirm_hash,\n       email_confirm_expiry\nFROM \"User\"\nWHERE username = $1\n   OR email = $2;",
   "describe": {
     "columns": [
       {
@@ -105,13 +105,22 @@
         "ordinal": 14,
         "name": "is_profile_private",
         "type_info": "Bool"
+      },
+      {
+        "ordinal": 15,
+        "name": "email_confirm_hash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 16,
+        "name": "email_confirm_expiry",
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
         "Text",
-        "Bool",
-        "Uuid"
+        "Text"
       ]
     },
     "nullable": [
@@ -129,8 +138,10 @@
       false,
       false,
       false,
-      false
+      false,
+      true,
+      true
     ]
   },
-  "hash": "1b1fb923e1796228ed7508f40aa601ebddc55d2168bf0aa526d496a2e8798c23"
+  "hash": "2b9d9f78c79c3fa51c783354138b5cf40a5094740415674552973b913f974f35"
 }
