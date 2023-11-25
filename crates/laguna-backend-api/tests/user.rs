@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use actix_http::StatusCode;
-use actix_web::test::{read_body_json, TestRequest, read_body};
+use actix_web::test::{read_body, read_body_json, TestRequest};
 
 use chrono::{DateTime, Utc};
 
@@ -77,7 +77,6 @@ async fn test_user_patch(pool: PgPool) -> sqlx::Result<()> {
     TestRequest::patch()
       .uri("/api/user/me")
       .set_json(UserPatchDTO {
-        username: user_dto.username.clone(),
         avatar_url: Some(String::from("https://example.com")),
         is_profile_private: true,
       }),
@@ -109,6 +108,7 @@ async fn test_user_patch(pool: PgPool) -> sqlx::Result<()> {
   Ok(())
 }
 
+/*
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_user_patch_change_username(pool: PgPool) -> sqlx::Result<()> {
   let app = common::setup_test(&pool).await;
@@ -119,7 +119,8 @@ async fn test_user_patch_change_username(pool: PgPool) -> sqlx::Result<()> {
     TestRequest::patch()
       .uri("/api/user/me")
       .set_json(UserPatchDTO {
-        username: String::from("new_username"),
+        username: Some(String::from("new_username")),
+        password: None,
         avatar_url: None,
         is_profile_private: false,
       }),
@@ -137,6 +138,7 @@ async fn test_user_patch_change_username(pool: PgPool) -> sqlx::Result<()> {
   );
   Ok(())
 }
+*/
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_user_patch_remove_avatar_url(pool: PgPool) -> sqlx::Result<()> {
@@ -148,7 +150,6 @@ async fn test_user_patch_remove_avatar_url(pool: PgPool) -> sqlx::Result<()> {
     TestRequest::patch()
       .uri("/api/user/me")
       .set_json(UserPatchDTO {
-        username: user_dto.username.clone(),
         avatar_url: Some(String::from("https://example.com")),
         is_profile_private: true,
       }),
@@ -163,7 +164,6 @@ async fn test_user_patch_remove_avatar_url(pool: PgPool) -> sqlx::Result<()> {
     TestRequest::patch()
       .uri("/api/user/me")
       .set_json(UserPatchDTO {
-        username: user_dto.username.clone(),
         avatar_url: None,
         is_profile_private: true,
       }),
@@ -307,10 +307,7 @@ async fn test_user_role_change_self(pool: PgPool) -> sqlx::Result<()> {
   .await
   .unwrap();
 
-  assert_eq!(
-    role_change_res.status(),
-    StatusCode::FORBIDDEN,
-  );
+  assert_eq!(role_change_res.status(), StatusCode::FORBIDDEN,);
 
   assert_eq!(
     read_body(role_change_res).await,

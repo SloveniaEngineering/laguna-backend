@@ -37,6 +37,8 @@ pub struct ApplicationSettings {
   pub frontend: FrontendSettings,
   /// Tracker configuration settings.
   pub tracker: TrackerSettings,
+  /// Mailer configuration settings.
+  pub mailer: MailerSettings,
 }
 
 /// Authentication settings.
@@ -138,6 +140,19 @@ impl FrontendSettings {
 pub struct TrackerSettings {
   /// Where can tracker receive announce requests from torrent clients?
   pub announce_url: String,
+}
+
+/// Mailer settings.
+/// Used to send emails to users.
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "kebab-case")]
+pub struct MailerSettings {
+  /// API Base URL
+  pub api_base_url: String,
+  /// API Token
+  pub api_token: Secret<String>,
+  /// Sender email address
+  pub sender_email: String,
 }
 
 /// Allow override of Laguna.toml-based values with environment variable-based values.
@@ -248,6 +263,19 @@ pub fn make_overridable_with_env_vars(settings: &mut Settings) {
     "APPLICATION_TRACKER_ANNOUNCE_URL",
   )
   .expect("APPLICATION_TRACKER_ANNOUNCE_URL not specified");
+  Settings::override_field_with_env_var(
+    &mut settings.application.mailer.api_base_url,
+    "APPLICATION_MAILER_API_BASE_URL",
+  )
+  .expect("APPLICATION_MAILER_API_BASE_URL not specified");
+  if let Ok(application_mailer_api_token) = env::var("APPLICATION_MAILER_API_TOKEN") {
+    settings.application.mailer.api_token = Secret::new(application_mailer_api_token);
+  }
+  Settings::override_field_with_env_var(
+    &mut settings.application.mailer.sender_email,
+    "APPLICATION_MAILER_SENDER_EMAIL",
+  )
+  .expect("APPLICATION_MAILER_SENDER_EMAIL not specified");
 }
 
 #[cfg(test)]

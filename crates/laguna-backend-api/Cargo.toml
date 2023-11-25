@@ -55,6 +55,7 @@ secrecy = { version = "*", features = ["serde"] }
 rand = "*"
 utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
 bendy = { version = "^0.3", features = ["std", "serde"] }
+postmark = {version = "0.10.0", features = ["reqwest-rustls-tls"]}
 # serde_bencode = "*"
 
 [dev-dependencies]

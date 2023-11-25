@@ -11,6 +11,7 @@ use actix_settings::Mode;
 use actix_web::dev::ServiceResponse;
 use actix_web::dev::{ServiceFactory, ServiceRequest};
 use actix_web::http::header;
+use postmark::reqwest::PostmarkClient;
 
 use actix_web::middleware::DefaultHeaders;
 use actix_web::web::ServiceConfig;
@@ -41,8 +42,7 @@ use laguna_backend_api::torrent::{
 };
 use laguna_backend_api::user;
 use laguna_backend_api::user::{
-  user_get, user_me_delete, user_me_get, user_patch, user_patch_me, user_role_change,
-  user_torrents_get,
+  user_get, user_me_delete, user_me_get, user_patch, user_role_change, user_torrents_get,
 };
 use laguna_backend_dto::already_exists::AlreadyExistsDTO;
 use laguna_backend_dto::login::LoginDTO;
@@ -131,6 +131,7 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
   let secret_key = setup_secret_key(&settings);
   let (token_signer, authority) = crate::setup_authority!(secret_key, settings);
   let argon_context = setup_argon_context(&settings);
+  let mailer = setup_mailer(&settings);
 
   move |service_config: &mut ServiceConfig| {
     service_config
@@ -140,6 +141,10 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
       .app_data(web::Data::new(
         settings.application.tracker.announce_url.clone(),
       ))
+      .app_data(web::Data::new(
+        settings.application.mailer.sender_email.clone(),
+      ))
+      .app_data(web::Data::new(mailer))
       .service(
         web::scope("/api/user/auth")
           .route("/register", web::post().to(register))
@@ -179,12 +184,9 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
           )
           .service(
             web::scope("/user")
-              .route("/me", web::patch().to(user_patch_me))
               .route(
                 "/{id}",
-                web::patch()
-                  .to(user_patch)
-                  .wrap(AuthorizationMiddlewareFactory::new(Role::Mod)),
+                web::patch().to(user_patch), //.wrap(AuthorizationMiddlewareFactory::new(Role::Mod)),
               )
               .route("/{id}/role_change", web::patch().to(user_role_change))
               .route("/me", web::get().to(user_me_get))
@@ -321,7 +323,6 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
   paths(
     user::user_me_get,
     user::user_me_delete,
-    user::user_patch_me,
     user::user_get,
     user::user_patch,
     user::user_torrents_get,
@@ -516,4 +517,19 @@ pub async fn setup_db(settings: &Settings) -> Result<PgPool, sqlx::Error> {
   sqlx::migrate!("../../migrations").run(&pool).await?;
 
   Ok(pool)
+}
+
+/// Sets up [`PostmarkClient`] used for sending emails.
+pub fn setup_mailer(settings: &Settings) -> PostmarkClient {
+  PostmarkClient::builder()
+    .base_url(settings.application.mailer.api_base_url.clone())
+    .token(
+      settings
+        .application
+        .mailer
+        .api_token
+        .expose_secret()
+        .as_str(),
+    )
+    .build()
 }

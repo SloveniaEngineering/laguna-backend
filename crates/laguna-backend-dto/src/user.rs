@@ -50,10 +50,30 @@ impl From<User> for UserDTO {
   }
 }
 
-#[allow(missing_docs)]
+/// Patch non-sensitive user data-transfer object.
+/// When patching with this DTO, user does not have to go through additional verification.
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, FromRequest, ToSchema)]
 pub struct UserPatchDTO {
-  pub username: String,
+  /// [`None`] means URL is deleted.
   pub avatar_url: Option<String>,
+  /// Set if user's profile is private.
   pub is_profile_private: bool,
+}
+
+/// Patch user's password DTO.
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, FromRequest, ToSchema)]
+pub struct UserPasswordPatchDTO {
+  /// User's new password.
+  pub password: String,
+}
+
+/// Patch user's username DTO.
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, FromRequest, Validate, ToSchema)]
+pub struct UserUsernamePatchDTO {
+  /// User's new username.
+  #[validate(
+    non_control_character,
+    length(min = "USERNAME_MIN_LEN", max = "USERNAME_MAX_LEN")
+  )]
+  pub username: String,
 }

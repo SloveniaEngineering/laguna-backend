@@ -51,3 +51,4 @@ cached = "*"
 utoipa-swagger-ui = { version = "3", features = ["actix-web"] }
 utoipa-redoc = { version = "*", features = ["actix-web"] }
 utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
+postmark = {version = "0.10.0", features = ["reqwest-rustls-tls"]}

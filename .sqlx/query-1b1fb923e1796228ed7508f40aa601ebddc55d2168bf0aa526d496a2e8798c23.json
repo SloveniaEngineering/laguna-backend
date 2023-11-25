@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE \"User\"\nSET username           = $1,\n    avatar_url         = $2,\n    is_profile_private = $3\nWHERE id = $4 RETURNING\n    id,\n    username,\n    email,\n    password,\n    first_login,\n    last_login,\n    avatar_url,\n    salt,\n    role AS \"role: Role\",\n    hnr_count,\n    behaviour AS \"behaviour: Behaviour\",\n    is_enabled,\n    is_donator,\n    has_verified_email,\n    is_profile_private\n;",
+  "query": "UPDATE \"User\"\nSET avatar_url         = $1,\n    is_profile_private = $2\nWHERE id = $3 RETURNING\n    id,\n    username,\n    email,\n    password,\n    first_login,\n    last_login,\n    avatar_url,\n    salt,\n    role AS \"role: Role\",\n    hnr_count,\n    behaviour AS \"behaviour: Behaviour\",\n    is_enabled,\n    is_donator,\n    has_verified_email,\n    is_profile_private\n;",
   "describe": {
     "columns": [
       {
@@ -109,7 +109,6 @@
     ],
     "parameters": {
       "Left": [
-        "Varchar",
         "Text",
         "Bool",
         "Uuid"
@@ -133,5 +132,5 @@
       false
     ]
   },
-  "hash": "e929815023896301e99ff8904af42fe4a8758ffa8d6f5910dad41aae4fe2f17a"
+  "hash": "1b1fb923e1796228ed7508f40aa601ebddc55d2168bf0aa526d496a2e8798c23"
 }

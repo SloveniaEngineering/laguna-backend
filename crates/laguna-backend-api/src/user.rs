@@ -1,13 +1,12 @@
-use actix_jwt_auth_middleware::TokenSigner;
 use actix_web::{web, HttpResponse};
 
-use jwt_compact::alg::Hs256;
 use laguna_backend_dto::peer::PeerDTO;
 use laguna_backend_dto::role::RoleChangeDTO;
 use laguna_backend_dto::torrent::TorrentDTO;
 use laguna_backend_dto::user::UserDTO;
+
 use laguna_backend_dto::user::UserPatchDTO;
-use laguna_backend_middleware::consts::{ACCESS_TOKEN_HEADER_NAME, REFRESH_TOKEN_HEADER_NAME};
+
 use laguna_backend_middleware::mime::APPLICATION_LAGUNA_JSON_VERSIONED;
 use laguna_backend_model::behaviour::Behaviour;
 use laguna_backend_model::genre::Genre;
@@ -89,53 +88,6 @@ pub async fn user_me_delete(
 #[allow(missing_docs)]
 #[utoipa::path(
   patch,
-  path = "/api/user/me",
-  responses(
-    (status = 200, description = "Returns updated user.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json", headers(
-      ("X-Access-Token" = String, description = "New access token."),
-      ("X-Refresh-Token" = String, description = "New refresh token.")
-    )),
-    (status = 400, description = "User not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
-  ),
-  request_body = UserPatchDTO
-)]
-pub async fn user_patch_me(
-  user_patch_dto: web::Json<UserPatchDTO>,
-  user: UserDTO,
-  pool: web::Data<PgPool>,
-  signer: web::Data<TokenSigner<UserDTO, Hs256>>,
-) -> Result<HttpResponse, APIError> {
-  let user = sqlx::query_file_as!(
-    User,
-    "queries/user_update.sql",
-    user_patch_dto.username,
-    user_patch_dto.avatar_url,
-    user_patch_dto.is_profile_private,
-    user.id
-  )
-  .fetch_optional(pool.get_ref())
-  .await?
-  .map(UserDTO::from)
-  .ok_or(UserError::NotUpdated)?;
-  Ok(
-    HttpResponse::Ok()
-      .append_header((
-        ACCESS_TOKEN_HEADER_NAME,
-        signer.create_access_header_value(&user)?,
-      ))
-      .append_header((
-        REFRESH_TOKEN_HEADER_NAME,
-        signer.create_refresh_header_value(&user)?,
-      ))
-      .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
-      .json(user),
-  )
-}
-
-#[allow(missing_docs)]
-#[utoipa::path(
-  patch,
   path = "/api/user/{id}",
   responses(
     (status = 200, description = "Returns updated user.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
@@ -148,13 +100,34 @@ pub async fn user_patch_me(
   )
 )]
 pub async fn user_patch(
-  _user_id: web::Path<Uuid>,
-  _user_patch_dto: web::Json<UserPatchDTO>,
-  _current_user: UserDTO,
-  _signer: web::Data<TokenSigner<UserDTO, Hs256>>,
-  _pool: web::Data<PgPool>,
+  user_id: web::Path<Uuid>,
+  user_patch_dto: web::Json<UserPatchDTO>,
+  current_user: UserDTO,
+  pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-  Ok(HttpResponse::Ok().finish())
+  // Only allow self or admin to change user.
+  // TODO: Middleware this.
+  let user_id = user_id.into_inner();
+  if user_id != current_user.id && current_user.role != Role::Admin {
+    Err(UserError::NotUpdated)?;
+  }
+
+  let user = sqlx::query_file_as!(
+    User,
+    "queries/user_update.sql",
+    user_patch_dto.avatar_url,
+    user_patch_dto.is_profile_private,
+    user_id
+  )
+  .fetch_optional(pool.get_ref())
+  .await?
+  .map(UserDTO::from)
+  .ok_or(UserError::NotUpdated)?;
+  Ok(
+    HttpResponse::Ok()
+      .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
+      .json(user),
+  )
 }
 
 #[allow(missing_docs)]

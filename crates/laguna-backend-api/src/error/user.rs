@@ -40,9 +40,7 @@ impl fmt::Display for UserError {
         "Kot {:?} sprememba vloge uporabnika iz {:?} v {:?} ni dovoljena.",
         changer, changee_from, changee_to
       )),
-      Self::SelfRoleChangeNotAllowed => {
-        f.write_str("Sprememba lastne vloge ni dovoljena.")
-      },
+      Self::SelfRoleChangeNotAllowed => f.write_str("Sprememba lastne vloge ni dovoljena."),
     }
   }
 }

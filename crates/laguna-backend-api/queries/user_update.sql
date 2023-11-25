@@ -1,8 +1,7 @@
 UPDATE "User"
-SET username           = $1,
-    avatar_url         = $2,
-    is_profile_private = $3
-WHERE id = $4 RETURNING
+SET avatar_url         = $1,
+    is_profile_private = $2
+WHERE id = $3 RETURNING
     id,
     username,
     email,
