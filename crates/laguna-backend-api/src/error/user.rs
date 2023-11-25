@@ -19,6 +19,7 @@ pub enum UserError {
     changee_from: Role,
     changee_to: Role,
   },
+  SelfRoleChangeNotAllowed,
 }
 
 impl fmt::Display for UserError {
@@ -36,9 +37,12 @@ impl fmt::Display for UserError {
         changee_from,
         changee_to,
       } => f.write_fmt(format_args!(
-        "Kot {:?} sprememba role uporabnika iz {:?} v {:?} ni dovoljena.",
+        "Kot {:?} sprememba vloge uporabnika iz {:?} v {:?} ni dovoljena.",
         changer, changee_from, changee_to
       )),
+      Self::SelfRoleChangeNotAllowed => {
+        f.write_str("Sprememba lastne vloge ni dovoljena.")
+      },
     }
   }
 }
@@ -52,6 +56,7 @@ impl ResponseError for UserError {
       Self::NotCreated => StatusCode::BAD_REQUEST,
       Self::NotUpdated => StatusCode::BAD_REQUEST,
       Self::RoleChangeNotAllowed { .. } => StatusCode::FORBIDDEN,
+      Self::SelfRoleChangeNotAllowed => StatusCode::FORBIDDEN,
     }
   }
 

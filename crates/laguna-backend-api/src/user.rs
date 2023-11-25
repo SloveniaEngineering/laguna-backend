@@ -178,7 +178,10 @@ pub async fn user_role_change(
     .fetch_optional(pool.get_ref())
     .await?
     .ok_or(UserError::NotFound)?;
-  // TODO: Can user change its own role? Currently yes but only according to the formula below, which is safe.
+  // User can't change his own role.
+  if changee.id == current_user.id {
+    Err(UserError::SelfRoleChangeNotAllowed)?;
+  }
   match (current_user.role, changee.role, role_change_dto.to) {
     (Role::Admin, _, _)
     | (Role::Mod, Role::Verified | Role::Normie, Role::Verified | Role::Normie) => {

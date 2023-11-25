@@ -1,10 +1,11 @@
 use std::str::FromStr;
 
 use actix_http::StatusCode;
-use actix_web::test::{read_body_json, TestRequest};
+use actix_web::test::{read_body_json, TestRequest, read_body};
 
 use chrono::{DateTime, Utc};
 
+use laguna_backend_api::error::user::UserError;
 use laguna_backend_dto::{
   role::RoleChangeDTO,
   torrent::TorrentDTO,
@@ -287,6 +288,33 @@ async fn test_user_torrents_get(pool: PgPool) -> sqlx::Result<()> {
   assert_eq!(
     torrents,
     vec![expected_torrent_dto_1, expected_torrent_dto_2]
+  );
+  Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_user_role_change_self(pool: PgPool) -> sqlx::Result<()> {
+  let app = common::setup_test(&pool).await;
+  let (_, user_dto, access_token, refresh_token) = common::new_user(&app).await;
+  let role_change_res = common::as_logged_in(
+    access_token.clone(),
+    refresh_token.clone(),
+    TestRequest::patch()
+      .uri(&format!("/api/user/{}/role_change", user_dto.id))
+      .set_json(RoleChangeDTO { to: Role::Verified }),
+    &app,
+  )
+  .await
+  .unwrap();
+
+  assert_eq!(
+    role_change_res.status(),
+    StatusCode::FORBIDDEN,
+  );
+
+  assert_eq!(
+    read_body(role_change_res).await,
+    UserError::SelfRoleChangeNotAllowed.to_string(),
   );
   Ok(())
 }
