@@ -47,7 +47,6 @@ actix-settings = "*"
 actix-service = "*"
 actix-cors = "*"
 const_format = "*"
-cached = "*"
 utoipa-swagger-ui = { version = "3", features = ["actix-web"] }
 utoipa-redoc = { version = "*", features = ["actix-web"] }
 utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }

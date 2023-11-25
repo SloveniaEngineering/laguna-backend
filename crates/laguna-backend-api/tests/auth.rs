@@ -9,9 +9,9 @@ use actix_web::http::StatusCode;
 use fake::Fake;
 use fake::Faker;
 
+use laguna_backend_config::get_settings;
 use laguna_backend_config::Settings;
 use laguna_backend_model::user::User;
-use laguna_backend_setup::get_settings;
 use sqlx::PgPool;
 use std::time::Duration as StdDuration;
 

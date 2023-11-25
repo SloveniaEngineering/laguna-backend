@@ -19,7 +19,6 @@ use actix_web::web::ServiceConfig;
 use actix_web::{web, App, HttpResponse};
 use argon2::Argon2;
 use argon2::{Algorithm, ParamsBuilder, Version};
-use cached::proc_macro::once;
 use chrono::Duration;
 use jwt_compact::{alg::Hs256, alg::Hs256Key, TimeOptions};
 use laguna_backend_api::login;
@@ -70,8 +69,9 @@ use laguna_backend_tracker_common::announce::AnnounceEvent;
 use laguna_backend_tracker_common::info_hash::{InfoHash, SHA1_LENGTH, SHA256_LENGTH};
 use laguna_backend_tracker_common::peer::{PeerBin, PeerDict, PeerId, PeerStream};
 use laguna_backend_tracker_http::announce::{Announce, AnnounceReply};
-use laguna_config::make_overridable_with_env_vars;
-use laguna_config::{Settings, LAGUNA_CONFIG};
+
+use laguna_config::get_settings;
+use laguna_config::Settings;
 use secrecy::ExposeSecret;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 
@@ -83,14 +83,6 @@ use std::sync::Once;
 
 static ENV_LOGGER_INIT: Once = Once::new();
 static CORS_INIT: Once = Once::new();
-
-/// Cached settings specified in Laguna.toml file.
-#[once(name = "SETTINGS")]
-pub fn get_settings() -> Settings {
-  let mut settings = Settings::parse_toml(LAGUNA_CONFIG).expect("Failed to parse settings");
-  make_overridable_with_env_vars(&mut settings);
-  settings
-}
 
 /// Setup with Laguna.toml settings.
 /// Interesting issues discussing returning [`App<T>`]:
@@ -138,12 +130,6 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
       .app_data(web::Data::new(argon_context.clone()))
       // AuthenticationService by default doesnt include token_signer into app_data, hence we get it from setup_authority!() which is kinda hacky.
       .app_data(web::Data::new(token_signer.clone()))
-      .app_data(web::Data::new(
-        settings.application.tracker.announce_url.clone(),
-      ))
-      .app_data(web::Data::new(
-        settings.application.mailer.sender_email.clone(),
-      ))
       .app_data(web::Data::new(mailer))
       .service(
         web::scope("/api/user/auth")

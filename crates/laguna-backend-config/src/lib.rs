@@ -8,6 +8,7 @@
 use std::{env, net::SocketAddr};
 
 use actix_settings::BasicSettings;
+use cached::proc_macro::once;
 use const_format::formatcp;
 use secrecy::{ExposeSecret, Secret};
 use serde::{Deserialize, Serialize};
@@ -24,6 +25,14 @@ pub const MIGRATIONS_DIR: &str = formatcp!("{}/migrations", WORKSPACE_ROOT);
 
 /// Base settings type for laguna.
 pub type Settings = BasicSettings<ApplicationSettings>;
+
+/// Cached settings specified in Laguna.toml file.
+#[once(name = "SETTINGS")]
+pub fn get_settings() -> Settings {
+  let mut settings = Settings::parse_toml(LAGUNA_CONFIG).expect("Failed to parse settings");
+  make_overridable_with_env_vars(&mut settings);
+  settings
+}
 
 /// Root application settings.
 #[derive(Debug, Deserialize, Clone)]

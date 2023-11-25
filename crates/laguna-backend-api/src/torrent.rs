@@ -3,6 +3,7 @@ use actix_web_validator::Json;
 use bendy::decoding::FromBencode;
 use bendy::encoding::ToBencode;
 
+use laguna_backend_config::get_settings;
 use laguna_backend_tracker_common::info_hash::SHA1_LENGTH;
 use sha1::Sha1;
 
@@ -73,7 +74,6 @@ pub async fn torrent_get_raw<const N: usize>(
   info_hash: web::Path<InfoHash<N>>,
   pool: web::Data<PgPool>,
   user: UserDTO,
-  domestic_announce_url: web::Data<String>,
 ) -> Result<HttpResponse, APIError> {
   let info_hash = info_hash.into_inner();
   let download = sqlx::query_file_as!(
@@ -106,7 +106,7 @@ pub async fn torrent_get_raw<const N: usize>(
   // overwrite annouce url by adding down_hash
   torrent.announce_url = Some(format!(
     "{}?down_hash={}",
-    domestic_announce_url.into_inner(),
+    get_settings().application.tracker.announce_url,
     DownloadHash::from(down_hash.to_vec())
   ));
 
@@ -199,7 +199,6 @@ pub async fn torrent_patch<const N: usize>(
 pub async fn torrent_put<const N: usize>(
   form: Multipart<TorrentPutDTO>,
   pool: web::Data<PgPool>,
-  domestic_announce_url: web::Data<String>,
   user: UserDTO,
 ) -> Result<HttpResponse, APIError> {
   /*if user.role < Role::Verified {
@@ -216,10 +215,9 @@ pub async fn torrent_put<const N: usize>(
   }
 
   // Deny torrents with foreign announce url
-  let domestic_announce_url = domestic_announce_url.into_inner();
+  let domestic_announce_url = get_settings().application.tracker.announce_url;
   match torrent_file.announce_url {
-    Some(announce_url_inner) if announce_url_inner != *domestic_announce_url => {
-      eprintln!("{} ::: {}", announce_url_inner, *domestic_announce_url);
+    Some(announce_url_inner) if announce_url_inner != domestic_announce_url => {
       return Err(TorrentError::Invalid.into());
     },
     // TODO: Remove `None` and adjust tests so that torrents with domestic announce url are used.

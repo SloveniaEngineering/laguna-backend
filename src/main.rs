@@ -13,8 +13,8 @@ use actix_web::middleware::TrailingSlash;
 use actix_web::web;
 use actix_web::HttpServer;
 
+use laguna::config::get_settings;
 use laguna::dto::meta::AppInfoDTO;
-use laguna::setup::get_settings;
 use std::env;
 
 use laguna::setup::setup;
