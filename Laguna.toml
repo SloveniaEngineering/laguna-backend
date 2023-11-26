@@ -45,6 +45,6 @@ announce-url = "http://127.0.0.1:6969/peer/announce"
 announce-interval = 1800
 
 [application.mailer]
-api-base-url = "http://api.postmarkapp.com/"
+api-base-url = "https://api.postmarkapp.com/"
 api-token = "some token"
 sender-email = "noreply@laguna.si"
