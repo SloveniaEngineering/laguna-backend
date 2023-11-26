@@ -47,4 +47,4 @@ announce-interval = 1800
 [application.mailer]
 api-base-url = "http://api.postmarkapp.com/"
 api-token = "some token"
-sender-email = "bot@laguna.si"
+sender-email = "noreply@laguna.si"
