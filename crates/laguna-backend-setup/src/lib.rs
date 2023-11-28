@@ -151,6 +151,7 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
           ),
       )
       // https://github.com/cloud-annotations/docusaurus-openapi/issues/231
+      // TODO: Should this be closed in production?
       .service(
         SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
       )
@@ -178,7 +179,14 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
               .route("/me", web::get().to(user_me_get))
               .route("/{id}", web::get().to(user_get))
               .route("/me", web::delete().to(user_me_delete))
-              .route("/{id}/torrents", web::get().to(user_torrents_get)),
+              .route(
+                "/{id}/torrents",
+                web::get().to(user_torrents_get::<SHA1_LENGTH>),
+              )
+              .route(
+                "/v2/{id}/torrents",
+                web::get().to(user_torrents_get::<SHA256_LENGTH>),
+              ),
           )
           .service(
             web::scope("/torrent")
@@ -272,8 +280,10 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
       UserDTO,
       UserPatchDTO,
       TorrentPutDTO,
-      TorrentDTO,
-      Torrent,
+      TorrentDTO::<SHA1_LENGTH>,
+      TorrentDTO::<SHA256_LENGTH>,
+      Torrent::<SHA1_LENGTH>,
+      Torrent::<SHA256_LENGTH>,
       Genre,
       TorrentPatchDTO,
       RatingDTO::<SHA1_LENGTH>,
@@ -283,7 +293,8 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
       RegisterDTO,
       LoginDTO,
       AppInfoDTO,
-      PeerDTO,
+      PeerDTO::<SHA1_LENGTH>,
+      PeerDTO::<SHA256_LENGTH>,
       AlreadyExistsDTO,
       Role,
       Behaviour,
@@ -296,7 +307,9 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
       AnnounceEvent,
       AnnounceReply,
       RoleChangeDTO,
-      Peer,
+      Peer::<SHA1_LENGTH>,
+      Peer::<SHA256_LENGTH>,
+      PeerStream,
       PeerStream,
       PeerDict,
       PeerBin,

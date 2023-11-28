@@ -51,7 +51,7 @@ pub async fn torrent_get<const N: usize>(
   )
   .fetch_optional(pool.get_ref())
   .await?
-  .map(TorrentDTO::from)
+  .map(TorrentDTO::<N>::from)
   .ok_or(TorrentError::NotFound)?;
   Ok(
     HttpResponse::Ok()
@@ -85,7 +85,7 @@ pub async fn torrent_get_raw<const N: usize>(
   .fetch_optional(pool.get_ref())
   .await?;
 
-  let torrent_bytes = sqlx::query_file_as!(Torrent, "queries/torrent_get.sql", info_hash as _)
+  let torrent_bytes = sqlx::query_file_as!(Torrent::<N>, "queries/torrent_get.sql", info_hash as _)
     .fetch_optional(pool.get_ref())
     .await?
     .ok_or(TorrentError::NotFound)?
@@ -168,7 +168,7 @@ pub async fn torrent_patch<const N: usize>(
 ) -> Result<HttpResponse, APIError> {
   let torrent_patch = torrent_dto.into_inner();
   let torrent_dto = sqlx::query_file_as!(
-    Torrent,
+    Torrent::<N>,
     "queries/torrent_update.sql",
     torrent_patch.nfo,
     torrent_patch.genre as _,
@@ -176,7 +176,7 @@ pub async fn torrent_patch<const N: usize>(
   )
   .fetch_optional(pool.get_ref())
   .await?
-  .map(TorrentDTO::from)
+  .map(TorrentDTO::<N>::from)
   .ok_or(TorrentError::NotUpdated)?;
   Ok(
     HttpResponse::Ok()
@@ -233,16 +233,19 @@ pub async fn torrent_put<const N: usize>(
   let info_hash = Sha1::digest(torrent_file.info.to_bencode()?);
   // TODO: BitTorrent v2 needs SHA256_LENGTH
   let info_hash = InfoHash::<SHA1_LENGTH>(info_hash.try_into().unwrap());
-  let maybe_torrent =
-    sqlx::query_file_as!(Torrent, "queries/torrent_get.sql", info_hash.clone() as _)
-      .fetch_optional(pool.get_ref())
-      .await?;
+  let maybe_torrent = sqlx::query_file_as!(
+    Torrent::<N>,
+    "queries/torrent_get.sql",
+    info_hash.clone() as _
+  )
+  .fetch_optional(pool.get_ref())
+  .await?;
   if maybe_torrent.is_some() {
     return Ok(HttpResponse::AlreadyReported().finish());
   }
 
   let torrent_dto = sqlx::query_file_as!(
-    Torrent,
+    Torrent::<N>,
     "queries/torrent_insert.sql",
     info_hash as _,
     form.torrent.bytes, // torrent is already bencoded so we can just insert it
@@ -265,7 +268,7 @@ pub async fn torrent_put<const N: usize>(
   )
   .fetch_optional(pool.get_ref())
   .await?
-  .map(TorrentDTO::from)
+  .map(TorrentDTO::<N>::from)
   .ok_or(TorrentError::NotCreated)?;
 
   Ok(
@@ -290,13 +293,13 @@ pub async fn torrent_delete<const N: usize>(
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
   let torrent_dto = sqlx::query_file_as!(
-    Torrent,
+    Torrent::<N>,
     "queries/torrent_delete.sql",
     info_hash.into_inner() as _
   )
   .fetch_optional(pool.get_ref())
   .await?
-  .map(TorrentDTO::from)
+  .map(TorrentDTO::<N>::from)
   .ok_or(TorrentError::NotFound)?;
   Ok(
     HttpResponse::Ok()
@@ -320,7 +323,7 @@ pub async fn torrent_swarm<const N: usize>(
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
   let swarm = sqlx::query_file_as!(
-    Peer,
+    Peer::<N>,
     "queries/torrent_swarm.sql",
     info_hash.into_inner() as _
   )

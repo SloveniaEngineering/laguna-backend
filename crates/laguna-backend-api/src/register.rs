@@ -76,7 +76,7 @@ pub async fn register(
 
   let email_confirm_hash = Sha256::digest(format!(
     "{}{}",
-    email_confirm_expiry.to_string(),
+    email_confirm_expiry,
     register_dto.email.clone()
   ));
 

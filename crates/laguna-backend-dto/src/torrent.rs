@@ -18,7 +18,7 @@ use utoipa::ToSchema;
 use validator::Validate;
 
 /// Alias for [`Torrent`].
-pub type TorrentDTO = Torrent;
+pub type TorrentDTO<const N: usize> = Torrent<N>;
 
 /// DTO used when `PUT`ting a multipart file.
 #[derive(Debug, Deserialize, MultipartForm, ToSchema)]

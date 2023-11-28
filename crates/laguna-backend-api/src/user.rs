@@ -198,7 +198,7 @@ pub async fn user_role_change(
     ("id", Path, description = "User's id.", format = Uuid)
   )
 )]
-pub async fn user_peers_get(
+pub async fn user_peers_get<const N: usize>(
   id: web::Path<Uuid>,
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
@@ -206,7 +206,7 @@ pub async fn user_peers_get(
     .fetch_all(pool.get_ref())
     .await?
     .into_iter()
-    .collect::<Vec<PeerDTO>>();
+    .collect::<Vec<PeerDTO<N>>>();
   Ok(
     HttpResponse::Ok()
       .content_type(APPLICATION_LAGUNA_JSON_VERSIONED)
@@ -227,16 +227,16 @@ pub async fn user_peers_get(
     ("id", Path, description = "User's id.", format = Uuid)
   )
 )]
-pub async fn user_torrents_get(
+pub async fn user_torrents_get<const N: usize>(
   id: web::Path<Uuid>,
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
-  let torrents = sqlx::query_file_as!(Torrent, "queries/user_torrents.sql", id.into_inner())
+  let torrents = sqlx::query_file_as!(Torrent::<N>, "queries/user_torrents.sql", id.into_inner())
     .fetch_all(pool.get_ref())
     .await?
     .into_iter()
-    .map(TorrentDTO::from)
-    .collect::<Vec<TorrentDTO>>();
+    .map(TorrentDTO::<N>::from)
+    .collect::<Vec<TorrentDTO<N>>>();
 
   Ok(
     HttpResponse::Ok()

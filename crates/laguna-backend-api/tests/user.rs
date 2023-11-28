@@ -13,6 +13,7 @@ use laguna_backend_dto::{
 };
 use laguna_backend_middleware::mime::APPLICATION_XBITTORRENT;
 use laguna_backend_model::{role::Role, speedlevel::SpeedLevel};
+use laguna_backend_tracker_common::info_hash::SHA1_LENGTH;
 use sqlx::PgPool;
 
 mod common;
@@ -207,7 +208,7 @@ async fn test_user_torrents_get(pool: PgPool) -> sqlx::Result<()> {
   .unwrap();
 
   assert_eq!(put_res.status(), StatusCode::OK);
-  let torrent_dto = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent_dto = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
   let expected_torrent_dto_1 = TorrentDTO {
     info_hash: torrent_dto.info_hash.clone(),
     raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent").to_vec(),
@@ -250,7 +251,7 @@ async fn test_user_torrents_get(pool: PgPool) -> sqlx::Result<()> {
   .unwrap();
 
   assert_eq!(put_res.status(), StatusCode::OK);
-  let torrent_dto = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent_dto = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
   let expected_torrent_dto_2 = TorrentDTO {
     info_hash: torrent_dto.info_hash.clone(),
     raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/bunny.torrent").to_vec(),
@@ -284,7 +285,7 @@ async fn test_user_torrents_get(pool: PgPool) -> sqlx::Result<()> {
 
   assert_eq!(get_torrents_res.status(), StatusCode::OK);
 
-  let torrents = read_body_json::<Vec<TorrentDTO>, _>(get_torrents_res).await;
+  let torrents = read_body_json::<Vec<TorrentDTO<SHA1_LENGTH>>, _>(get_torrents_res).await;
   assert_eq!(torrents.len(), 2);
 
   assert_eq!(

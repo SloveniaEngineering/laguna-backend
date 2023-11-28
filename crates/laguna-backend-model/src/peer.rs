@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::ipnetwork::IpNetwork;
 use utoipa::ToSchema;
 
-use laguna_backend_tracker_common::info_hash::{InfoHash, SHA1_LENGTH};
+use laguna_backend_tracker_common::info_hash::InfoHash;
 use laguna_backend_tracker_common::peer::PeerId;
 use uuid::Uuid;
 
@@ -12,15 +12,15 @@ use crate::behaviour::Behaviour;
 /// [`Peer`] DB object.
 /// A [`Peer`] is created when leeching/seeding or anything else a user does with a **file pointed to by torrent** (except when **torrent file** is downloaded).
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Hash, sqlx::FromRow, ToSchema)]
-pub struct Peer {
+pub struct Peer<const N: usize> {
   /// Unique id of Peer.
   pub uuid: Uuid,
-  /// Id of Peer as reported by torrent client (peer client program ie. BitTorrent, uBitTorrent, etc).
+  /// Id of Peer as reported by torrent client [`laguna_backend_tracker_common::peer::PeerClient`] (peer client program ie. BitTorrent, uBitTorrent, etc).
   pub id: PeerId,
   /// MD5 of Peer
   pub md5_hash: Option<String>,
   /// Info hash of torrent file this [`Peer`] is interacting with.
-  pub info_hash: InfoHash<SHA1_LENGTH>,
+  pub info_hash: InfoHash<N>,
   /// IP of this peer.
   pub ip: IpNetwork,
   /// Port of this peer.

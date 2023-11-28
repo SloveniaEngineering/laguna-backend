@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 
-use laguna_backend_tracker_common::info_hash::{InfoHash, SHA1_LENGTH};
+use laguna_backend_tracker_common::info_hash::InfoHash;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -18,9 +18,9 @@ use validator::Validate;
 /// Torrent DB object.
 #[derive(Derivative, Serialize, Deserialize, PartialEq, Eq, Clone, FromRow, Validate, ToSchema)]
 #[derivative(Debug)]
-pub struct Torrent {
-  /// Torrent's info hash, unique for all torrents, right now we only store bittorrents v1 (sha1), but v2 (sha256) should technically still work due to usage of `BYTEA` which is unlimited bytearray.
-  pub info_hash: InfoHash<SHA1_LENGTH>,
+pub struct Torrent<const N: usize> {
+  /// Torrent's info hash, unique for all torrents, sha1 or sha256 of [`laguna_backend_dto::torrent::TorrentFile`]'s bencoded info section.
+  pub info_hash: InfoHash<N>,
   /// Raw torrent file's bytes.
   #[derivative(Debug = "ignore")]
   pub raw: Vec<u8>,

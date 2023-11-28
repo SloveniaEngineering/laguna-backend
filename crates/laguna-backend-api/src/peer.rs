@@ -62,12 +62,16 @@ pub async fn peer_announce<const N: usize>(
   )
   .fetch_optional(pool.get_ref())
   .await?
-  .map(drop)
+  .map(drop::<Torrent<N>>)
   .ok_or(PeerError::UnknownTorrent(announce_data.info_hash.clone()))?;
 
-  let maybe_peer = sqlx::query_file_as!(Peer, "queries/peer_get.sql", announce_data.peer_id as _)
-    .fetch_optional(pool.get_ref())
-    .await?;
+  let maybe_peer = sqlx::query_file_as!(
+    Peer::<N>,
+    "queries/peer_get.sql",
+    announce_data.peer_id as _
+  )
+  .fetch_optional(pool.get_ref())
+  .await?;
 
   handle_peer_request(
     req,
@@ -83,7 +87,7 @@ pub async fn peer_announce<const N: usize>(
 /// Delegates peer request to one of subfunctions depend on event type.
 async fn handle_peer_request<const N: usize>(
   req: HttpRequest,
-  maybe_peer: Option<Peer>,
+  maybe_peer: Option<Peer<N>>,
   announce_data: Announce<N>,
   user: User,
   pool: web::Data<PgPool>,
@@ -185,7 +189,7 @@ async fn handle_peer_started<const N: usize>(
   };
 
   sqlx::query_file_as!(
-    Peer,
+    Peer::<N>,
     "queries/peer_insert.sql",
     announce_data.peer_id as _,
     None::<String>,
@@ -244,7 +248,7 @@ async fn handle_peer_stopped<const N: usize>(
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, PeerError<N>> {
   sqlx::query_file_as!(
-    Peer,
+    Peer::<N>,
     "queries/peer_update.sql",
     announce_data.uploaded,
     announce_data.downloaded,
@@ -266,7 +270,7 @@ async fn handle_peer_stopped<const N: usize>(
         tracker_id: None,
         min_interval: None,
         interval: 1,
-        peers: peer_stream(
+        peers: peer_stream::<N>(
           announce_data.compact.unwrap_or(true),
           announce_data.no_peer_id.unwrap_or_default(),
           vec![],
@@ -319,7 +323,7 @@ async fn handle_peer_updated<const N: usize>(
   };
 
   sqlx::query_file_as!(
-    Peer,
+    Peer::<N>,
     "queries/peer_update.sql",
     announce_data.uploaded,
     announce_data.downloaded,
@@ -366,7 +370,7 @@ async fn handle_peer_updated<const N: usize>(
 
 #[allow(missing_docs)]
 async fn handle_peer_paused<const N: usize>(
-  _peer: Peer,
+  _peer: Peer<N>,
   announce_data: Announce<N>,
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, PeerError<N>> {
@@ -399,9 +403,9 @@ async fn handle_peer_paused<const N: usize>(
 async fn torrent_swarm<const N: usize>(
   pool: &PgPool,
   announce_data: &Announce<N>,
-) -> Result<Vec<Peer>, PeerError<N>> {
+) -> Result<Vec<Peer<N>>, PeerError<N>> {
   sqlx::query_file_as!(
-    Peer,
+    Peer::<N>,
     "queries/torrent_swarm_noself.sql",
     &announce_data.info_hash as _,
     &announce_data.peer_id as _
@@ -435,7 +439,11 @@ async fn complete_incomplete_counts<const N: usize>(
 }
 
 /// Creates [`PeerStream`] based on `compact` and other parameters.
-fn peer_stream(compact: bool, no_peer_id: bool, torrent_swarm: Vec<Peer>) -> PeerStream {
+fn peer_stream<const N: usize>(
+  compact: bool,
+  no_peer_id: bool,
+  torrent_swarm: Vec<Peer<N>>,
+) -> PeerStream {
   if !compact || torrent_swarm.iter().any(|peer| peer.ip.is_ipv6()) {
     PeerStream::Dict(
       torrent_swarm

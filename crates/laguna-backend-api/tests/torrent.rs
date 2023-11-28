@@ -48,7 +48,7 @@ async fn test_get_torrent_bunny(pool: PgPool) -> sqlx::Result<()> {
   .unwrap();
 
   assert_eq!(put_res.status(), StatusCode::OK);
-  let torrent_dto = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent_dto = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
   let expected_torrent_dto = TorrentDTO {
     info_hash: torrent_dto.info_hash.clone(),
     raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/bunny.torrent").to_vec(),
@@ -81,7 +81,7 @@ async fn test_get_torrent_bunny(pool: PgPool) -> sqlx::Result<()> {
   .unwrap();
 
   assert_eq!(get_res.status(), StatusCode::OK);
-  let torrent_dto = read_body_json::<TorrentDTO, _>(get_res).await;
+  let torrent_dto = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(get_res).await;
   assert_eq!(torrent_dto, expected_torrent_dto,);
 
   Ok(())
@@ -111,7 +111,7 @@ async fn test_get_torrent_bunny_raw(pool: PgPool) -> sqlx::Result<()> {
 
   assert_eq!(put_res.status(), StatusCode::OK);
 
-  let torrent_dto = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent_dto = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
 
   let get_res = common::as_logged_in(
     access_token,
@@ -189,7 +189,7 @@ async fn test_put_torrent(pool: PgPool) -> sqlx::Result<()> {
   .unwrap();
 
   assert_eq!(put_res.status(), StatusCode::OK);
-  let torrent_dto = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent_dto = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
   let expected_torrent_dto = TorrentDTO {
     info_hash: torrent_dto.info_hash.clone(),
     raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent").to_vec(),
@@ -265,7 +265,7 @@ async fn test_patch_torrent(pool: PgPool) -> sqlx::Result<()> {
   .unwrap();
 
   assert_eq!(put_res.status(), StatusCode::OK);
-  let torrent_dto = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent_dto = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
   let expected_torrent_dto = TorrentDTO {
     info_hash: torrent_dto.info_hash.clone(),
     raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent").to_vec(),
@@ -304,7 +304,7 @@ async fn test_patch_torrent(pool: PgPool) -> sqlx::Result<()> {
   .unwrap();
 
   assert_eq!(patch_res.status(), StatusCode::OK);
-  let torrent_dto = read_body_json::<TorrentDTO, _>(patch_res).await;
+  let torrent_dto = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(patch_res).await;
   let expected_torrent_dto = TorrentDTO {
     nfo: Some(String::from("New NFO")),
     genre: Some(Genre::Action),
@@ -338,7 +338,7 @@ async fn test_delete_torrent(pool: PgPool) -> sqlx::Result<()> {
   .await
   .unwrap();
   assert_eq!(put_res.status(), StatusCode::OK);
-  let torrent_dto = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent_dto = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
   let delete_res = common::as_logged_in(
     access_token,
     refresh_token,
@@ -374,7 +374,7 @@ async fn test_get_torrent_swarm(pool: PgPool) -> sqlx::Result<()> {
   .unwrap();
   assert_eq!(put_res.status(), StatusCode::OK);
 
-  let torrent_dto = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent_dto = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
 
   let get_res = common::as_logged_in(
     access_token,
@@ -385,7 +385,10 @@ async fn test_get_torrent_swarm(pool: PgPool) -> sqlx::Result<()> {
   .await
   .unwrap();
   assert_eq!(get_res.status(), StatusCode::OK);
-  assert_eq!(read_body_json::<Vec<PeerDTO>, _>(get_res).await, vec![]);
+  assert_eq!(
+    read_body_json::<Vec<PeerDTO<SHA1_LENGTH>>, _>(get_res).await,
+    vec![]
+  );
 
   Ok(())
 }
