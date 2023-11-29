@@ -18,6 +18,7 @@ documentation = "https://sloveniaengineering.github.io/laguna-backend"
 laguna_config = { package = "laguna-backend-config", path = "../laguna-backend-config" }
 actix-web = "4"
 actix-http = "*"
+actix-governor = "0.5"
 actix-jwt-auth-middleware = "0.3.0"
 laguna-backend-middleware = { path = "../laguna-backend-middleware" }
 laguna-backend-model = { path = "../laguna-backend-model" }

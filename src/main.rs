@@ -16,10 +16,11 @@ use actix_web::HttpServer;
 use laguna::config::get_settings;
 use laguna::dto::meta::AppInfoDTO;
 use std::env;
+use actix_governor::Governor;
 
-use laguna::setup::setup;
 use laguna::setup::setup_cors;
 use laguna::setup::setup_db;
+use laguna::setup::{setup, setup_ip_ratelimiter};
 
 #[actix_web::main]
 async fn main() -> Result<(), sqlx::Error> {
@@ -37,6 +38,7 @@ async fn main() -> Result<(), sqlx::Error> {
         description: env::var("CARGO_PKG_DESCRIPTION").expect("CARGO_PKG_DESCRIPTION not set"),
         repository: env::var("CARGO_PKG_REPOSITORY").expect("CARGO_PKG_REPOSITORY not set"),
       }))
+      .wrap(Governor::new(&setup_ip_ratelimiter!()))
       .wrap(setup_cors(&get_settings()))
       .wrap(NormalizePath::new(TrailingSlash::MergeOnly))
       .wrap(Logger::default())

@@ -32,6 +32,7 @@ sqlx = { version="0.7.2", features = [
 laguna = { package = "laguna-backend-internal", path = "crates/laguna-backend-internal" }
 # FIXME: Bump to 0.7.* seems to break the program.
 actix-settings = "0.6.0"
+actix-governor = "0.5"
 
 [dev-dependencies]
 

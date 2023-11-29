@@ -48,3 +48,7 @@ announce-interval = 1800
 api-base-url = "https://api.postmarkapp.com/"
 api-token = "some token"
 sender-email = "noreply@laguna.si"
+
+[application.ip-ratelimiter]
+burst-quota = 5
+replenish-seconds = 5

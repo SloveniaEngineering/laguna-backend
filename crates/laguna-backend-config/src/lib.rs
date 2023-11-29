@@ -48,6 +48,8 @@ pub struct ApplicationSettings {
   pub tracker: TrackerSettings,
   /// Mailer configuration settings.
   pub mailer: MailerSettings,
+  /// IP-based rate-limiter settings.
+  pub ip_ratelimiter: IpRateLimiterSettings,
 }
 
 /// Authentication settings.
@@ -162,6 +164,18 @@ pub struct MailerSettings {
   pub api_token: Secret<String>,
   /// Sender email address
   pub sender_email: String,
+}
+
+/// IpRateLimiter settings.
+/// Used to globally rate-limit by IP.
+/// This is different from ID-based rate limiter.
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "kebab-case")]
+pub struct IpRateLimiterSettings {
+  /// How many requests before rate limit
+  pub burst_quota: u32,
+  /// How many seconds before one item is replenished and quota is decreased (allowing more requests)
+  pub replenish_seconds: u64,
 }
 
 /// Allow override of Laguna.toml-based values with environment variable-based values.
@@ -285,6 +299,18 @@ pub fn make_overridable_with_env_vars(settings: &mut Settings) {
     "APPLICATION_MAILER_SENDER_EMAIL",
   )
   .expect("APPLICATION_MAILER_SENDER_EMAIL not specified");
+
+  Settings::override_field_with_env_var(
+    &mut settings.application.ip_ratelimiter.burst_quota,
+    "APPLICATION_IP_RATELIMITER_BURST_QUOTA",
+  )
+  .expect("APPLCATION_IP_RATELIMITER_BURST_QUOTA not specified");
+
+  Settings::override_field_with_env_var(
+    &mut settings.application.ip_ratelimiter.replenish_seconds,
+    "APPLICATION_IP_RATELIMITER_REPLENISH_SECONDS",
+  )
+  .expect("APPLICATION_IP_RATELIMITER_REPLENISH_SECONDS not specified");
 }
 
 #[cfg(test)]

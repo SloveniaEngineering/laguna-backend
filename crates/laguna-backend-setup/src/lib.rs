@@ -70,8 +70,8 @@ use laguna_backend_tracker_common::info_hash::{InfoHash, SHA1_LENGTH, SHA256_LEN
 use laguna_backend_tracker_common::peer::{PeerBin, PeerDict, PeerId, PeerStream};
 use laguna_backend_tracker_http::announce::{Announce, AnnounceReply};
 
-use laguna_config::get_settings;
 use laguna_config::Settings;
+use laguna_config::{get_settings, IpRateLimiterSettings};
 use secrecy::ExposeSecret;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 
@@ -79,6 +79,9 @@ use utoipa::OpenApi;
 use utoipa_redoc::{Redoc, Servable};
 use utoipa_swagger_ui::SwaggerUi;
 
+use actix_governor::governor::clock::QuantaInstant;
+use actix_governor::governor::middleware::RateLimitingMiddleware;
+use actix_governor::{Governor, GovernorConfig, GovernorConfigBuilder, PeerIpKeyExtractor};
 use std::sync::Once;
 
 static ENV_LOGGER_INIT: Once = Once::new();
@@ -531,4 +534,18 @@ pub fn setup_mailer(settings: &Settings) -> PostmarkClient {
         .as_str(),
     )
     .build()
+}
+
+/// Sets up [`GovernorConfig`] middleware.
+// TODO: Make this a function
+#[macro_export]
+macro_rules! setup_ip_ratelimiter {
+  () => {{
+    use ::actix_governor::GovernorConfigBuilder;
+    GovernorConfigBuilder::const_default()
+      .const_per_second(get_settings().application.ip_ratelimiter.replenish_seconds)
+      .const_burst_size(get_settings().application.ip_ratelimiter.burst_quota)
+      .finish()
+      .expect("Governor rate-limiter failed to initialize")
+  }};
 }
