@@ -20,10 +20,7 @@ pub enum PeerError<const N: usize> {
   DownloadNotFound(DownloadHash),
   UnknownTorrent(InfoHash<N>),
   UnknownUser(Uuid),
-  UnexpectedEvent {
-    event: AnnounceEvent,
-    message: String,
-  },
+  UnknownPeerSentEvent(AnnounceEvent),
   NotCreated,
   NotUpdated,
   SqlxError(sqlx::Error),
@@ -52,10 +49,9 @@ impl<const N: usize> From<encoding::Error> for PeerError<N> {
 impl<const N: usize> fmt::Display for PeerError<N> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
-      Self::UnexpectedEvent { event, message } => f.write_fmt(format_args!(
-        "Nepričakovan dogodek {:?}. {}.",
-        event, message
-      )),
+      Self::UnknownPeerSentEvent(event) => {
+        f.write_fmt(format_args!("Neznan Peer je poslal dogodek {:?}", event))
+      },
       Self::NotCreated => f.write_str("Peer ni bil ustvarjen."),
       Self::UnknownTorrent(info_hash) => f.write_fmt(format_args!(
         "Torrent z info hash {} ne obstaja na strežniku.",

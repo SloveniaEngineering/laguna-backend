@@ -16,6 +16,4 @@ pub enum AnnounceEvent {
   Updated,
   /// [`Peer`] has paused downloading but will probably resume (due to wifi issues or force pause).
   Paused,
-  /// Treated just like Update, but wasn't specified.
-  Empty,
 }

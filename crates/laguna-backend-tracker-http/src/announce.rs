@@ -11,6 +11,7 @@ use laguna_backend_tracker_common::{
 use serde::{Deserialize, Serialize};
 
 use laguna_backend_model::download::DownloadHash;
+
 use utoipa::ToSchema;
 
 /// Used by torrent client to send information to TCP-based torrent tracker.
@@ -99,6 +100,38 @@ pub struct AnnounceReply {
   pub incomplete: u64,
   /// All peers in swarm stored in [`PeerStream`] which can be either bencoded dict or bencoded string, depending on `compact` parameter in [`Announce`].
   pub peers: PeerStream,
+}
+
+impl AnnounceReply {
+  /// Successful reply with everything non-success related as default
+  #[inline]
+  pub fn success(complete: u64, incomplete: u64, peer_stream: PeerStream) -> Self {
+    Self {
+      failure_reason: None,
+      warning_message: None,
+      interval: 1,
+      min_interval: None,
+      tracker_id: None,
+      complete,
+      incomplete,
+      peers: peer_stream,
+    }
+  }
+
+  /// Failure reply with everything non-failure related as default
+  #[inline]
+  pub fn failure(failure_reason: String) -> Self {
+    Self {
+      failure_reason: Some(failure_reason),
+      warning_message: None,
+      interval: 1,
+      min_interval: None,
+      tracker_id: None,
+      complete: 0,
+      incomplete: 0,
+      peers: PeerStream::Dict(Vec::new()),
+    }
+  }
 }
 
 impl ToBencode for AnnounceReply {
