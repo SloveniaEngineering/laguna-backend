@@ -161,20 +161,8 @@ async fn handle_peer_started<const N: usize>(
   pool: web::Data<PgPool>,
   peer_addr: SocketAddr,
 ) -> Result<HttpResponse, PeerError<N>> {
-  // If ip was specified by client, prefer it over the one in the request.
-  // If proxy is used, prefer the original ip (realip).
-  // If neither is available, use the peer's ip (socket).
-  let ip = IpNetwork::from(
-    announce_data.ip.unwrap_or(
-      req
-        .connection_info()
-        .realip_remote_addr()
-        .map(IpAddr::from_str)
-        .unwrap_or(Ok(peer_addr.ip()))
-        .unwrap_or(peer_addr.ip()),
-    ),
-  );
-
+  let ip = IpNetwork::from(peer_addr.ip());
+  
   let user_agent = req
     .headers()
     .get(USER_AGENT)
