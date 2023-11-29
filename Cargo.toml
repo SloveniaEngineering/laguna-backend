@@ -34,8 +34,6 @@ laguna = { package = "laguna-backend-internal", path = "crates/laguna-backend-in
 actix-settings = "0.6.0"
 actix-governor = "0.5"
 
-[dev-dependencies]
-
 [features]
 # Dummy feature until build scripts can detect cfg(doc).
 # See: https://github.com/rust-lang/cargo/issues/8811
