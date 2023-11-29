@@ -20,10 +20,7 @@ pub enum PeerError<const N: usize> {
   DownloadNotFound(DownloadHash),
   UnknownTorrent(InfoHash<N>),
   UnknownUser(Uuid),
-  UnexpectedEvent {
-    event: AnnounceEvent,
-    message: String,
-  },
+  UnknownPeerSentEvent(AnnounceEvent),
   NotCreated,
   NotUpdated,
   SqlxError(sqlx::Error),
@@ -52,13 +49,12 @@ impl<const N: usize> From<encoding::Error> for PeerError<N> {
 impl<const N: usize> fmt::Display for PeerError<N> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
-      Self::UnexpectedEvent { event, message } => f.write_fmt(format_args!(
-        "Nepričakovan dogodek {:?}. {}.",
-        event, message
-      )),
+      Self::UnknownPeerSentEvent(event) => {
+        f.write_fmt(format_args!("Neznan Peer je poslal dogodek {:?}", event))
+      },
       Self::NotCreated => f.write_str("Peer ni bil ustvarjen."),
       Self::UnknownTorrent(info_hash) => f.write_fmt(format_args!(
-        "Torrent z info_hash {} ne obstaja na strežniku. Za dodajanje torrenta uporabite `api/torrent/put`.",
+        "Torrent z info hash {} ne obstaja na strežniku.",
         info_hash
       )),
       // NOTE: Don't output this.
@@ -69,19 +65,17 @@ impl<const N: usize> fmt::Display for PeerError<N> {
         f.write_fmt(format_args!("Peer z peer_id {} ne obstaja.", peer_id))
       },
       Self::DownloadNotFound(download_hash) => {
-        f.write_fmt(format_args!("Torrent download hash {} ne obstaja.", download_hash))
+        f.write_fmt(format_args!("Prenos z hash {} ne obstaja.", download_hash))
       },
       Self::NotUpdated => f.write_str("Peer ni bil posodobljen."),
-      Self::UnknownUser(id) => {
-        f.write_fmt(format_args!("Uporabnik z id {} ne obstaja.", id))
-      }
+      Self::UnknownUser(id) => f.write_fmt(format_args!("Uporabnik z id {} ne obstaja.", id)),
     }
   }
 }
 
 impl<const N: usize> ResponseError for PeerError<N> {
   fn status_code(&self) -> StatusCode {
-    // We can send 200 status codes back.
+    // We must send 200 status codes back (even if Error)
     StatusCode::OK
   }
 

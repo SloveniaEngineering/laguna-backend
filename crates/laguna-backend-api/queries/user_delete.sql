@@ -15,5 +15,7 @@ WHERE id = $1 RETURNING
     is_enabled,
     is_donator,
     has_verified_email,
-    is_profile_private
+    is_profile_private,
+    email_confirm_hash,
+    email_confirm_expiry
 ;

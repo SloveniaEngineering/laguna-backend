@@ -23,5 +23,7 @@ CREATE TABLE IF NOT EXISTS "User"
     is_enabled         BOOLEAN                  NOT NULL,
     is_donator         BOOLEAN                  NOT NULL,
     has_verified_email BOOLEAN                  NOT NULL,
-    is_profile_private BOOLEAN                  NOT NULL
+    is_profile_private BOOLEAN                  NOT NULL,
+    email_confirm_hash TEXT,
+    email_confirm_expiry TIMESTAMP WITH TIME ZONE
 );

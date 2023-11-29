@@ -1,3 +1,4 @@
 use laguna_backend_model::peer::Peer;
 
-pub type PeerDTO = Peer;
+/// Alias for [`Peer`].
+pub type PeerDTO<const N: usize> = Peer<N>;

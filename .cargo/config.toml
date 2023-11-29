@@ -21,7 +21,7 @@
 # See defaults: https://doc.rust-lang.org/cargo/reference/profiles.html#release
 [profile.release]
 # This combination seems to be the fastest
-opt-level = 0
+opt-level = "s"
 strip = "symbols"
 panic = "abort"
 # Incremental compilation

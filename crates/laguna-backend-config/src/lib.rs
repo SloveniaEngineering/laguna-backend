@@ -1,52 +1,94 @@
-#![doc(html_logo_url = "https://sloveniaengineering.github.io/laguna-backend/logo.png")]
+#![doc(html_logo_url = "https://sloveniaengineering.github.io/laguna-backend/logo.svg")]
 #![doc(html_favicon_url = "https://sloveniaengineering.github.io/laguna-backend/favicon.ico")]
 #![doc(issue_tracker_base_url = "https://github.com/SloveniaEngineering/laguna-backend")]
+#![forbid(missing_docs)]
+//! Important configuration structures are used by [`laguna_backend_setup`] crate to boot the server.
+//! They can also be used inside application to get important data, but this is mostly not advised.
+//! Configuration is read from Laguna.toml file.
 use std::{env, net::SocketAddr};
 
 use actix_settings::BasicSettings;
+use cached::proc_macro::once;
 use const_format::formatcp;
 use secrecy::{ExposeSecret, Secret};
 use serde::{Deserialize, Serialize};
 
+/// Path to root of this cargo workspace (ie. root of this project).
+/// Determined at compile-time.
 pub const WORKSPACE_ROOT: &str = env!("WORKSPACE_ROOT");
+
+/// Path to Laguna.toml configuration file.
 pub const LAGUNA_CONFIG: &str = formatcp!("{}/Laguna.toml", WORKSPACE_ROOT);
+
+/// Path to directory of migrations.
 pub const MIGRATIONS_DIR: &str = formatcp!("{}/migrations", WORKSPACE_ROOT);
 
+/// Base settings type for laguna.
 pub type Settings = BasicSettings<ApplicationSettings>;
 
+/// Cached settings specified in Laguna.toml file.
+#[once(name = "SETTINGS")]
+pub fn get_settings() -> Settings {
+  let mut settings = Settings::parse_toml(LAGUNA_CONFIG).expect("Failed to parse settings");
+  make_overridable_with_env_vars(&mut settings);
+  settings
+}
+
+/// Root application settings.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct ApplicationSettings {
+  /// Database configuration settings.
   pub database: DatabaseSettings,
+  /// Authentication configuration settings.
   pub auth: AuthSettings,
+  /// Frontend location settings (used by CORS).
   pub frontend: FrontendSettings,
+  /// Tracker configuration settings.
   pub tracker: TrackerSettings,
+  /// Mailer configuration settings.
+  pub mailer: MailerSettings,
+  /// IP-based rate-limiter settings.
+  pub ip_ratelimiter: IpRateLimiterSettings,
 }
 
+/// Authentication settings.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct AuthSettings {
+  /// Secret HS256 key for JWT auth.
   pub secret_key: Secret<String>,
+  /// Pepper for Argon2 password hasher.
   pub password_pepper: Secret<String>,
+  /// How many seconds does access token live?
   pub access_token_lifetime_seconds: i64,
+  /// How many seconds does refresh token live?
   pub refresh_token_lifetime_seconds: i64,
 }
 
+/// Database settings.
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct DatabaseSettings {
+  /// Which protocol does database use?
   pub proto: String,
+  /// Where is DB hosted?
   pub host: Secret<String>,
+  /// On what port can DB be accessed?
   pub port: u16,
+  /// What username should be used to access DB?
   pub username: String,
+  /// What password should be used to access DB?
   pub password: Secret<String>,
+  /// What is DB name?
   pub name: String,
 }
 
 impl DatabaseSettings {
+  /// Convert database configuration into a connection string.
   pub fn url(&self) -> String {
     format!(
-      "{}://{}:{}@{}:{}/{}",
+      "{}://{}:{}@{}:{:?}/{}",
       self.proto,
       self.username,
       self.password.expose_secret(),
@@ -56,6 +98,7 @@ impl DatabaseSettings {
     )
   }
 
+  /// Given a connection string deserialize connection string into [`DatabaseSettings`].
   pub fn from_url(url: String) -> Self {
     let url = url::Url::parse(&url).expect("Cannot parse database url");
     Self {
@@ -79,14 +122,18 @@ impl DatabaseSettings {
   }
 }
 
+/// Frontend settings
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct FrontendSettings {
+  /// Where is frontend hosted?
   pub host: String,
+  /// On what port is frontend hosted?
   pub port: u16,
 }
 
 impl FrontendSettings {
+  /// Obtain socket-like address of frontend.
   pub fn address(&self) -> SocketAddr {
     SocketAddr::new(
       self
@@ -98,12 +145,40 @@ impl FrontendSettings {
   }
 }
 
+/// Tracker settings.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub struct TrackerSettings {
+  /// Where can tracker receive announce requests from torrent clients?
   pub announce_url: String,
 }
 
+/// Mailer settings.
+/// Used to send emails to users.
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "kebab-case")]
+pub struct MailerSettings {
+  /// API Base URL
+  pub api_base_url: String,
+  /// API Token
+  pub api_token: Secret<String>,
+  /// Sender email address
+  pub sender_email: String,
+}
+
+/// IpRateLimiter settings.
+/// Used to globally rate-limit by IP.
+/// This is different from ID-based rate limiter.
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "kebab-case")]
+pub struct IpRateLimiterSettings {
+  /// How many requests before rate limit
+  pub burst_quota: u32,
+  /// How many seconds before one item is replenished and quota is decreased (allowing more requests)
+  pub replenish_seconds: u64,
+}
+
+/// Allow override of Laguna.toml-based values with environment variable-based values.
 pub fn make_overridable_with_env_vars(settings: &mut Settings) {
   Settings::override_field_with_env_var(&mut settings.actix.hosts, "ACTIX_HOSTS")
     .expect("ACTIX_HOSTS not specified");
@@ -211,6 +286,31 @@ pub fn make_overridable_with_env_vars(settings: &mut Settings) {
     "APPLICATION_TRACKER_ANNOUNCE_URL",
   )
   .expect("APPLICATION_TRACKER_ANNOUNCE_URL not specified");
+  Settings::override_field_with_env_var(
+    &mut settings.application.mailer.api_base_url,
+    "APPLICATION_MAILER_API_BASE_URL",
+  )
+  .expect("APPLICATION_MAILER_API_BASE_URL not specified");
+  if let Ok(application_mailer_api_token) = env::var("APPLICATION_MAILER_API_TOKEN") {
+    settings.application.mailer.api_token = Secret::new(application_mailer_api_token);
+  }
+  Settings::override_field_with_env_var(
+    &mut settings.application.mailer.sender_email,
+    "APPLICATION_MAILER_SENDER_EMAIL",
+  )
+  .expect("APPLICATION_MAILER_SENDER_EMAIL not specified");
+
+  Settings::override_field_with_env_var(
+    &mut settings.application.ip_ratelimiter.burst_quota,
+    "APPLICATION_IP_RATELIMITER_BURST_QUOTA",
+  )
+  .expect("APPLCATION_IP_RATELIMITER_BURST_QUOTA not specified");
+
+  Settings::override_field_with_env_var(
+    &mut settings.application.ip_ratelimiter.replenish_seconds,
+    "APPLICATION_IP_RATELIMITER_REPLENISH_SECONDS",
+  )
+  .expect("APPLICATION_IP_RATELIMITER_REPLENISH_SECONDS not specified");
 }
 
 #[cfg(test)]

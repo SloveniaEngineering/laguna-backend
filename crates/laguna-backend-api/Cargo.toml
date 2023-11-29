@@ -1,6 +1,6 @@
 [package]
 name = "laguna-backend-api"
-version = "0.1.0"
+version = "1.0.0-beta"
 edition = "2021"
 license = "Apache-2.0"
 readme = "README.md"
@@ -19,7 +19,7 @@ laguna-backend-model = { path = "../laguna-backend-model" }
 laguna-backend-middleware = { path = "../laguna-backend-middleware" }
 actix-web = { version = "4", features = ["cookies"] }
 sha-1 = "0.10.1"
-sqlx = { version="0.7.1", features = [
+sqlx = { version="0.7.2", features = [
     "runtime-tokio",
     "tls-rustls",
     "postgres",
@@ -53,8 +53,9 @@ laguna-backend-tracker-common = { path = "../laguna-backend-tracker-common" }
 laguna-backend-config = { path = "../laguna-backend-config" }
 secrecy = { version = "*", features = ["serde"] }
 rand = "*"
-utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
+utoipa = { version = "4.1.0", features = ["actix_extras", "uuid", "chrono", "yaml"] }
 bendy = { version = "^0.3", features = ["std", "serde"] }
+postmark = {version = "0.10.0", features = ["reqwest-rustls-tls"]}
 # serde_bencode = "*"
 
 [dev-dependencies]

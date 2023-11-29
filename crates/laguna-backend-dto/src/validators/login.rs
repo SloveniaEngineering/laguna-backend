@@ -4,6 +4,7 @@ use laguna_backend_model::consts::{
   EMAIL_MAX_LEN, EMAIL_MIN_LEN, USERNAME_MAX_LEN, USERNAME_MIN_LEN,
 };
 
+/// Validates a field which can be either username or email.
 pub fn validate_username_or_email(username_or_email: &str) -> Result<(), ValidationError> {
   if username_or_email.contains('@') {
     if !validate_length(

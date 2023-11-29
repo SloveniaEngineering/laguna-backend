@@ -12,6 +12,7 @@ use validator::Validate;
 
 /// Data transfer object (DTO) used for registering.
 /// This object is serialized and transfered from the frontend to the backend to register a new user.
+#[allow(missing_docs)]
 #[derive(Serialize, Deserialize, Debug, Clone, Validate, ToSchema)]
 #[cfg_attr(feature = "testx", derive(Dummy))]
 pub struct RegisterDTO {

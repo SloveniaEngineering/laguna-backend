@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id,\n       username,\n       email,\n       password,\n       first_login,\n       last_login,\n       avatar_url,\n       salt,\n       role      AS \"role: Role\",\n       hnr_count,\n       behaviour AS \"behaviour: Behaviour\",\n       is_enabled,\n       is_donator,\n       has_verified_email,\n       is_profile_private\nFROM \"User\"\nWHERE id = $1;",
+  "query": "DELETE\nFROM \"User\"\nWHERE id = $1 RETURNING\n    id,\n    username,\n    email,\n    password,\n    first_login,\n    last_login,\n    avatar_url,\n    salt,\n    role AS \"role: Role\",\n    hnr_count,\n    behaviour AS \"behaviour: Behaviour\",\n    is_enabled,\n    is_donator,\n    has_verified_email,\n    is_profile_private,\n    email_confirm_hash,\n    email_confirm_expiry\n;",
   "describe": {
     "columns": [
       {
@@ -105,6 +105,16 @@
         "ordinal": 14,
         "name": "is_profile_private",
         "type_info": "Bool"
+      },
+      {
+        "ordinal": 15,
+        "name": "email_confirm_hash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 16,
+        "name": "email_confirm_expiry",
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -127,8 +137,10 @@
       false,
       false,
       false,
-      false
+      false,
+      true,
+      true
     ]
   },
-  "hash": "0a30c20a01dcd80dcf7ef074f2a86038211c945bb0f5157c4eab419b6f093f30"
+  "hash": "56383e1e6580a781eb9fd74bdfc59cae5d04d9e0e547dd8dcd78f69d22a7bd1a"
 }

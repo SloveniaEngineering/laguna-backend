@@ -3,6 +3,7 @@ use actix_web_validator::Json;
 use bendy::decoding::FromBencode;
 use bendy::encoding::ToBencode;
 
+use laguna_backend_config::get_settings;
 use laguna_backend_tracker_common::info_hash::SHA1_LENGTH;
 use sha1::Sha1;
 
@@ -29,13 +30,14 @@ use crate::error::download::DownloadError;
 use crate::error::{torrent::TorrentError, APIError};
 use sha2::Sha256;
 
+#[allow(missing_docs)]
 #[utoipa::path(
   get,
   path = "/api/torrent/{info_hash}",
   responses(
-    (status = 200, description = "Returns torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
   )
 )]
 pub async fn torrent_get<const N: usize>(
@@ -49,7 +51,7 @@ pub async fn torrent_get<const N: usize>(
   )
   .fetch_optional(pool.get_ref())
   .await?
-  .map(TorrentDTO::from)
+  .map(TorrentDTO::<N>::from)
   .ok_or(TorrentError::NotFound)?;
   Ok(
     HttpResponse::Ok()
@@ -58,20 +60,20 @@ pub async fn torrent_get<const N: usize>(
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   get,
   path = "/api/torrent/{info_hash}/raw",
   responses(
     (status = 200, description = "Returns torrent.", body = Vec<u8>, content_type = "application/x-bittorrent"),
-    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
   )
 )]
 pub async fn torrent_get_raw<const N: usize>(
   info_hash: web::Path<InfoHash<N>>,
   pool: web::Data<PgPool>,
   user: UserDTO,
-  domestic_announce_url: web::Data<String>,
 ) -> Result<HttpResponse, APIError> {
   let info_hash = info_hash.into_inner();
   let download = sqlx::query_file_as!(
@@ -83,7 +85,7 @@ pub async fn torrent_get_raw<const N: usize>(
   .fetch_optional(pool.get_ref())
   .await?;
 
-  let torrent_bytes = sqlx::query_file_as!(Torrent, "queries/torrent_get.sql", info_hash as _)
+  let torrent_bytes = sqlx::query_file_as!(Torrent::<N>, "queries/torrent_get.sql", info_hash as _)
     .fetch_optional(pool.get_ref())
     .await?
     .ok_or(TorrentError::NotFound)?
@@ -104,7 +106,7 @@ pub async fn torrent_get_raw<const N: usize>(
   // overwrite annouce url by adding down_hash
   torrent.announce_url = Some(format!(
     "{}?down_hash={}",
-    domestic_announce_url.into_inner(),
+    get_settings().application.tracker.announce_url,
     DownloadHash::from(down_hash.to_vec())
   ));
 
@@ -148,13 +150,14 @@ pub async fn torrent_get_raw<const N: usize>(
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   patch,
   path = "/api/torrent/{info_hash}",
   responses(
-    (status = 200, description = "Returns updated torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns updated torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
   ),
   request_body = TorrentPatchDTO,
 )]
@@ -165,7 +168,7 @@ pub async fn torrent_patch<const N: usize>(
 ) -> Result<HttpResponse, APIError> {
   let torrent_patch = torrent_dto.into_inner();
   let torrent_dto = sqlx::query_file_as!(
-    Torrent,
+    Torrent::<N>,
     "queries/torrent_update.sql",
     torrent_patch.nfo,
     torrent_patch.genre as _,
@@ -173,7 +176,7 @@ pub async fn torrent_patch<const N: usize>(
   )
   .fetch_optional(pool.get_ref())
   .await?
-  .map(TorrentDTO::from)
+  .map(TorrentDTO::<N>::from)
   .ok_or(TorrentError::NotUpdated)?;
   Ok(
     HttpResponse::Ok()
@@ -182,20 +185,20 @@ pub async fn torrent_patch<const N: usize>(
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   put,
   path = "/api/torrent",
   responses(
-    (status = 200, description = "Returns created torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns created torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
   ),
   request_body(content = TorrentPutDTO, content_type = "multipart/form-data"),
 )]
 pub async fn torrent_put<const N: usize>(
   form: Multipart<TorrentPutDTO>,
   pool: web::Data<PgPool>,
-  domestic_announce_url: web::Data<String>,
   user: UserDTO,
 ) -> Result<HttpResponse, APIError> {
   /*if user.role < Role::Verified {
@@ -212,10 +215,9 @@ pub async fn torrent_put<const N: usize>(
   }
 
   // Deny torrents with foreign announce url
-  let domestic_announce_url = domestic_announce_url.into_inner();
+  let domestic_announce_url = get_settings().application.tracker.announce_url;
   match torrent_file.announce_url {
-    Some(announce_url_inner) if announce_url_inner != *domestic_announce_url => {
-      eprintln!("{} ::: {}", announce_url_inner, *domestic_announce_url);
+    Some(announce_url_inner) if announce_url_inner != domestic_announce_url => {
       return Err(TorrentError::Invalid.into());
     },
     // TODO: Remove `None` and adjust tests so that torrents with domestic announce url are used.
@@ -231,16 +233,19 @@ pub async fn torrent_put<const N: usize>(
   let info_hash = Sha1::digest(torrent_file.info.to_bencode()?);
   // TODO: BitTorrent v2 needs SHA256_LENGTH
   let info_hash = InfoHash::<SHA1_LENGTH>(info_hash.try_into().unwrap());
-  let maybe_torrent =
-    sqlx::query_file_as!(Torrent, "queries/torrent_get.sql", info_hash.clone() as _)
-      .fetch_optional(pool.get_ref())
-      .await?;
+  let maybe_torrent = sqlx::query_file_as!(
+    Torrent::<N>,
+    "queries/torrent_get.sql",
+    info_hash.clone() as _
+  )
+  .fetch_optional(pool.get_ref())
+  .await?;
   if maybe_torrent.is_some() {
     return Ok(HttpResponse::AlreadyReported().finish());
   }
 
   let torrent_dto = sqlx::query_file_as!(
-    Torrent,
+    Torrent::<N>,
     "queries/torrent_insert.sql",
     info_hash as _,
     form.torrent.bytes, // torrent is already bencoded so we can just insert it
@@ -263,7 +268,7 @@ pub async fn torrent_put<const N: usize>(
   )
   .fetch_optional(pool.get_ref())
   .await?
-  .map(TorrentDTO::from)
+  .map(TorrentDTO::<N>::from)
   .ok_or(TorrentError::NotCreated)?;
 
   Ok(
@@ -273,13 +278,14 @@ pub async fn torrent_put<const N: usize>(
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   delete,
   path = "/api/torrent/{info_hash}",
   responses(
-    (status = 200, description = "Returns deleted torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns deleted torrent.", body = Torrent, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
   )
 )]
 pub async fn torrent_delete<const N: usize>(
@@ -287,13 +293,13 @@ pub async fn torrent_delete<const N: usize>(
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
   let torrent_dto = sqlx::query_file_as!(
-    Torrent,
+    Torrent::<N>,
     "queries/torrent_delete.sql",
     info_hash.into_inner() as _
   )
   .fetch_optional(pool.get_ref())
   .await?
-  .map(TorrentDTO::from)
+  .map(TorrentDTO::<N>::from)
   .ok_or(TorrentError::NotFound)?;
   Ok(
     HttpResponse::Ok()
@@ -302,13 +308,14 @@ pub async fn torrent_delete<const N: usize>(
   )
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   get,
   path = "/api/torrent/{info_hash}/swarm",
   responses(
-    (status = 200, description = "Returns torrent swarm.", body = Vec<Peer>, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns torrent swarm.", body = Vec<Peer>, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+    (status = 400, description = "Torrent not found.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+    (status = 401, description = "Not logged in, hence unauthorized.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
   )
 )]
 pub async fn torrent_swarm<const N: usize>(
@@ -316,7 +323,7 @@ pub async fn torrent_swarm<const N: usize>(
   pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, APIError> {
   let swarm = sqlx::query_file_as!(
-    Peer,
+    Peer::<N>,
     "queries/torrent_swarm.sql",
     info_hash.into_inner() as _
   )

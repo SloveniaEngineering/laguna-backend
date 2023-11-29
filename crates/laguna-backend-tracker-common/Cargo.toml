@@ -1,6 +1,6 @@
 [package]
 name = "laguna-backend-tracker-common"
-version = "0.1.0"
+version = "1.0.0-beta"
 edition = "2021"
 license = "Apache-2.0"
 readme = "README.md"
@@ -20,7 +20,7 @@ actix-web = "4"
 serde_bytes = "*"
 serde_with = { version = "3.3.0", features = ["hex"] }
 actix = "*"
-sqlx = { version="0.7.1", features = [
+sqlx = { version="0.7.2", features = [
     "runtime-tokio",
     "tls-rustls",
     "postgres",
@@ -32,5 +32,5 @@ sqlx = { version="0.7.1", features = [
     "json",
 ] }
 url = { version = "*", features = ["serde"] }
-utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
+utoipa = { version = "4.1.0", features = ["actix_extras", "uuid", "chrono", "yaml"] }
 bendy = { version = "^0.3", features = ["std", "serde"] }

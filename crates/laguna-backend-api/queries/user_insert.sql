@@ -11,7 +11,9 @@ INSERT INTO "User" (username,
                     is_enabled,
                     is_donator,
                     has_verified_email,
-                    is_profile_private)
+                    is_profile_private,
+                    email_confirm_hash,
+                    email_confirm_expiry)
 VALUES ($1,
         $2,
         $3,
@@ -25,7 +27,9 @@ VALUES ($1,
         $11,
         $12,
         $13,
-        $14) RETURNING
+        $14,
+        $15,
+        $16) RETURNING
     id,
     username,
     email,
@@ -40,5 +44,7 @@ VALUES ($1,
     is_enabled,
     is_donator,
     has_verified_email,
-    is_profile_private
+    is_profile_private,
+    email_confirm_hash,
+    email_confirm_expiry
 ;

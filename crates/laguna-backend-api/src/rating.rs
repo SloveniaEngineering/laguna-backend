@@ -10,14 +10,15 @@ use crate::error::rating::RatingError;
 use crate::error::APIError;
 use actix_web_validator::Json;
 
+#[allow(missing_docs)]
 #[utoipa::path(
     post,
     path = "/api/torrent/rating",
     request_body = RatingDTO<N>,
     responses(
-        (status = 200, description = "Rating created.", content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-        (status = 400, description = "Rating already exists.", content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-        (status = 401, description = "Not logged in, hence unauthorized.", content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+        (status = 200, description = "Rating created.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+        (status = 400, description = "Rating already exists.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+        (status = 401, description = "Not logged in, hence unauthorized.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
     ),
 )]
 pub async fn rating_create<const N: usize>(
@@ -52,12 +53,13 @@ pub async fn rating_create<const N: usize>(
   Ok(HttpResponse::Ok().finish())
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
     delete,
     path = "/api/torrent/rating/{info_hash}",
     responses(
-        (status = 200, description = "Rating deleted.", content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-        (status = 401, description = "Not logged in, hence unauthorized.", content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+        (status = 200, description = "Rating deleted.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+        (status = 401, description = "Not logged in, hence unauthorized.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
     ),
 )]
 pub async fn rating_delete<const N: usize>(
@@ -77,12 +79,13 @@ pub async fn rating_delete<const N: usize>(
   Ok(HttpResponse::Ok().finish())
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
     get,
     path = "/api/torrent/rating/{info_hash}",
     responses(
-        (status = 200, description = "Rating for torrent.", body = TorrentRating, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-        (status = 401, description = "Not logged in, hence unauthorized.", content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+        (status = 200, description = "Rating for torrent.", body = TorrentRating, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+        (status = 401, description = "Not logged in, hence unauthorized.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
     ),
 )]
 pub async fn rating_torrent_average<const N: usize>(

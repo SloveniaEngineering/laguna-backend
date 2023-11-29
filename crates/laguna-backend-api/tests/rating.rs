@@ -3,6 +3,7 @@ use actix_web::test::TestRequest;
 use laguna_backend_dto::torrent_rating::TorrentRatingDTO;
 use laguna_backend_dto::{rating::RatingDTO, torrent::TorrentDTO};
 use laguna_backend_middleware::mime::APPLICATION_XBITTORRENT;
+use laguna_backend_tracker_common::info_hash::SHA1_LENGTH;
 use sqlx::PgPool;
 
 mod common;
@@ -31,7 +32,7 @@ fn test_rating_create(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
 
   assert_eq!(put_res.status(), 200);
 
-  let torrent = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
 
   let post_res = common::as_logged_in(
     access_token,
@@ -75,7 +76,7 @@ fn test_rating_create_twice(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
 
   assert_eq!(put_res.status(), 200);
 
-  let torrent = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
 
   let post_res = common::as_logged_in(
     access_token.clone(),
@@ -135,7 +136,7 @@ fn test_rating_delete(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
 
   assert_eq!(put_res.status(), 200);
 
-  let torrent = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
 
   let post_res = common::as_logged_in(
     access_token.clone(),
@@ -190,7 +191,7 @@ fn test_rating_delete_twice(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
 
   assert_eq!(put_res.status(), 200);
 
-  let torrent = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
 
   let post_res = common::as_logged_in(
     access_token.clone(),
@@ -256,7 +257,7 @@ fn test_rating_torrent_average(pool: PgPool) -> sqlx::Result<(), sqlx::Error> {
   .unwrap();
 
   assert_eq!(put_res.status(), 200);
-  let torrent = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
 
   let post_res = common::as_logged_in(
     access_token.clone(),
@@ -361,7 +362,7 @@ fn test_rating_torrent_average_out_of_range(pool: PgPool) -> sqlx::Result<(), sq
 
   assert_eq!(put_res.status(), 200);
 
-  let torrent = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
 
   let post_res = common::as_logged_in(
     access_token_2.clone(),

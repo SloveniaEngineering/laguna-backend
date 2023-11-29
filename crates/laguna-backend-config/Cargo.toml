@@ -1,6 +1,6 @@
 [package]
 name = "laguna-backend-config"
-version = "0.1.0"
+version = "1.0.0-beta"
 edition = "2021"
 license = "Apache-2.0"
 readme = "README.md"
@@ -20,3 +20,4 @@ actix-settings = "*"
 const_format = "*"
 url = "2.4.1"
 secrecy = { version = "*", features = ["serde"] }
+cached = "*"

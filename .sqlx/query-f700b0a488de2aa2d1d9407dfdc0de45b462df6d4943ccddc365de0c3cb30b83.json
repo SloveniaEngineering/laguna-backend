@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COUNT(*) FILTER (WHERE left_bytes = 0) AS complete,\n       COUNT(*) FILTER (WHERE left_bytes > 0) AS incomplete\nFROM \"Peer\"\nWHERE info_hash = $1\n  AND id != $2\n  AND behaviour NOT IN ('Stopped', 'Choked');",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "complete",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "incomplete",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea",
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "f700b0a488de2aa2d1d9407dfdc0de45b462df6d4943ccddc365de0c3cb30b83"
+}

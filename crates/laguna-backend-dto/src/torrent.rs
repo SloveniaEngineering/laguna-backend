@@ -17,10 +17,13 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use validator::Validate;
 
-pub type TorrentDTO = Torrent;
+/// Alias for [`Torrent`].
+pub type TorrentDTO<const N: usize> = Torrent<N>;
 
+/// DTO used when `PUT`ting a multipart file.
 #[derive(Debug, Deserialize, MultipartForm, ToSchema)]
 pub struct TorrentPutDTO {
+  /// Torrent file, validated to be 1MB of size MAX.
   #[multipart(max_size = 1MB)]
   pub torrent: ActixFile,
 }
@@ -36,47 +39,50 @@ pub struct TorrentPutDTO {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Validate)]
 // #[cfg_attr(feature = "testx", derive(Dummy))]
 pub struct TorrentFile {
-  // announce is set by torrent client
+  /// Announce URL set by torrent client
   #[serde(rename = "announce")]
   #[serde(default)]
   pub announce_url: Option<String>,
-  // announce-list is set by torrent client
+  /// List of announce URLs set by torrent client
   #[serde(rename = "accounce-list")]
   pub announce_list: Option<Vec<Vec<String>>>,
-  // title is set by FE
+  /// Title is set by uploader on FE.
   #[validate(length(min = "TORRENT_TITLE_MIN_LEN", max = "TORRENT_TITLE_MAX_LEN"))]
   #[serde(default)]
   pub title: Option<String>,
-  // nfo is set by FE
+  /// nfo (torrent file description) is set by uploader on FE.
   #[validate(length(min = "TORRENT_FILENAME_MIN_LEN", max = "TORRENT_FILENAME_MAX_LEN"))]
   #[serde(default)]
   pub nfo: Option<String>,
-  // comment is set by torrent client
+  /// comment is set by torrent client (uploader)
   #[serde(default)]
   pub comment: Option<String>,
-  // encoding is set by torrent client, we deny all except UTF-8
+  /// encoding is set by torrent client, we deny all except UTF-8
   #[serde(default)]
   pub encoding: Option<String>,
-  // this is a timestamp, creation date is set by torrent client
+  /// this is a timestamp, creation date is set by torrent client
   #[serde(rename = "creation date", with = "ts_seconds")]
   pub creation_date: DateTime<Utc>,
-  // created by is set by torrent client
+  /// "created by" is set by torrent client
   #[serde(rename = "created by")]
   #[serde(default)]
   pub created_by: Option<String>,
-  // info is set by torrent client
+  /// info section is set by torrent client (upon generating torrent file)
   pub info: TorrentInfo,
-  // url-list is set by torrent client (this is webtorrent specific)
+  /// url-list is set by torrent client (this is webtorrent specific)
+  /// It describes a list of HTTP-based seeds (like servers), which can be used as a part of a swarm.
   #[serde(rename = "url-list")]
   #[serde(default)]
   pub url_list: Option<Vec<String>>,
-  // website is set by torrent client (this is webtorrent specific)
+  /// website is set by torrent client (this is webtorrent specific).
+  /// Website describes what website provided the torrent file.
   #[serde(default)]
   pub website: Option<String>,
-  // nodes is set by torrent client
+  /// nodes is set by torrent client (this is webtorrent specific).
   #[serde(default)]
   pub nodes: Option<Vec<Node>>,
-  // httpseeds is set by torrent client
+  /// httpseeds is set by torrent client.
+  /// A different wording of `url-list`.
   #[serde(default)]
   pub httpseeds: Option<Vec<String>>,
 }
@@ -242,34 +248,48 @@ impl ToBencode for TorrentFile {
   }
 }
 
+/// Torrent file's info section.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 // #[cfg_attr(feature = "testx", derive(Dummy))]
 pub struct TorrentInfo {
+  /// How long does a file last? If it is a video.
   #[serde(rename = "file-duration")]
   #[serde(default)]
   pub file_duration: Option<Vec<i32>>,
+  /// What are file's media parameters (quality, color coding, etc.)
   #[serde(rename = "file-media")]
   #[serde(default)]
   pub file_media: Option<Vec<i32>>,
-  // length of single file if Torrent describes a single file
-  // if torrent describes directory, then lengths can be found in [`File`].
+  /// length of single file if Torrent describes a single file
+  /// if torrent describes directory, then lengths can be found in [`File`].
   #[serde(default)]
   pub length: Option<i64>,
-  // Name of single file or root directory if directory.
+  /// Name of single file or root directory if directory.
   pub name: String,
+  /// How long is one piece of file in bytes?
   #[serde(rename = "piece length")]
   pub piece_length: i64,
+  /// All the pieces of the file in bytes.
   #[serde(rename = "pieces")]
   pub pieces: Vec<u8>,
+  /// Merkle hash of all files if directory was uploaded.
   #[serde(rename = "root hash")]
   #[serde(default)]
   pub root_hash: Option<String>,
+  /// MD5 sum of all files or single file used for integrity checks.
   #[serde(default)]
   pub md5sum: Option<String>,
+  /// Is torrent private? This should always be 1, since we have a private tracker.
+  /// If tracker is ever public, this should always be 0.
+  /// This is usually set by uploader on torrent client.
   #[serde(default)]
   pub private: Option<u8>,
+  /// List of all files described by torrent (if in directory).
   #[serde(default)]
   pub files: Option<Vec<File>>,
+  /// All Files' profiles, st. files\[i\] matches profiles\[i\].
+  /// It encodes some metadata about file.
+  /// It is webtorrent specific.
   #[serde(default)]
   pub profiles: Option<Vec<TorrentProfile>>,
 }
@@ -407,6 +427,7 @@ impl ToBencode for TorrentInfo {
   }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "testx", derive(Dummy))]
 pub struct File {
@@ -470,6 +491,8 @@ impl ToBencode for File {
     })
   }
 }
+
+#[allow(missing_docs)]
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Node {
   pub node: String,
@@ -521,6 +544,7 @@ impl ToBencode for Node {
   }
 }
 
+#[allow(missing_docs)]
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "testx", derive(Dummy))]
 pub struct TorrentProfile {
@@ -597,6 +621,10 @@ impl ToBencode for TorrentProfile {
   }
 }
 
+/// When sending DTO to `PATCH` a torrent file's attributes.
+/// So far only non-raw-file attributes can be patched.
+// TODO: How can we patch, say, announce url while a swarm is active?
+#[allow(missing_docs)]
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Validate, ToSchema)]
 pub struct TorrentPatchDTO {
   #[serde(default)]

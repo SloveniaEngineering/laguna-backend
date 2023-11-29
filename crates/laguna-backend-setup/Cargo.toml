@@ -1,6 +1,6 @@
 [package]
 name = "laguna-backend-setup"
-version = "0.1.0"
+version = "1.0.0-beta"
 edition = "2021"
 license = "Apache-2.0"
 readme = "README.md"
@@ -18,6 +18,7 @@ documentation = "https://sloveniaengineering.github.io/laguna-backend"
 laguna_config = { package = "laguna-backend-config", path = "../laguna-backend-config" }
 actix-web = "4"
 actix-http = "*"
+actix-governor = "0.5"
 actix-jwt-auth-middleware = "0.3.0"
 laguna-backend-middleware = { path = "../laguna-backend-middleware" }
 laguna-backend-model = { path = "../laguna-backend-model" }
@@ -27,7 +28,7 @@ laguna-backend-tracker-common = { path = "../laguna-backend-tracker-common" }
 laguna-backend-tracker-http = { path = "../laguna-backend-tracker-http" }
 log = "*"
 rustversion = "1.0"
-sqlx = { version="0.7.1", features = [
+sqlx = { version="0.7.2", features = [
     "runtime-tokio",
     "tls-rustls",
     "postgres",
@@ -38,6 +39,7 @@ sqlx = { version="0.7.1", features = [
     "chrono",
     "json",
 ] }
+# FIXME: 0.8.0 breaks code due to Hs256 not being implemented as Algorithm in actix-jwt-auth-middleware
 jwt-compact = "0.7.0"
 env_logger = "*"
 argon2 = { version = "*", features = ["std"] }
@@ -47,7 +49,7 @@ actix-settings = "*"
 actix-service = "*"
 actix-cors = "*"
 const_format = "*"
-cached = "*"
-utoipa-swagger-ui = { version = "3", features = ["actix-web"] }
-utoipa-redoc = { version = "*", features = ["actix-web"] }
-utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
+utoipa-swagger-ui = { version = "4.0.0", features = ["actix-web"] }
+utoipa-redoc = { version = "1.0.0", features = ["actix-web"] }
+utoipa = { version = "4.1.0", features = ["actix_extras", "uuid", "chrono", "yaml"] }
+postmark = {version = "0.10.0", features = ["reqwest-rustls-tls"]}

@@ -1,8 +1,7 @@
 UPDATE "User"
-SET username           = $1,
-    avatar_url         = $2,
-    is_profile_private = $3
-WHERE id = $4 RETURNING
+SET avatar_url         = $1,
+    is_profile_private = $2
+WHERE id = $3 RETURNING
     id,
     username,
     email,
@@ -17,5 +16,7 @@ WHERE id = $4 RETURNING
     is_enabled,
     is_donator,
     has_verified_email,
-    is_profile_private
+    is_profile_private,
+    email_confirm_hash,
+    email_confirm_expiry
 ;

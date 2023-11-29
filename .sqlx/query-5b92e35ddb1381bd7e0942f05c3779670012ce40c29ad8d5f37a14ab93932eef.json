@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE \"User\"\nSET role = $1\nWHERE id = $2 RETURNING\n  id,\n  username,\n  email,\n  password,\n  first_login,\n  last_login,\n  avatar_url,\n  salt,\n  role AS \"role: Role\",\n  hnr_count,\n  behaviour AS \"behaviour: Behaviour\",\n  is_enabled,\n  is_donator,\n  has_verified_email,\n  is_profile_private\n;",
+  "query": "UPDATE \"User\"\nSET role = $1\nWHERE id = $2 RETURNING\n  id,\n  username,\n  email,\n  password,\n  first_login,\n  last_login,\n  avatar_url,\n  salt,\n  role AS \"role: Role\",\n  hnr_count,\n  behaviour AS \"behaviour: Behaviour\",\n  is_enabled,\n  is_donator,\n  has_verified_email,\n  is_profile_private,\n  email_confirm_hash,\n  email_confirm_expiry\n;",
   "describe": {
     "columns": [
       {
@@ -105,6 +105,16 @@
         "ordinal": 14,
         "name": "is_profile_private",
         "type_info": "Bool"
+      },
+      {
+        "ordinal": 15,
+        "name": "email_confirm_hash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 16,
+        "name": "email_confirm_expiry",
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -140,8 +150,10 @@
       false,
       false,
       false,
-      false
+      false,
+      true,
+      true
     ]
   },
-  "hash": "2b50bc5355d44af50c26e2a07295ed3775d4122bb335eef310f50730150b4464"
+  "hash": "5b92e35ddb1381bd7e0942f05c3779670012ce40c29ad8d5f37a14ab93932eef"
 }

@@ -1,6 +1,8 @@
-#![doc(html_logo_url = "https://sloveniaengineering.github.io/laguna-backend/logo.png")]
+#![doc(html_logo_url = "https://sloveniaengineering.github.io/laguna-backend/logo.svg")]
 #![doc(html_favicon_url = "https://sloveniaengineering.github.io/laguna-backend/favicon.ico")]
 #![doc(issue_tracker_base_url = "https://github.com/SloveniaEngineering/laguna-backend")]
+#![forbid(missing_docs)]
+//! Setup functions for when server is booting.
 use actix_cors::Cors;
 
 use actix_jwt_auth_middleware::AuthenticationService;
@@ -9,6 +11,7 @@ use actix_settings::Mode;
 use actix_web::dev::ServiceResponse;
 use actix_web::dev::{ServiceFactory, ServiceRequest};
 use actix_web::http::header;
+use postmark::reqwest::PostmarkClient;
 
 use actix_web::middleware::DefaultHeaders;
 use actix_web::web::ServiceConfig;
@@ -16,7 +19,6 @@ use actix_web::web::ServiceConfig;
 use actix_web::{web, App, HttpResponse};
 use argon2::Argon2;
 use argon2::{Algorithm, ParamsBuilder, Version};
-use cached::proc_macro::once;
 use chrono::Duration;
 use jwt_compact::{alg::Hs256, alg::Hs256Key, TimeOptions};
 use laguna_backend_api::login;
@@ -39,8 +41,7 @@ use laguna_backend_api::torrent::{
 };
 use laguna_backend_api::user;
 use laguna_backend_api::user::{
-  user_get, user_me_delete, user_me_get, user_patch, user_patch_me, user_role_change,
-  user_torrents_get,
+  user_get, user_me_delete, user_me_get, user_patch, user_role_change, user_torrents_get,
 };
 use laguna_backend_dto::already_exists::AlreadyExistsDTO;
 use laguna_backend_dto::login::LoginDTO;
@@ -68,8 +69,9 @@ use laguna_backend_tracker_common::announce::AnnounceEvent;
 use laguna_backend_tracker_common::info_hash::{InfoHash, SHA1_LENGTH, SHA256_LENGTH};
 use laguna_backend_tracker_common::peer::{PeerBin, PeerDict, PeerId, PeerStream};
 use laguna_backend_tracker_http::announce::{Announce, AnnounceReply};
-use laguna_config::make_overridable_with_env_vars;
-use laguna_config::{Settings, LAGUNA_CONFIG};
+
+use laguna_config::Settings;
+use laguna_config::{get_settings, IpRateLimiterSettings};
 use secrecy::ExposeSecret;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 
@@ -77,20 +79,18 @@ use utoipa::OpenApi;
 use utoipa_redoc::{Redoc, Servable};
 use utoipa_swagger_ui::SwaggerUi;
 
+use actix_governor::governor::clock::QuantaInstant;
+use actix_governor::governor::middleware::RateLimitingMiddleware;
+use actix_governor::{Governor, GovernorConfig, GovernorConfigBuilder, PeerIpKeyExtractor};
 use std::sync::Once;
 
 static ENV_LOGGER_INIT: Once = Once::new();
 static CORS_INIT: Once = Once::new();
 
-#[once(name = "SETTINGS")]
-pub fn get_settings() -> Settings {
-  let mut settings = Settings::parse_toml(LAGUNA_CONFIG).expect("Failed to parse settings");
-  make_overridable_with_env_vars(&mut settings);
-  settings
-}
-
-// https://github.com/actix/actix-web/issues/2039
-// https://github.com/actix/actix-web/issues/1190
+/// Setup with Laguna.toml settings.
+/// Interesting issues discussing returning [`App<T>`]:
+/// <https://github.com/actix/actix-web/issues/2039>
+/// <https://github.com/actix/actix-web/issues/1190>
 pub fn setup() -> App<
   impl ServiceFactory<
     ServiceRequest,
@@ -103,7 +103,9 @@ pub fn setup() -> App<
   setup_with_settings(get_settings())
 }
 
-// https://github.com/actix/actix-web/blob/b1c85ba85be91b5ea34f31264853b411fadce1ef/actix-web/src/app.rs#L698
+/// Setup with any settings specified.
+/// Test if [`App<T>`] can be return from function:
+/// <https://github.com/actix/actix-web/blob/b1c85ba85be91b5ea34f31264853b411fadce1ef/actix-web/src/app.rs#L698>
 pub fn setup_with_settings(
   settings: Settings,
 ) -> App<
@@ -118,20 +120,20 @@ pub fn setup_with_settings(
   App::new().configure(get_config_fn(settings))
 }
 
+/// Configuring function, based on [`Settings`] it produces function which can be used to define routes and app data.
 pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
   setup_logging(&settings);
   let secret_key = setup_secret_key(&settings);
   let (token_signer, authority) = crate::setup_authority!(secret_key, settings);
   let argon_context = setup_argon_context(&settings);
+  let mailer = setup_mailer(&settings);
 
   move |service_config: &mut ServiceConfig| {
     service_config
       .app_data(web::Data::new(argon_context.clone()))
       // AuthenticationService by default doesnt include token_signer into app_data, hence we get it from setup_authority!() which is kinda hacky.
       .app_data(web::Data::new(token_signer.clone()))
-      .app_data(web::Data::new(
-        settings.application.tracker.announce_url.clone(),
-      ))
+      .app_data(web::Data::new(mailer))
       .service(
         web::scope("/api/user/auth")
           .route("/register", web::post().to(register))
@@ -152,6 +154,7 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
           ),
       )
       // https://github.com/cloud-annotations/docusaurus-openapi/issues/231
+      // TODO: Should this be closed in production?
       .service(
         SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
       )
@@ -171,18 +174,22 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
           )
           .service(
             web::scope("/user")
-              .route("/me", web::patch().to(user_patch_me))
               .route(
                 "/{id}",
-                web::patch()
-                  .to(user_patch)
-                  .wrap(AuthorizationMiddlewareFactory::new(Role::Mod)),
+                web::patch().to(user_patch), //.wrap(AuthorizationMiddlewareFactory::new(Role::Mod)),
               )
               .route("/{id}/role_change", web::patch().to(user_role_change))
               .route("/me", web::get().to(user_me_get))
               .route("/{id}", web::get().to(user_get))
               .route("/me", web::delete().to(user_me_delete))
-              .route("/{id}/torrents", web::get().to(user_torrents_get)),
+              .route(
+                "/{id}/torrents",
+                web::get().to(user_torrents_get::<SHA1_LENGTH>),
+              )
+              .route(
+                "/v2/{id}/torrents",
+                web::get().to(user_torrents_get::<SHA256_LENGTH>),
+              ),
           )
           .service(
             web::scope("/torrent")
@@ -267,6 +274,7 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
   }
 }
 
+/// Required by OpenAPI generator.
 #[derive(OpenApi)]
 #[openapi(
   info(description = "API documentation", title = "Laguna API"),
@@ -275,8 +283,10 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
       UserDTO,
       UserPatchDTO,
       TorrentPutDTO,
-      TorrentDTO,
-      Torrent,
+      TorrentDTO::<SHA1_LENGTH>,
+      TorrentDTO::<SHA256_LENGTH>,
+      Torrent::<SHA1_LENGTH>,
+      Torrent::<SHA256_LENGTH>,
       Genre,
       TorrentPatchDTO,
       RatingDTO::<SHA1_LENGTH>,
@@ -286,7 +296,8 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
       RegisterDTO,
       LoginDTO,
       AppInfoDTO,
-      PeerDTO,
+      PeerDTO::<SHA1_LENGTH>,
+      PeerDTO::<SHA256_LENGTH>,
       AlreadyExistsDTO,
       Role,
       Behaviour,
@@ -299,7 +310,9 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
       AnnounceEvent,
       AnnounceReply,
       RoleChangeDTO,
-      Peer,
+      Peer::<SHA1_LENGTH>,
+      Peer::<SHA256_LENGTH>,
+      PeerStream,
       PeerStream,
       PeerDict,
       PeerBin,
@@ -312,7 +325,6 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
   paths(
     user::user_me_get,
     user::user_me_delete,
-    user::user_patch_me,
     user::user_get,
     user::user_patch,
     user::user_torrents_get,
@@ -346,6 +358,7 @@ pub fn get_config_fn(settings: Settings) -> impl FnOnce(&mut ServiceConfig) {
 )]
 struct ApiDoc;
 
+/// Retrieve log level based on settings.
 #[inline]
 pub fn get_loglevel(settings: &Settings) -> &str {
   match settings.actix.mode {
@@ -354,6 +367,7 @@ pub fn get_loglevel(settings: &Settings) -> &str {
   }
 }
 
+/// Initialize logging, this is done only once even if this function is called multiple times due to internal [`Once`].
 pub fn setup_logging(settings: &Settings) {
   if settings.actix.enable_log {
     ENV_LOGGER_INIT.call_once(|| {
@@ -367,6 +381,9 @@ pub fn setup_logging(settings: &Settings) {
   }
 }
 
+/// Macro returning [`TokenSigner`] and [`Authority`] used by JWT auth.
+// This is a macro because types are too hard and Rust isn't there yet with inference.
+// TODO: Make this a function that returns an `impl`.
 #[macro_export]
 macro_rules! setup_authority {
   ($secret_key:ident, $settings:ident) => {{
@@ -401,6 +418,7 @@ macro_rules! setup_authority {
   }};
 }
 
+/// Sets up [`Argon2<'static>`] context used for hashing passwords.
 pub fn setup_argon_context(settings: &Settings) -> Argon2<'static> {
   let password_pepper = Box::leak::<'static>(
     settings
@@ -425,6 +443,7 @@ pub fn setup_argon_context(settings: &Settings) -> Argon2<'static> {
   .unwrap()
 }
 
+/// Sets up secret key used for JWT auth.
 pub fn setup_secret_key(settings: &Settings) -> Hs256Key {
   Hs256Key::new(
     settings
@@ -436,6 +455,9 @@ pub fn setup_secret_key(settings: &Settings) -> Hs256Key {
   )
 }
 
+/// Sets up CORS policies with respect to FE.
+/// Production environment is more strict, development environment use CORS permissive.
+/// CORS supports preflight requests, so FE can make them.
 pub fn setup_cors(settings: &Settings) -> Cors {
   let fe_ip = settings.application.frontend.address().ip();
   let fe_port = settings.application.frontend.address().port();
@@ -484,6 +506,9 @@ pub fn setup_cors(settings: &Settings) -> Cors {
   cors
 }
 
+/// Sets up DB connection and migrates tables.
+/// Current maximum amount of connections is 100.
+// TODO: Parameterize this better.
 pub async fn setup_db(settings: &Settings) -> Result<PgPool, sqlx::Error> {
   let pool = PgPoolOptions::new()
     .max_connections(100)
@@ -494,4 +519,35 @@ pub async fn setup_db(settings: &Settings) -> Result<PgPool, sqlx::Error> {
   sqlx::migrate!("../../migrations").run(&pool).await?;
 
   Ok(pool)
+}
+
+/// Sets up [`PostmarkClient`] used for sending emails.
+pub fn setup_mailer(settings: &Settings) -> PostmarkClient {
+  PostmarkClient::builder()
+    .base_url(settings.application.mailer.api_base_url.clone())
+    .token(
+      settings
+        .application
+        .mailer
+        .api_token
+        .expose_secret()
+        .as_str(),
+    )
+    .build()
+}
+
+/// Sets up [`GovernorConfig`] middleware.
+// TODO: Make this a function
+#[macro_export]
+macro_rules! setup_ip_ratelimiter {
+  () => {{
+    use ::actix_governor::GovernorConfigBuilder;
+    use ::actix_settings::Mode;
+    GovernorConfigBuilder::const_default()
+      .const_per_second(get_settings().application.ip_ratelimiter.replenish_seconds)
+      .const_burst_size(get_settings().application.ip_ratelimiter.burst_quota)
+      .permissive(get_settings().actix.mode == Mode::Development)
+      .finish()
+      .expect("Governor rate-limiter failed to initialize")
+  }};
 }

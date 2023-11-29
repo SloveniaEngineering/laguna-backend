@@ -5,11 +5,12 @@ use laguna_backend_dto::meta::AppInfoDTO;
 use laguna_backend_middleware::mime::APPLICATION_LAGUNA_JSON_VERSIONED;
 use log::info;
 
+#[allow(missing_docs)]
 #[utoipa::path(
   get,
   path = "/api/misc/appinfo",
   responses(
-    (status = 200, description = "Returns app info.", body = AppInfoDTO, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns app info.", body = AppInfoDTO, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
   )
 )]
 pub async fn get_app_info(laguna: web::Data<AppInfoDTO>) -> HttpResponse {
@@ -18,11 +19,12 @@ pub async fn get_app_info(laguna: web::Data<AppInfoDTO>) -> HttpResponse {
     .json(laguna)
 }
 
+#[allow(missing_docs)]
 #[utoipa::path(
   get,
   path = "/api/misc/healthcheck",
   responses(
-    (status = 200, description = "Returns healthcheck.", content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
+    (status = 200, description = "Returns healthcheck.", content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
   )
 )]
 pub async fn healthcheck(peer_addr: PeerAddr) -> HttpResponse {

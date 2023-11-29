@@ -13,23 +13,23 @@ use laguna_backend_middleware::{
 };
 use laguna_backend_model::behaviour::Behaviour;
 use laguna_backend_model::role::Role;
-use laguna_backend_model::user::{User, UserSafe};
+use laguna_backend_model::user::User;
 
-use secrecy::ExposeSecret;
 use sqlx::PgPool;
 
 use crate::error::{user::UserError, APIError};
 
+#[allow(missing_docs)]
 #[utoipa::path(
   post,
   path = "/api/user/auth/login",
   responses(
-    (status = 200, description = "User logged in successfully.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json", headers(
+    (status = 200, description = "User logged in successfully.", body = UserDTO, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json", headers(
       ("X-Access-Token" = String, description = "Access token."),
       ("X-Refresh-Token" = String, description = "Refresh token.")
     )),
-    (status = 400, description = "Bad request.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json"),
-    (status = 401, description = "Invalid credentials.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.0.1.0+json")
+    (status = 400, description = "Bad request.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json"),
+    (status = 401, description = "Invalid credentials.", body = String, content_type = "application/vnd.sloveniaengineering.laguna.1.0.0-beta+json")
   ),
 )]
 pub async fn login(
@@ -46,10 +46,9 @@ pub async fn login(
   )
   .fetch_optional(pool.get_ref())
   .await?
-  .map(UserSafe::from)
   .ok_or(UserError::InvalidCredentials)?;
 
-  let password_hash = PasswordHash::new(user.password.expose_secret()).unwrap();
+  let password_hash = PasswordHash::new(&user.password).unwrap();
   if argon_context
     .verify_password(login_dto.password.as_bytes(), &password_hash)
     .is_err()
@@ -63,7 +62,6 @@ pub async fn login(
   let user = sqlx::query_file_as!(User, "queries/user_login_update.sql", Utc::now(), user.id)
     .fetch_optional(pool.get_ref())
     .await?
-    .map(UserSafe::from)
     .map(UserDTO::from)
     .ok_or(UserError::NotUpdated)?;
 

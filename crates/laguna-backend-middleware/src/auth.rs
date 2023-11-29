@@ -15,6 +15,7 @@ use laguna_backend_model::role::Role;
 use std::future::ready;
 use std::future::Ready;
 
+#[allow(missing_docs)]
 pub struct AuthorizationMiddlewareFactory(Role);
 
 impl AuthorizationMiddlewareFactory {
@@ -43,11 +44,13 @@ where
   }
 }
 
+#[allow(missing_docs)]
 pub struct AuthorizationMiddleware<S> {
   min_role: Role,
   service: S,
 }
 
+#[allow(missing_docs)]
 #[derive(Debug)]
 pub enum AuthorizationError {
   UnauthorizedRole { min_role: Role, actual_role: Role },

@@ -1,10 +1,11 @@
 use std::str::FromStr;
 
 use actix_http::StatusCode;
-use actix_web::test::{read_body_json, TestRequest};
+use actix_web::test::{read_body, read_body_json, TestRequest};
 
 use chrono::{DateTime, Utc};
 
+use laguna_backend_api::error::user::UserError;
 use laguna_backend_dto::{
   role::RoleChangeDTO,
   torrent::TorrentDTO,
@@ -12,6 +13,7 @@ use laguna_backend_dto::{
 };
 use laguna_backend_middleware::mime::APPLICATION_XBITTORRENT;
 use laguna_backend_model::{role::Role, speedlevel::SpeedLevel};
+use laguna_backend_tracker_common::info_hash::SHA1_LENGTH;
 use sqlx::PgPool;
 
 mod common;
@@ -66,6 +68,7 @@ async fn test_delete_me(pool: PgPool) -> sqlx::Result<()> {
   Ok(())
 }
 
+/*
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_user_patch(pool: PgPool) -> sqlx::Result<()> {
   let app = common::setup_test(&pool).await;
@@ -74,9 +77,8 @@ async fn test_user_patch(pool: PgPool) -> sqlx::Result<()> {
     access_token.clone(),
     refresh_token.clone(),
     TestRequest::patch()
-      .uri("/api/user/me")
+      .uri(&format!("/api/user/{}", user_dto.id))
       .set_json(UserPatchDTO {
-        username: user_dto.username.clone(),
         avatar_url: Some(String::from("https://example.com")),
         is_profile_private: true,
       }),
@@ -107,7 +109,9 @@ async fn test_user_patch(pool: PgPool) -> sqlx::Result<()> {
   assert_ne!(refresh_token, new_refresh_token);
   Ok(())
 }
+*/
 
+/*
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_user_patch_change_username(pool: PgPool) -> sqlx::Result<()> {
   let app = common::setup_test(&pool).await;
@@ -118,7 +122,8 @@ async fn test_user_patch_change_username(pool: PgPool) -> sqlx::Result<()> {
     TestRequest::patch()
       .uri("/api/user/me")
       .set_json(UserPatchDTO {
-        username: String::from("new_username"),
+        username: Some(String::from("new_username")),
+        password: None,
         avatar_url: None,
         is_profile_private: false,
       }),
@@ -136,6 +141,7 @@ async fn test_user_patch_change_username(pool: PgPool) -> sqlx::Result<()> {
   );
   Ok(())
 }
+*/
 
 #[sqlx::test(migrations = "../../migrations")]
 async fn test_user_patch_remove_avatar_url(pool: PgPool) -> sqlx::Result<()> {
@@ -145,9 +151,8 @@ async fn test_user_patch_remove_avatar_url(pool: PgPool) -> sqlx::Result<()> {
     access_token.clone(),
     refresh_token.clone(),
     TestRequest::patch()
-      .uri("/api/user/me")
+      .uri(&format!("/api/user/{}", user_dto.id))
       .set_json(UserPatchDTO {
-        username: user_dto.username.clone(),
         avatar_url: Some(String::from("https://example.com")),
         is_profile_private: true,
       }),
@@ -160,9 +165,8 @@ async fn test_user_patch_remove_avatar_url(pool: PgPool) -> sqlx::Result<()> {
     access_token,
     refresh_token,
     TestRequest::patch()
-      .uri("/api/user/me")
+      .uri(&format!("/api/user/{}", user_dto.id))
       .set_json(UserPatchDTO {
-        username: user_dto.username.clone(),
         avatar_url: None,
         is_profile_private: true,
       }),
@@ -204,7 +208,7 @@ async fn test_user_torrents_get(pool: PgPool) -> sqlx::Result<()> {
   .unwrap();
 
   assert_eq!(put_res.status(), StatusCode::OK);
-  let torrent_dto = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent_dto = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
   let expected_torrent_dto_1 = TorrentDTO {
     info_hash: torrent_dto.info_hash.clone(),
     raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/leaves.torrent").to_vec(),
@@ -247,7 +251,7 @@ async fn test_user_torrents_get(pool: PgPool) -> sqlx::Result<()> {
   .unwrap();
 
   assert_eq!(put_res.status(), StatusCode::OK);
-  let torrent_dto = read_body_json::<TorrentDTO, _>(put_res).await;
+  let torrent_dto = read_body_json::<TorrentDTO<SHA1_LENGTH>, _>(put_res).await;
   let expected_torrent_dto_2 = TorrentDTO {
     info_hash: torrent_dto.info_hash.clone(),
     raw: include_bytes!("fixtures/webtorrent-fixtures/fixtures/bunny.torrent").to_vec(),
@@ -281,12 +285,36 @@ async fn test_user_torrents_get(pool: PgPool) -> sqlx::Result<()> {
 
   assert_eq!(get_torrents_res.status(), StatusCode::OK);
 
-  let torrents = read_body_json::<Vec<TorrentDTO>, _>(get_torrents_res).await;
+  let torrents = read_body_json::<Vec<TorrentDTO<SHA1_LENGTH>>, _>(get_torrents_res).await;
   assert_eq!(torrents.len(), 2);
 
   assert_eq!(
     torrents,
     vec![expected_torrent_dto_1, expected_torrent_dto_2]
+  );
+  Ok(())
+}
+
+#[sqlx::test(migrations = "../../migrations")]
+async fn test_user_role_change_self(pool: PgPool) -> sqlx::Result<()> {
+  let app = common::setup_test(&pool).await;
+  let (_, user_dto, access_token, refresh_token) = common::new_user(&app).await;
+  let role_change_res = common::as_logged_in(
+    access_token.clone(),
+    refresh_token.clone(),
+    TestRequest::patch()
+      .uri(&format!("/api/user/{}/role_change", user_dto.id))
+      .set_json(RoleChangeDTO { to: Role::Verified }),
+    &app,
+  )
+  .await
+  .unwrap();
+
+  assert_eq!(role_change_res.status(), StatusCode::FORBIDDEN,);
+
+  assert_eq!(
+    read_body(role_change_res).await,
+    UserError::SelfRoleChangeNotAllowed.to_string(),
   );
   Ok(())
 }

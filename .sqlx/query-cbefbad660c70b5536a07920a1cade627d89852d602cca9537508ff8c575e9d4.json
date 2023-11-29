@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO \"User\" (username,\n                    email,\n                    password,\n                    first_login,\n                    last_login,\n                    avatar_url,\n                    salt,\n                    role,\n                    hnr_count,\n                    behaviour,\n                    is_enabled,\n                    is_donator,\n                    has_verified_email,\n                    is_profile_private)\nVALUES ($1,\n        $2,\n        $3,\n        $4,\n        $5,\n        $6,\n        $7,\n        $8,\n        $9,\n        $10,\n        $11,\n        $12,\n        $13,\n        $14) RETURNING\n    id,\n    username,\n    email,\n    password,\n    first_login,\n    last_login,\n    avatar_url,\n    salt,\n    role AS \"role: Role\",\n    hnr_count,\n    behaviour AS \"behaviour: Behaviour\",\n    is_enabled,\n    is_donator,\n    has_verified_email,\n    is_profile_private\n;",
+  "query": "SELECT id,\n       username,\n       email,\n       password,\n       first_login,\n       last_login,\n       avatar_url,\n       salt,\n       role      AS \"role: Role\",\n       hnr_count,\n       behaviour AS \"behaviour: Behaviour\",\n       is_enabled,\n       is_donator,\n       has_verified_email,\n       is_profile_private,\n       email_confirm_hash,\n       email_confirm_expiry\nFROM \"User\"\nWHERE id = $1;",
   "describe": {
     "columns": [
       {
@@ -105,52 +105,21 @@
         "ordinal": 14,
         "name": "is_profile_private",
         "type_info": "Bool"
+      },
+      {
+        "ordinal": 15,
+        "name": "email_confirm_hash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 16,
+        "name": "email_confirm_expiry",
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
-        "Varchar",
-        "Varchar",
-        "Varchar",
-        "Timestamptz",
-        "Timestamptz",
-        "Text",
-        "Text",
-        {
-          "Custom": {
-            "name": "role",
-            "kind": {
-              "Enum": [
-                "Normie",
-                "Verified",
-                "Mod",
-                "Admin"
-              ]
-            }
-          }
-        },
-        "Int4",
-        {
-          "Custom": {
-            "name": "behaviour",
-            "kind": {
-              "Enum": [
-                "Lurker",
-                "Downloader",
-                "Freeleecher",
-                "Leech",
-                "Seed",
-                "Choked",
-                "Uploader",
-                "Stopped"
-              ]
-            }
-          }
-        },
-        "Bool",
-        "Bool",
-        "Bool",
-        "Bool"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -168,8 +137,10 @@
       false,
       false,
       false,
-      false
+      false,
+      true,
+      true
     ]
   },
-  "hash": "141364a5593e3510cc76b5a8719a4785d64531880925364c62cfa6c605d63c22"
+  "hash": "cbefbad660c70b5536a07920a1cade627d89852d602cca9537508ff8c575e9d4"
 }

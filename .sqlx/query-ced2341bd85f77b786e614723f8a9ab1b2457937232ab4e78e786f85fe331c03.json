@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "REFRESH MATERIALIZED VIEW \"UserStats\";",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "ced2341bd85f77b786e614723f8a9ab1b2457937232ab4e78e786f85fe331c03"
+}
