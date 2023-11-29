@@ -542,9 +542,11 @@ pub fn setup_mailer(settings: &Settings) -> PostmarkClient {
 macro_rules! setup_ip_ratelimiter {
   () => {{
     use ::actix_governor::GovernorConfigBuilder;
+    use ::actix_settings::Mode;
     GovernorConfigBuilder::const_default()
       .const_per_second(get_settings().application.ip_ratelimiter.replenish_seconds)
       .const_burst_size(get_settings().application.ip_ratelimiter.burst_quota)
+      .permissive(get_settings().actix.mode == Mode::Development)
       .finish()
       .expect("Governor rate-limiter failed to initialize")
   }};
