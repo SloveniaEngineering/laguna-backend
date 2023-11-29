@@ -46,4 +46,4 @@ laguna-backend-dto = { path = "../laguna-backend-dto" }
 const_format = "*"
 serde_urlencoded = "*"
 qstring = "*"
-percent-encoding = "2.3.0"
+percent-encoding = "2.3.1"
