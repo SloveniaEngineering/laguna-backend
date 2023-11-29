@@ -38,6 +38,7 @@ sqlx = { version="0.7.2", features = [
     "chrono",
     "json",
 ] }
+# FIXME: 0.8.0 breaks code due to Hs256 not being implemented as Algorithm in actix-jwt-auth-middleware
 jwt-compact = "0.7.0"
 env_logger = "*"
 argon2 = { version = "*", features = ["std"] }
@@ -47,7 +48,7 @@ actix-settings = "*"
 actix-service = "*"
 actix-cors = "*"
 const_format = "*"
-utoipa-swagger-ui = { version = "3", features = ["actix-web"] }
-utoipa-redoc = { version = "*", features = ["actix-web"] }
-utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
+utoipa-swagger-ui = { version = "4.0.0", features = ["actix-web"] }
+utoipa-redoc = { version = "1.0.0", features = ["actix-web"] }
+utoipa = { version = "4.1.0", features = ["actix_extras", "uuid", "chrono", "yaml"] }
 postmark = {version = "0.10.0", features = ["reqwest-rustls-tls"]}

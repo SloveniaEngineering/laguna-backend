@@ -18,6 +18,6 @@ documentation = "https://sloveniaengineering.github.io/laguna-backend"
 laguna-backend-tracker-common = { path = "../laguna-backend-tracker-common" }
 serde = { version = "1.0", features = ["derive"] }
 actix-web = "4"
-utoipa = { version = "3", features = ["actix_extras", "uuid", "chrono", "yaml"] }
+utoipa = { version = "4.1.0", features = ["actix_extras", "uuid", "chrono", "yaml"] }
 bendy = { version = "*", features = ["std", "serde"] }
 laguna-backend-model = { path = "../laguna-backend-model" }
