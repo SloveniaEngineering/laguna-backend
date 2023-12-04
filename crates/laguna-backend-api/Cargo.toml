@@ -42,7 +42,7 @@ argon2 = { version = "*", features = ["std"] }
 derive_more = "*"
 env_logger = "*"
 actix-multipart = "*"
-const_format = "0.2.31"
+const_format = "0.2.32"
 serde = { version = "1.0", features = ["derive"]}
 validator = { version = "0.16", features = ["derive"] }
 actix-web-validator = "5.0.1"
